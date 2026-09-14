@@ -40,8 +40,8 @@
           <input class="field" type="text" id="name" placeholder="π.χ. Maria Massage Studio" required>
         </div>
         <div class="form-group">
-          <label>Slug (μοναδικό URL name, π.χ. maria-massage)</label>
-          <input class="field" type="text" id="slug" placeholder="maria-massage" required>
+          <label>Business Code (μοναδικός κωδικός, π.χ. maria-massage)</label>
+          <input class="field" type="text" id="business_code" placeholder="maria-massage" required>
         </div>
         <div class="form-group">
           <label>Κωδικός Πρόσβασης (Admin Password)</label>
@@ -49,7 +49,7 @@
         </div>
       </div>
 
-      <!-- 2. Logo . Λινκ από github images bucket ή κάπου δημόσια.-->
+      <!-- 2. Logo -->
       <div class="section-box">
         <div class="section-header">
           <input type="checkbox" id="enableLogo" onchange="toggleSection('logoSection', this)">
@@ -162,10 +162,9 @@
     e.preventDefault();
 
     const name = document.getElementById('name').value.trim();
-    const slug = document.getElementById('slug').value.trim();
+    const business_code = document.getElementById('business_code').value.trim();
     const password = document.getElementById('password').value.trim();
 
-    // Μαζεύουμε προαιρετικά στοιχεία αν είναι τσεκαρισμένα
     const logo_url = document.getElementById('enableLogo').checked ? document.getElementById('logo_url').value : '';
     const brand_color = document.getElementById('enableColor').checked ? document.getElementById('brand_color').value : '#4f46e5';
     
@@ -194,7 +193,7 @@
       const res = await fetch(`${WORKER_URL}/api/super-admin/create-tenant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug, password, logo_url, brand_color, work_days, open_time, close_time, services })
+        body: JSON.stringify({ name, business_code, password, logo_url, brand_color, work_days, open_time, close_time, services })
       });
 
       const data = await res.json();
