@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin | Onboarding Νέου Πελάτη</title>
+    <title>Super Admin | Onboarding Νέας Επιχείρησης</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: sans-serif; background: #f1f5f9; margin: 0; color: #1e293b; padding: 2rem; }
-        .container { max-width: 700px; margin: 0 auto; background: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .container { max-width: 750px; margin: 0 auto; background: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         h1 { margin-top: 0; color: #0f172a; font-size: 1.5rem; }
         .section-box { border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.25rem; background: #fafafa; }
         .section-header { display: flex; align-items: center; gap: 0.75rem; font-weight: bold; cursor: pointer; }
@@ -20,7 +20,8 @@
         .checkbox-group label { display: flex; align-items: center; gap: 0.35rem; font-weight: normal; cursor: pointer; }
         .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background: #4f46e5; color: white; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn:hover { background: #4338ca; }
-        .service-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
+        .row-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .shift-row, .service-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
         #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; display: none; background: #f0fdf4; color: #166534; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     </style>
 </head>
@@ -28,11 +29,11 @@
 
   <div class="container">
     <h1>🚀 Onboarding Νέας Επιχείρησης</h1>
-    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 2rem;">Συμπληρώστε τα βασικά στοιχεία και ενεργοποιήστε τις επιθυμητές λειτουργίες.</p>
+    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 2rem;">Δημιουργήστε νέο tenant με πλήρη παραμετροποίηση ωραρίων, βαρδιών και υπηρεσιών.</p>
 
     <form id="onboardingForm" onsubmit="handleOnboarding(event)">
       
-      <!-- Βασικά Στοιχεία (Υποχρεωτικά) -->
+      <!-- 1. Βασικά Στοιχεία -->
       <div class="section-box" style="background: white; border-color: #cbd5e1;">
         <h3>1. Βασικά Στοιχεία</h3>
         <div class="form-group">
@@ -40,52 +41,50 @@
           <input class="field" type="text" id="name" placeholder="π.χ. Maria Massage Studio" required>
         </div>
         <div class="form-group">
-          <label>Business Code (μοναδικός κωδικός, π.χ. maria-massage)</label>
+          <label>Business Code (μοναδικός κωδικός URL, π.χ. maria-massage)</label>
           <input class="field" type="text" id="business_code" placeholder="maria-massage" required>
         </div>
         <div class="form-group">
           <label>Κωδικός Πρόσβασης (Admin Password)</label>
           <input class="field" type="password" id="password" placeholder="••••••••" required>
         </div>
+        <div class="row-group">
+          <div class="form-group"><label>Email Επιχείρησης</label><input class="field" type="email" id="email" placeholder="info@domain.gr"></div>
+          <div class="form-group"><label>Τηλέφωνο Επικοινωνίας</label><input class="field" type="text" id="phone" placeholder="2101234567"></div>
+        </div>
+        <div class="form-group">
+          <label>Διεύθυνση</label>
+          <input class="field" type="text" id="address" placeholder="Οδός & Αριθμός, Πόλη">
+        </div>
       </div>
 
-      <!-- 2. Logo -->
+      <!-- 2. Logo & Branding -->
       <div class="section-box">
         <div class="section-header">
-          <input type="checkbox" id="enableLogo" onchange="toggleSection('logoSection', this)">
-          <label for="enableLogo" style="cursor:pointer; margin:0;">Προσθήκη Λογότυπου</label>
+          <input type="checkbox" id="enableBranding" onchange="toggleSection('brandingSection', this)">
+          <label for="enableBranding" style="cursor:pointer; margin:0;">Λογότυπο & Χρώματα Branding</label>
         </div>
-        <div class="section-content" id="logoSection">
+        <div class="section-content" id="brandingSection">
           <div class="form-group">
-            <label>URL Λογότυπου (Image Link)</label>
+            <label>URL Λογότυπου</label>
             <input class="field" type="url" id="logo_url" placeholder="https://example.com/logo.png">
           </div>
-        </div>
-      </div>
-
-      <!-- 3. Χρώματα Branding -->
-      <div class="section-box">
-        <div class="section-header">
-          <input type="checkbox" id="enableColor" onchange="toggleSection('colorSection', this)">
-          <label for="enableColor" style="cursor:pointer; margin:0;">Προσαρμογή Χρωμάτων</label>
-        </div>
-        <div class="section-content" id="colorSection">
           <div class="form-group">
-            <label>Κύριο Χρώμα (Brand Color)</label>
+            <label>Κύριο Χρώμα</label>
             <input class="field" type="color" id="brand_color" value="#4f46e5" style="height: 40px; padding: 0.25rem; cursor:pointer;">
           </div>
         </div>
       </div>
 
-      <!-- 4. Ωράριο & Μέρες Λειτουργίας -->
+      <!-- 3. Ευέλικτο Ωράριο & Βάρδιες (Shifts/Breaks) -->
       <div class="section-box">
         <div class="section-header">
           <input type="checkbox" id="enableHours" onchange="toggleSection('hoursSection', this)">
-          <label for="enableHours" style="cursor:pointer; margin:0;">Ωράριο & Ημέρες Λειτουργίας</label>
+          <label for="enableHours" style="cursor:pointer; margin:0;">Ωράριο, Ημέρες & Πολλαπλές Βάρδιες (Breaks)</label>
         </div>
         <div class="section-content" id="hoursSection">
           <div class="form-group">
-            <label>Ημέρες Εβδομάδας</label>
+            <label>Ημέρες Εβδομάδας Λειτουργίας</label>
             <div class="checkbox-group">
               <label><input type="checkbox" name="work_day" value="1" checked> Δευτ</label>
               <label><input type="checkbox" name="work_day" value="2" checked> Τρί</label>
@@ -96,14 +95,32 @@
               <label><input type="checkbox" name="work_day" value="0"> Κυρ</label>
             </div>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group"><label>Ώρα Έναρξης</label><input class="field" type="time" id="open_time" value="09:00"></div>
-            <div class="form-group"><label>Ώρα Λήξης</label><input class="field" type="time" id="close_time" value="21:00"></div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label>Βάρδιες / Διαστήματα Ημέρας (π.χ. Πρωί 09:00-14:00 & Απόγευμα 17:00-21:00)</label>
+            <div id="shiftsList">
+              <div class="shift-row">
+                <span style="font-size: 0.85rem; color:#64748b;">Από:</span> <input class="field" type="time" value="09:00">
+                <span style="font-size: 0.85rem; color:#64748b;">Έως:</span> <input class="field" type="time" value="14:00">
+                <button type="button" class="btn" onclick="this.parentElement.remove()" style="background:#ef4444; padding: 0.65rem;"><i data-lucide="trash-2" size="16"></i></button>
+              </div>
+              <div class="shift-row">
+                <span style="font-size: 0.85rem; color:#64748b;">Από:</span> <input class="field" type="time" value="17:00">
+                <span style="font-size: 0.85rem; color:#64748b;">Έως:</span> <input class="field" type="time" value="21:00">
+                <button type="button" class="btn" onclick="this.parentElement.remove()" style="background:#ef4444; padding: 0.65rem;"><i data-lucide="trash-2" size="16"></i></button>
+              </div>
+            </div>
+            <button type="button" class="btn" onclick="addShiftRow()" style="background:#059669; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 0.8rem;">+ Προσθήκη Βάρδιας</button>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label>Buffer Time (Χρόνος κενού/καθαρισμού ανάμεσα στα ραντεβού σε λεπτά)</label>
+            <input class="field" type="number" id="buffer_minutes" value="0" min="0" step="5">
           </div>
         </div>
       </div>
 
-      <!-- 5. Υπηρεσίες -->
+      <!-- 4. Υπηρεσίες -->
       <div class="section-box">
         <div class="section-header">
           <input type="checkbox" id="enableServices" onchange="toggleSection('servicesSection', this)">
@@ -122,6 +139,20 @@
         </div>
       </div>
 
+      <!-- 5. Telegram Integration -->
+      <div class="section-box">
+        <div class="section-header">
+          <input type="checkbox" id="enableTelegram" onchange="toggleSection('telegramSection', this)">
+          <label for="enableTelegram" style="cursor:pointer; margin:0;">Ειδοποιήσεις Telegram</label>
+        </div>
+        <div class="section-content" id="telegramSection">
+          <div class="form-group">
+            <label>Telegram Chat ID</label>
+            <input class="field" type="text" id="telegram_chat_id" placeholder="π.χ. 123456789">
+          </div>
+        </div>
+      </div>
+
       <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 1rem;">
         <i data-lucide="check-circle" size="18"></i> Δημιουργία Επιχείρησης
       </button>
@@ -137,11 +168,19 @@
 
   function toggleSection(sectionId, checkbox) {
     const section = document.getElementById(sectionId);
-    if (checkbox.checked) {
-      section.classList.add('active');
-    } else {
-      section.classList.remove('active');
-    }
+    section.classList.toggle('active', checkbox.checked);
+  }
+
+  function addShiftRow() {
+    const list = document.getElementById('shiftsList');
+    const row = document.createElement('div');
+    row.className = 'shift-row';
+    row.innerHTML = `
+      <span style="font-size: 0.85rem; color:#64748b;">Από:</span> <input class="field" type="time" value="09:00">
+      <span style="font-size: 0.85rem; color:#64748b;">Έως:</span> <input class="field" type="time" value="17:00">
+      <button type="button" class="btn" onclick="this.parentElement.remove()" style="background:#ef4444; padding: 0.65rem;"><i data-lucide="trash-2" size="16"></i></button>
+    `;
+    list.appendChild(row);
   }
 
   function addServiceRow() {
@@ -164,19 +203,37 @@
     const name = document.getElementById('name').value.trim();
     const business_code = document.getElementById('business_code').value.trim();
     const password = document.getElementById('password').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const address = document.getElementById('address').value.trim();
 
-    const logo_url = document.getElementById('enableLogo').checked ? document.getElementById('logo_url').value : '';
-    const brand_color = document.getElementById('enableColor').checked ? document.getElementById('brand_color').value : '#4f46e5';
+    const logo_url = document.getElementById('enableBranding').checked ? document.getElementById('logo_url').value : '';
+    const brand_color = document.getElementById('enableBranding').checked ? document.getElementById('brand_color').value : '#4f46e5';
     
-    let work_days = [];
-    if (document.getElementById('enableHours').checked) {
-      document.querySelectorAll('input[name="work_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
-    }
-    const open_time = document.getElementById('open_time').value;
-    const close_time = document.getElementById('close_time').value;
+    let work_days = [1, 2, 3, 4, 5];
+    let working_hours = [{ start: "09:00", end: "21:00" }];
+    let buffer_minutes = 0;
 
-    let services = [];
+    if (document.getElementById('enableHours').checked) {
+      work_days = [];
+      document.querySelectorAll('input[name="work_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
+      
+      working_hours = [];
+      document.querySelectorAll('.shift-row').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs[0].value && inputs[1].value) {
+          working_hours.push({ start: inputs[0].value, end: inputs[1].value });
+        }
+      });
+      buffer_minutes = parseInt(document.getElementById('buffer_minutes').value) || 0;
+    }
+
+    let services = [
+      { name: 'Classic Massage', duration: 60, price: 40 },
+      { name: 'Deep Tissue', duration: 60, price: 50 }
+    ];
     if (document.getElementById('enableServices').checked) {
+      services = [];
       document.querySelectorAll('.service-row').forEach(row => {
         const inputs = row.querySelectorAll('input');
         if (inputs[0].value) {
@@ -189,11 +246,13 @@
       });
     }
 
+    const telegram_chat_id = document.getElementById('enableTelegram').checked ? document.getElementById('telegram_chat_id').value.trim() : '';
+
     try {
       const res = await fetch(`${WORKER_URL}/api/super-admin/create-tenant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, business_code, password, logo_url, brand_color, work_days, open_time, close_time, services })
+        body: JSON.stringify({ name, business_code, password, email, phone, address, logo_url, brand_color, work_days, working_hours, buffer_minutes, services, telegram_chat_id })
       });
 
       const data = await res.json();
