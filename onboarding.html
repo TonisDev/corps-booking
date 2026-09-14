@@ -23,16 +23,34 @@
         .row-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .shift-row, .service-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
         #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; display: none; background: #f0fdf4; color: #166534; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .error-text { color: #dc2626; font-size: 0.85rem; margin-top: 0.5rem; display: none; }
     </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>🚀 Onboarding Νέας Επιχείρησης</h1>
+  <!-- Gate: πρέπει να δοθεί το σωστό Super Admin Key πριν εμφανιστεί η φόρμα.
+       Αυτό ΔΕΝ αντικαθιστά τον server-side έλεγχο (ο worker επίσης απαιτεί το
+       ίδιο κλειδί στο header X-Admin-Key) — είναι απλώς ένα UX convenience gate. -->
+  <div id="gateScreen" class="container" style="max-width: 420px; margin-top: 5rem;">
+    <h1 style="font-size: 1.25rem;">🔐 Super Admin Πρόσβαση</h1>
+    <p style="color: #64748b; font-size: 0.875rem;">Εισάγετε το Super Admin Key για να συνεχίσετε.</p>
+    <div class="form-group">
+      <label>Super Admin Key</label>
+      <input class="field" type="password" id="gateKey" placeholder="••••••••" autocomplete="off">
+    </div>
+    <div id="gateError" class="error-text">Λάθος κλειδί ή αποτυχία σύνδεσης.</div>
+    <button class="btn" onclick="unlockGate()" style="width:100%; justify-content:center; margin-top: 1rem;">Συνέχεια</button>
+  </div>
+
+  <div class="container" id="onboardingContainer" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h1>🚀 Onboarding Νέας Επιχείρησης</h1>
+      <button class="btn" style="background:#64748b;" onclick="lockGate()">Αποσύνδεση</button>
+    </div>
     <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 2rem;">Δημιουργήστε νέο tenant με πλήρη παραμετροποίηση ωραρίων, βαρδιών και υπηρεσιών.</p>
 
     <form id="onboardingForm" onsubmit="handleOnboarding(event)">
-      
+
       <!-- 1. Βασικά Στοιχεία -->
       <div class="section-box" style="background: white; border-color: #cbd5e1;">
         <h3>1. Βασικά Στοιχεία</h3>
@@ -164,7 +182,60 @@
 
 <script>
   const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
+
+  // Το κλειδί κρατιέται ΜΟΝΟ στη μνήμη της σελίδας (μεταβλητή JS), ποτέ σε
+  // localStorage/sessionStorage/cookies, ώστε να μη μένει αποθηκευμένο στη
+  // συσκευή. Χάνεται με ανανέωση της σελίδας — σκόπιμα.
+  let adminKey = '';
+
   document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+
+  async function unlockGate() {
+    const keyInput = document.getElementById('gateKey');
+    const key = keyInput.value.trim();
+    const errorEl = document.getElementById('gateError');
+    errorEl.style.display = 'none';
+
+    if (!key) {
+      errorEl.textContent = 'Παρακαλώ εισάγετε το κλειδί.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    // Επαλήθευση του κλειδιού μέσω ενός αβλαβούς αιτήματος προς τον worker
+    // (η δημιουργία tenant με ψεύτικο business_code αποτυγχάνει σκόπιμα,
+    // αλλά μας λέει αν το κλειδί έγινε δεκτό ή όχι μέσω του status code).
+    try {
+      const res = await fetch(`${WORKER_URL}/api/super-admin/create-tenant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
+        body: JSON.stringify({}) // σκόπιμα ελλιπές· περιμένουμε 400, όχι 401
+      });
+
+      if (res.status === 401) {
+        errorEl.textContent = 'Λάθος Super Admin Key.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Οποιοδήποτε status εκτός από 401 σημαίνει ότι το κλειδί έγινε δεκτό
+      // (π.χ. 400 λόγω ελλιπών πεδίων, που είναι αναμενόμενο εδώ).
+      adminKey = key;
+      document.getElementById('gateScreen').style.display = 'none';
+      document.getElementById('onboardingContainer').style.display = 'block';
+      lucide.createIcons();
+    } catch (err) {
+      errorEl.textContent = 'Αποτυχία σύνδεσης με τον διακομιστή.';
+      errorEl.style.display = 'block';
+    }
+  }
+
+  function lockGate() {
+    adminKey = '';
+    document.getElementById('gateKey').value = '';
+    document.getElementById('onboardingContainer').style.display = 'none';
+    document.getElementById('gateScreen').style.display = 'block';
+  }
 
   function toggleSection(sectionId, checkbox) {
     const section = document.getElementById(sectionId);
@@ -181,6 +252,7 @@
       <button type="button" class="btn" onclick="this.parentElement.remove()" style="background:#ef4444; padding: 0.65rem;"><i data-lucide="trash-2" size="16"></i></button>
     `;
     list.appendChild(row);
+    lucide.createIcons();
   }
 
   function addServiceRow() {
@@ -200,6 +272,12 @@
   async function handleOnboarding(e) {
     e.preventDefault();
 
+    if (!adminKey) {
+      alert('Η συνεδρία έληξε. Παρακαλώ ξανακάντε είσοδο με το Super Admin Key.');
+      lockGate();
+      return;
+    }
+
     const name = document.getElementById('name').value.trim();
     const business_code = document.getElementById('business_code').value.trim();
     const password = document.getElementById('password').value.trim();
@@ -209,7 +287,7 @@
 
     const logo_url = document.getElementById('enableBranding').checked ? document.getElementById('logo_url').value : '';
     const brand_color = document.getElementById('enableBranding').checked ? document.getElementById('brand_color').value : '#4f46e5';
-    
+
     let work_days = [1, 2, 3, 4, 5];
     let working_hours = [{ start: "09:00", end: "21:00" }];
     let buffer_minutes = 0;
@@ -217,9 +295,9 @@
     if (document.getElementById('enableHours').checked) {
       work_days = [];
       document.querySelectorAll('input[name="work_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
-      
+
       working_hours = [];
-      document.querySelectorAll('.shift-row').forEach(row => {
+      document.querySelectorAll('#shiftsList .shift-row').forEach(row => {
         const inputs = row.querySelectorAll('input');
         if (inputs[0].value && inputs[1].value) {
           working_hours.push({ start: inputs[0].value, end: inputs[1].value });
@@ -234,7 +312,7 @@
     ];
     if (document.getElementById('enableServices').checked) {
       services = [];
-      document.querySelectorAll('.service-row').forEach(row => {
+      document.querySelectorAll('#servicesList .service-row').forEach(row => {
         const inputs = row.querySelectorAll('input');
         if (inputs[0].value) {
           services.push({
@@ -251,11 +329,20 @@
     try {
       const res = await fetch(`${WORKER_URL}/api/super-admin/create-tenant`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Key': adminKey
+        },
         body: JSON.stringify({ name, business_code, password, email, phone, address, logo_url, brand_color, work_days, working_hours, buffer_minutes, services, telegram_chat_id })
       });
 
       const data = await res.json();
+
+      if (res.status === 401) {
+        alert('Το κλειδί απορρίφθηκε από τον διακομιστή. Παρακαλώ ξανακάντε είσοδο.');
+        lockGate();
+        return;
+      }
       if (!res.ok) throw new Error(data.error || 'Σφάλμα δημιουργίας');
 
       showToast('Η επιχείρηση δημιουργήθηκε επιτυχώς!');
