@@ -6,6 +6,8 @@
     <title id="pageTitle">Κράτηση Ραντεβού</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Δικό μας ξεχωριστό CSS αρχείο -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
@@ -43,7 +45,6 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Ώρα</label>
                 <input type="time" id="time" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                <!-- Μήνυμα διαθεσιμότητας -->
                 <p id="availabilityHint" class="text-xs text-gray-500 mt-1"></p>
             </div>
 
@@ -58,7 +59,6 @@
     </div>
 
     <script>
-        // Βάλτε εδώ το Cloudflare Worker URL σας
         const API_BASE_URL = "https://YOUR-WORKER-SUBDOMAIN.workers.dev";
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -98,7 +98,6 @@
             }
         }
 
-        // Όταν ο χρήστης αλλάζει ημερομηνία, τραβάμε τα ήδη κλεισμένα ραντεβού
         document.getElementById('date').addEventListener('change', async (e) => {
             const selectedDate = e.target.value;
             const hint = document.getElementById('availabilityHint');
@@ -122,7 +121,6 @@
             }
         });
 
-        // Υποβολή φόρμας
         document.getElementById('bookingForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const msgBox = document.getElementById('responseMessage');
