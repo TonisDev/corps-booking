@@ -1,0 +1,14 @@
+/* Εδώ μπορείς να προσθέσεις όποιο custom CSS θες πέρα από το Tailwind */
+body {
+    background-color: #f9fafb;
+}
+
+/* Παράδειγμα custom animation για τα μηνύματα */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#responseMessage, #loadingError {
+    animation: fadeIn 0.3s ease-in-out;
+}
