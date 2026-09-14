@@ -325,31 +325,29 @@
 <!-- ========================================== -->
 <!-- 4. JAVASCRIPT LOGIC & API INTERACTION       -->
 <!-- ========================================== -->
+
 <script>
   const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
-  let currentSlug = localStorage.getItem('tenant_slug') || '';
+  let currentBusinessCode = localStorage.getItem('business_code') || '';
   let calendar;
   let selectedEventId = null;
   let toastTimer;
   let businessServices = [];
 
-  // Αρχικοποίηση εφαρμογής με τη φόρτωση της σελίδας
   document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
 
-    // Event listener για το Enter στο πεδίο κωδικού
     document.getElementById('loginPassword').addEventListener('keydown', e => {
       if (e.key === 'Enter') handleLogin();
     });
 
-    if (currentSlug) {
+    if (currentBusinessCode) {
       showDashboard();
     } else {
       showLogin();
     }
   });
 
-  // Εναλλαγή εμφάνισης/κρύψης κωδικού πρόσβασης
   function togglePasswordVisibility() {
     const passwordInput = document.getElementById('loginPassword');
     const eyeIcon = document.getElementById('eyeIcon');
@@ -364,12 +362,11 @@
     lucide.createIcons();
   }
 
-  // Διαχείριση Σύνδεσης Admin
   async function handleLogin() {
-    const slug = document.getElementById('loginSlug').value.trim();
+    const business_code = document.getElementById('loginSlug').value.trim(); // ID πεδίου HTML παραμένει loginSlug για ευκολία
     const password = document.getElementById('loginPassword').value.trim();
 
-    if (!slug || !password) {
+    if (!business_code || !password) {
       showToast('Συμπληρώστε όλα τα πεδία', true);
       return;
     }
@@ -378,14 +375,14 @@
       const res = await fetch(`${WORKER_URL}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, password })
+        body: JSON.stringify({ business_code, password })
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Σφάλμα σύνδεσης');
 
-      localStorage.setItem('tenant_slug', data.slug);
-      currentSlug = data.slug;
+      localStorage.setItem('business_code', data.business_code);
+      currentBusinessCode = data.business_code;
       showDashboard();
       showToast('Επιτυχής σύνδεση!');
     } catch (err) {
@@ -398,13 +395,12 @@
     document.querySelector('.app-shell').style.display = 'none';
   }
 
-  // Φόρτωση Dashboard και βασικών πληροφοριών επιχείρησης
   async function showDashboard() {
     document.getElementById('loginOverlay').style.display = 'none';
     document.querySelector('.app-shell').style.display = 'flex';
 
     try {
-      const res = await fetch(`${WORKER_URL}/api/${currentSlug}/info`);
+      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/info`);
       if (res.ok) {
         const info = await res.json();
         document.getElementById('adminBusinessName').textContent = info.name;
@@ -438,14 +434,14 @@
   }
 
   function logout() {
-    localStorage.removeItem('tenant_slug');
-    currentSlug = '';
+    localStorage.removeItem('business_code');
+    currentBusinessCode = '';
     showLogin();
   }
 
-  // Helper για αιτήματα προς τα Admin Endpoints με έλεγχο συνεδρίας
+  // Helper για αιτήματα: Προσθέτει αυτόματα το WORKER_URL χωρίς διπlογραφίες
   async function adminFetch(endpoint, options = {}) {
-    const res = await fetch(`${endpoint}`, {
+    const res = await fetch(`${WORKER_URL}${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -461,7 +457,6 @@
     return res;
   }
 
-  // Αρχικοποίηση FullCalendar
   function initCalendar() {
     const calendarEl = document.getElementById('calendar');
 
@@ -487,10 +482,9 @@
     calendar.render();
   }
 
-  // Ανάκτηση και προβολή ραντεβού στο ημερολόγιο
   async function fetchAppointments() {
     try {
-      const res = await adminFetch(`/api/${currentSlug}/admin/appointments`);
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/appointments`);
       const data = await res.json();
 
       let pending = 0, booked = 0;
@@ -500,14 +494,14 @@
         if (item.status === 'PENDING') pending++;
         if (item.status === 'BOOKED' || item.status === 'CONFIRMED') booked++;
 
-        let color = '#059669'; // BOOKED
+        let color = '#059669';
         if (item.status === 'PENDING') color = '#d97706';
         if (item.status === 'BLOCKED') color = '#64748b';
         if (item.status === 'REJECTED') color = '#ef4444';
 
         calendar.addEvent({
           id: item.id,
-          title: `${item.customer_name} · ${item.service_name || item.massage_type}`,
+          title: `${item.customer_name} · ${item.service_name}`,
           start: `${item.date}T${item.start_time}`,
           end: `${item.date}T${item.end_time}`,
           backgroundColor: color,
@@ -529,7 +523,6 @@
     return labels[status] || status;
   }
 
-  // Άνοιγμα modal διαχείρισης ραντεβού
   function openActionModal(event) {
     selectedEventId = event.id;
     const props = event.extendedProps;
@@ -538,7 +531,7 @@
     document.getElementById('actDetails').innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
         <div style="display:flex; justify-content:space-between;"><span>Τηλέφωνο:</span> <strong>${escapeHtml(props.customer_phone || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${escapeHtml(props.service_name || props.massage_type || '-')}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${escapeHtml(props.service_name || '-')}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${escapeHtml(props.start_time || '-')} – ${escapeHtml(props.end_time || '-')}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Κατάσταση:</span> <strong>${escapeHtml(statusLabel(props.status))}</strong></div>
         ${props.notes ? `<div style="margin-top:0.5rem; background:#f1f5f9; padding:0.5rem; border-radius:0.25rem;">Σημειώσεις: ${escapeHtml(props.notes)}</div>` : ''}
@@ -551,27 +544,25 @@
     openModal('actionModal');
   }
 
-  // Ενημέρωση κατάστασης ραντεβού (π.χ. Έγκριση)
   async function updateStatus(status) {
     try {
-      await adminFetch(`/api/${currentSlug}/admin/update-status`, {
+      await adminFetch(`/api/${currentBusinessCode}/admin/update-status`, {
         method: 'POST',
         body: JSON.stringify({ id: selectedEventId, status })
       });
       closeModal('actionModal');
-      showToast('Το ραντεβού εγκρίθηκε.');
+      showToast('Η κατάσταση ενημερώθηκε.');
       fetchAppointments();
     } catch (e) {
       showToast('Δεν ήταν δυνατή η ενημέρωση.', true);
     }
   }
 
-  // Διαγραφή ραντεβού
   async function deleteAppointment() {
     if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το ραντεβού;')) return;
 
     try {
-      await adminFetch(`/api/${currentSlug}/admin/delete`, {
+      await adminFetch(`/api/${currentBusinessCode}/admin/delete`, {
         method: 'POST',
         body: JSON.stringify({ id: selectedEventId })
       });
@@ -583,89 +574,86 @@
     }
   }
 
-// Δημιουργία χειροκίνητης κράτησης από τον Admin (Διόρθωση URL σε adminFetch)
-async function handleManualBooking(e) {
-  e.preventDefault();
+  async function handleManualBooking(e) {
+    e.preventDefault();
 
-  const selectedOpt = document.getElementById('massageType').selectedOptions[0];
-  if (!selectedOpt) {
-    showToast('Επιλέξτε υπηρεσία', true);
-    return;
-  }
-  const duration = parseInt(selectedOpt.getAttribute('data-duration')) || 60;
-  
-  const hour = document.getElementById('bookHour').value;
-  const minute = document.getElementById('bookMinute').value;
-  const time = `${hour}:${minute}`;
+    const selectedOpt = document.getElementById('massageType').selectedOptions[0];
+    if (!selectedOpt) {
+      showToast('Επιλέξτε υπηρεσία', true);
+      return;
+    }
+    const duration = parseInt(selectedOpt.getAttribute('data-duration')) || 60;
+    
+    const hour = document.getElementById('bookHour').value;
+    const minute = document.getElementById('bookMinute').value;
+    const time = `${hour}:${minute}`;
 
-  try {
-    // Χρησιμοποιούμε την adminFetch για συνέπεια και ασφάλεια
-    const res = await adminFetch(`/api/${currentSlug}/admin/bookings`, {
-      method: 'POST',
-      body: JSON.stringify({
-        name: document.getElementById('custName').value,
-        phone: document.getElementById('custPhone').value,
-        service_name: document.getElementById('massageType').value,
-        duration: duration,
-        date: document.getElementById('bookDate').value,
-        time: time
-      })
-    });
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/bookings`, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: document.getElementById('custName').value,
+          phone: document.getElementById('custPhone').value,
+          service_name: document.getElementById('massageType').value,
+          duration: duration,
+          date: document.getElementById('bookDate').value,
+          time: time
+        })
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Booking failed');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Booking failed');
 
-    closeModal('bookingModal');
-    e.target.reset();
-    showToast('Το νέο ραντεβού προστέθηκε.');
-    fetchAppointments();
-  } catch (err) {
-    console.error(err);
-    showToast(err.message || 'Δεν ήταν δυνατή η δημιουργία του ραντεβού.', true);
-  }
-}
-
-// Αντίστοιχα διορθώνουμε και το block slot για να περνάει από την adminFetch
-async function handleBlockSlot(e) {
-  e.preventDefault();
-
-  const startH = document.getElementById('blockStartHour').value;
-  const startM = document.getElementById('blockStartMin').value;
-  const start = `${startH}:${startM}`;
-
-  const endH = document.getElementById('blockEndHour').value;
-  const endM = document.getElementById('blockEndMin').value;
-  const end = `${endH}:${endM}`;
-
-  if (start >= end) {
-    showToast('Η ώρα "Έως" πρέπει να είναι μετά την ώρα "Από".', true);
-    return;
+      closeModal('bookingModal');
+      e.target.reset();
+      showToast('Το νέο ραντεβού προστέθηκε.');
+      fetchAppointments();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Δεν ήταν δυνατή η δημιουργία του ραντεβού.', true);
+    }
   }
 
-  try {
-    const res = await adminFetch(`/api/${currentSlug}/admin/block-slot`, {
-      method: 'POST',
-      body: JSON.stringify({
-        date: document.getElementById('blockDate').value,
-        start_time: start,
-        end_time: end,
-        reason: document.getElementById('blockReason').value
-      })
-    });
+  async function handleBlockSlot(e) {
+    e.preventDefault();
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Block slot failed');
+    const startH = document.getElementById('blockStartHour').value;
+    const startM = document.getElementById('blockStartMin').value;
+    const start = `${startH}:${startM}`;
 
-    closeModal('blockModal');
-    e.target.reset();
-    showToast('Το slot δεσμεύτηκε.');
-    fetchAppointments();
-  } catch (err) {
-    console.error(err);
-    showToast(err.message || 'Δεν ήταν δυνατή η δέσμευση του slot.', true);
+    const endH = document.getElementById('blockEndHour').value;
+    const endM = document.getElementById('blockEndMin').value;
+    const end = `${endH}:${endM}`;
+
+    if (start >= end) {
+      showToast('Η ώρα "Έως" πρέπει να είναι μετά την ώρα "Από".', true);
+      return;
+    }
+
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/block-slot`, {
+        method: 'POST',
+        body: JSON.stringify({
+          date: document.getElementById('blockDate').value,
+          start_time: start,
+          end_time: end,
+          reason: document.getElementById('blockReason').value
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Block slot failed');
+
+      closeModal('blockModal');
+      e.target.reset();
+      showToast('Το slot δεσμεύτηκε.');
+      fetchAppointments();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Δεν ήταν δυνατή η δέσμευση του slot.', true);
+    }
   }
-}
-  // Διαχείριση Modals
+
   function openModal(id) { document.getElementById(id).style.display = 'flex'; }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
@@ -673,7 +661,6 @@ async function handleBlockSlot(e) {
     overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
   });
 
-  // Ειδοποιήσεις (Toasts)
   function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     const text = document.getElementById('toastText');
@@ -686,7 +673,6 @@ async function handleBlockSlot(e) {
     toastTimer = setTimeout(() => toast.style.display = 'none', 3200);
   }
 
-  // Ασφάλεια HTML escaping
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, char => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
