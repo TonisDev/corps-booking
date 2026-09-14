@@ -40,7 +40,7 @@
         .btn-danger:hover { background: #dc2626; }
         .btn-outline { background: var(--card-bg); border: 1px solid var(--field-border); color: var(--text-color); }
         .btn-outline:hover { background: var(--border-color); }
-        
+
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 0.25rem; }
@@ -59,7 +59,7 @@
         .time-picker-wrapper select { flex: 1; padding: 0.65rem; border: 1px solid var(--field-border); border-radius: 0.5rem; background: var(--field-bg); color: var(--text-color); font-size: 0.9rem; cursor: pointer; }
 
         #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; background: #1e293b; color: white; display: none; align-items: center; gap: 0.5rem; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: 500; }
-        
+
         /* FullCalendar Customizations for Dark Mode */
         [data-theme="dark"] .fc { color: #f8fafc; }
         [data-theme="dark"] .fc-theme-standard td, [data-theme="dark"] .fc-theme-standard th, [data-theme="dark"] .fc-theme-standard .fc-scrollgrid { border-color: #334155; }
@@ -73,12 +73,13 @@
     <h2>🔐 Είσοδος Διαχειριστή</h2>
     <div class="form-group" style="margin-top: 1rem;">
       <label>Business Code / Slug</label>
-      <input class="field" type="text" id="loginCode" placeholder="π.χ. maria-massage" value="maria-massage">
+      <input class="field" type="text" id="loginCode" placeholder="π.χ. maria-massage">
     </div>
     <div class="form-group">
       <label>Κωδικός Πρόσβασης</label>
-      <input class="field" type="password" id="loginPass" placeholder="••••••••" value="password123">
+      <input class="field" type="password" id="loginPass" placeholder="••••••••">
     </div>
+    <div id="loginError" style="color:#dc2626; font-size:0.85rem; margin-bottom: 0.5rem; display:none;"></div>
     <button class="btn" onclick="handleLogin()" style="width:100%; justify-content:center; margin-top: 1rem;">Σύνδεση</button>
   </div>
 
@@ -161,7 +162,7 @@
           <div class="form-group"><label>URL Logo</label><input class="field" type="url" id="setLogo"></div>
           <div class="form-group"><label>Κύριο Χρώμα Φόρμας (Brand Color)</label><input class="field" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
         </div>
-        
+
         <div class="form-group">
           <label>Θέμα Σελίδας Πελάτη (Client Theme)</label>
           <select class="field" id="setClientTheme">
@@ -349,20 +350,35 @@
 <script>
   const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
   let currentBusinessCode = localStorage.getItem('biz_code') || '';
+  let currentSessionToken = localStorage.getItem('session_token') || '';
   let currentTenantData = null;
   let calendar = null;
   let selectedEventId = null;
   let toastTimer;
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Φόρτωση αποθηκευμένου Admin Theme
     const savedTheme = localStorage.getItem('admin_theme') || 'light';
     setAdminTheme(savedTheme);
 
-    if (currentBusinessCode) {
+    if (currentBusinessCode && currentSessionToken) {
       loadDashboard(currentBusinessCode);
     }
   });
+
+  // Κεντρικό wrapper για admin fetch calls: προσθέτει πάντα το session token
+  // και κάνει αυτόματο logout αν ο server απαντήσει 401 (λήξη ή μη έγκυρο token).
+  async function adminFetch(pathAndQuery, options = {}) {
+    const headers = Object.assign({}, options.headers || {}, {
+      'Authorization': `Bearer ${currentSessionToken}`
+    });
+    const res = await fetch(`${WORKER_URL}${pathAndQuery}`, { ...options, headers });
+
+    if (res.status === 401) {
+      handleLogout('Η συνεδρία έληξε ή δεν είναι έγκυρη. Παρακαλώ συνδεθείτε ξανά.');
+      throw new Error('Unauthorized');
+    }
+    return res;
+  }
 
   function toggleTheme() {
     const current = document.body.getAttribute('data-theme');
@@ -389,22 +405,47 @@
   async function handleLogin() {
     const code = document.getElementById('loginCode').value.trim();
     const pass = document.getElementById('loginPass').value.trim();
-    if (!code || !pass) return alert('Συμπληρώστε κωδικό και password');
+    const errorEl = document.getElementById('loginError');
+    errorEl.style.display = 'none';
+
+    if (!code || !pass) {
+      errorEl.textContent = 'Συμπληρώστε κωδικό και password.';
+      errorEl.style.display = 'block';
+      return;
+    }
 
     try {
-      const res = await fetch(`${WORKER_URL}/api/${code}/info`);
-      if (!res.ok) throw new Error('Η επιχείρηση δεν βρέθηκε');
-      
+      const res = await fetch(`${WORKER_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ business_code: code, password: pass })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.token) {
+        throw new Error(data.error || 'Αποτυχία σύνδεσης');
+      }
+
       localStorage.setItem('biz_code', code);
+      localStorage.setItem('session_token', data.token);
       currentBusinessCode = code;
+      currentSessionToken = data.token;
       loadDashboard(code);
-    } catch(err) {
-      alert('Σφάλμα σύνδεσης: ' + err.message);
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
     }
   }
 
-  function handleLogout() {
+  function handleLogout(message) {
     localStorage.removeItem('biz_code');
+    localStorage.removeItem('session_token');
+    currentBusinessCode = '';
+    currentSessionToken = '';
+    if (message) {
+      // Δείχνουμε το μήνυμα στην οθόνη login μετά το reload.
+      sessionStorage.setItem('logout_message', message);
+    }
     location.reload();
   }
 
@@ -414,12 +455,13 @@
     document.getElementById('storeCodeSpan').innerText = `Code: ${code}`;
 
     try {
+      // Το /info είναι δημόσιο endpoint, δεν χρειάζεται token.
       const res = await fetch(`${WORKER_URL}/api/${code}/info`);
       currentTenantData = await res.json();
       document.getElementById('storeTitle').innerText = currentTenantData.name;
-      
+
       populateServicesDropdown();
-    } catch(e) {
+    } catch (e) {
       console.error(e);
     }
 
@@ -474,7 +516,7 @@
 
   async function fetchAppointments() {
     try {
-      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/appointments`);
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/appointments`);
       const data = await res.json();
 
       let pending = 0, booked = 0;
@@ -532,7 +574,7 @@
 
   async function updateStatus(status) {
     try {
-      await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-status`, {
+      await adminFetch(`/api/${currentBusinessCode}/admin/update-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: selectedEventId, status })
@@ -541,14 +583,14 @@
       showToast('Η κατάσταση ενημερώθηκε.');
       fetchAppointments();
     } catch (e) {
-      showToast('Σφάλμα ενημέρωσης.', true);
+      if (e.message !== 'Unauthorized') showToast('Σφάλμα ενημέρωσης.', true);
     }
   }
 
   async function deleteAppointment() {
     if (!confirm('Είστε σίγουρος για τη διαγραφή;')) return;
     try {
-      await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/delete`, {
+      await adminFetch(`/api/${currentBusinessCode}/admin/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: selectedEventId })
@@ -557,7 +599,7 @@
       showToast('Το ραντεβού διαγράφηκε.');
       fetchAppointments();
     } catch (e) {
-      showToast('Σφάλμα διαγραφής.', true);
+      if (e.message !== 'Unauthorized') showToast('Σφάλμα διαγραφής.', true);
     }
   }
 
@@ -568,7 +610,7 @@
     const time = `${document.getElementById('bookHour').value}:${document.getElementById('bookMinute').value}`;
 
     try {
-      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/bookings`, {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -586,7 +628,7 @@
       showToast('Το νέο ραντεβού προστέθηκε.');
       fetchAppointments();
     } catch (err) {
-      showToast(err.message, true);
+      if (err.message !== 'Unauthorized') showToast(err.message, true);
     }
   }
 
@@ -596,7 +638,7 @@
     const end = `${document.getElementById('blockEndHour').value}:${document.getElementById('blockEndMin').value}`;
 
     try {
-      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/block-slot`, {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/block-slot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -612,7 +654,7 @@
       showToast('Το slot δεσμεύτηκε.');
       fetchAppointments();
     } catch (err) {
-      showToast(err.message, true);
+      if (err.message !== 'Unauthorized') showToast(err.message, true);
     }
   }
 
@@ -628,7 +670,7 @@
     document.getElementById('setTelegram').value = currentTenantData.telegram_chat_id || '';
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
 
-    const workDays = currentTenantData.work_days || [1,2,3,4,5];
+    const workDays = currentTenantData.work_days || [1, 2, 3, 4, 5];
     document.querySelectorAll('input[name="w_day"]').forEach(cb => {
       cb.checked = workDays.includes(parseInt(cb.value));
     });
@@ -729,38 +771,55 @@
       }
     });
 
- try {
-    const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name, email, phone, address, logo_url, brand_color,
-        client_theme, work_days, working_hours, services,
-        telegram_chat_id, buffer_minutes
-      })
-    });
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/update-settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, email, phone, address, logo_url, brand_color,
+          client_theme, work_days, working_hours, services,
+          telegram_chat_id, buffer_minutes
+        })
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Σφάλμα αποθήκευσης ρυθμίσεων');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα αποθήκευσης ρυθμίσεων');
 
-    showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
-    closeModal('settingsModal');
-    loadDashboard(currentBusinessCode);
-  } catch (err) {
-    showToast(err.message, true);
+      showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
+      closeModal('settingsModal');
+      loadDashboard(currentBusinessCode);
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message, true);
+    }
   }
-} // <-- close saveSettings here
 
-function showToast(text, isError = false) {
-  const toast = document.getElementById('toast');
-  const toastText = document.getElementById('toastText');
-  toastText.innerText = text;
-  toast.style.background = isError ? '#ef4444' : '#1e293b';
-  toast.style.display = 'flex';
+  function showToast(text, isError = false) {
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+    toastText.innerText = text;
+    toast.style.background = isError ? '#ef4444' : '#1e293b';
+    toast.style.display = 'flex';
 
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
-}
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3000);
+  }
+
+  // Εμφάνιση μηνύματος logout (π.χ. λήξη συνεδρίας) μετά από reload, αν υπάρχει.
+  (function showPendingLogoutMessage() {
+    const msg = sessionStorage.getItem('logout_message');
+    if (msg) {
+      sessionStorage.removeItem('logout_message');
+      window.addEventListener('DOMContentLoaded', () => {
+        const errorEl = document.getElementById('loginError');
+        if (errorEl) {
+          errorEl.textContent = msg;
+          errorEl.style.display = 'block';
+        }
+      });
+    }
+  })();
 </script>
 </body>
 </html>
