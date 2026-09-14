@@ -269,7 +269,7 @@
     lucide.createIcons();
   }
 
-  async function handleOnboarding(e) {
+async function handleOnboarding(e) {
     e.preventDefault();
 
     if (!adminKey) {
@@ -280,6 +280,16 @@
 
     const name = document.getElementById('name').value.trim();
     const business_code = document.getElementById('business_code').value.trim();
+    
+    // --- ΝΕΟ: Έλεγχος εγκυρότητας business_code (regex) ---
+    const codeRegex = /^[a-z0-9-]+$/;
+    if (!codeRegex.test(business_code)) {
+      alert('Το Business Code πρέπει να περιέχει ΜΟΝΟ πεζούς λατινικούς χαρακτήρες, αριθμούς και παύλες (π.χ. maria-massage). Χωρίς κενά ή τόνους.');
+      document.getElementById('business_code').focus();
+      return;
+    }
+    // --------------------------------------------------
+
     const password = document.getElementById('password').value.trim();
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
@@ -350,13 +360,6 @@
     } catch (err) {
       alert(err.message);
     }
-  }
-
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    document.getElementById('toastText').innerText = msg;
-    t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 3000);
   }
 </script>
 </body>
