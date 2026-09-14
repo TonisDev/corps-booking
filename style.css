@@ -1,8 +1,46 @@
 /* Εδώ μπορείς να προσθέσεις όποιο custom CSS θες πέρα από το Tailwind */
-body {
-    background-color: #f9fafb;
+:root {
+  --bg-color: #f8fafc;
+  --card-bg: #ffffff;
+  --text-color: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --field-bg: #ffffff;
+  --field-border: #cbd5e1;
+  --brand-color: #4f46e5; /* Εδώ μπαίνει δυναμικά το χρώμα */
 }
 
+[data-theme="dark"] {
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-color: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --field-bg: #0f172a;
+  --field-border: #475569;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background 0.3s, color 0.3s;
+}
+
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+}
+
+.btn {
+  background-color: var(--brand-color);
+  color: white;
+}
+
+/* Για τα επιλεγμένα slots ή borders */
+.slot-btn.selected {
+  background-color: var(--brand-color);
+  color: white;
+}
 /* Παράδειγμα custom animation για τα μηνύματα */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-4px); }
