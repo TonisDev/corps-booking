@@ -553,6 +553,12 @@
       showToast(err.message, true);
     }
   }
+   
+  function openPublicPage() {
+   if (!currentBusinessCode) return;
+   const url = `https://tonisdev.github.io/corps-booking/?business_code=${currentBusinessCode}`;
+  window.open(url, '_blank');
+ }
 
   function openSettingsModal() {
     if (!currentTenantData) return;
@@ -664,6 +670,8 @@
         });
       }
     });
+
+      
 
     try {
       const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
