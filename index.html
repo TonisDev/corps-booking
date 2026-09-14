@@ -6,11 +6,13 @@
     <title id="pageTitle">Κράτηση Ραντεβού</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+    <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
         <!-- Header Επιχείρησης -->
         <div class="text-center mb-6">
             <h1 id="businessName" class="text-2xl font-bold text-gray-900">Φόρτωση...</h1>
@@ -19,55 +21,86 @@
 
         <!-- Φόρμα Κράτησης -->
         <form id="bookingForm" class="space-y-4 hidden">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ονοματεπώνυμο</label>
-                <input type="text" id="name" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            
+            <!-- Honeypot field against bots (Κρυφό πεδίο) -->
+            <div style="display:none !important;">
+                <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Τηλέφωνο Επικοινωνίας</label>
-                <input type="tel" id="phone" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ονοματεπώνυμο *</label>
+                <input type="text" id="name" required placeholder="π.χ. Μαρία Παπαδοπούλου" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Υπηρεσία</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Τηλέφωνο Επικοινωνίας *</label>
+                <input type="tel" id="phone" required placeholder="π.χ. 6912345678" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Instagram Username (προαιρετικό)</label>
+                <input type="text" id="instagram" placeholder="π.χ. maria_massage" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Υπηρεσία *</label>
                 <select id="service" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     <option value="">-- Επιλέξτε Υπηρεσία --</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ημερομηνία</label>
-                <input type="date" id="date" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ημερομηνία *</label>
+                <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly class="w-full px-4 py-2 border rounded-lg bg-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
 
-            <!-- Επιλογή Ώρας με Slots (Κουμπιά) -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμες Ώρες</label>
-                <div id="slotsContainer" class="grid grid-cols-3 gap-2 mt-2">
-                    <p class="col-span-3 text-xs text-gray-400 italic">Επιλέξτε πρώτα ημερομηνία και υπηρεσία...</p>
-                </div>
-                <!-- Κρυφό input για να κρατάει την επιλεγμένη ώρα για το submit -->
-                <input type="hidden" id="selectedTime" required>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμη Ώρα *</label>
+                <select id="time" required disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <option value="">-- Επιλέξτε πρώτα Ημερομηνία --</option>
+                </select>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md mt-4">
-                Υποβολή Κράτησης
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Σημειώσεις / Παρατηρήσεις</label>
+                <textarea id="notes" rows="2" placeholder="Π.χ. Ιδιαίτερες προτιμήσεις..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md">
+                Υποβολή Αιτήματος Κράτησης
             </button>
         </form>
 
-        <!-- Μηνύματα -->
+        <!-- Μηνύματα Επιτυχίας / Σφάλματος -->
         <div id="responseMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
         <div id="loadingError" class="text-center text-red-600 text-sm font-medium hidden">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
     </div>
 
+    <!-- Flatpickr JS & Ελληνική γλώσσα -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/gr.js"></script>
+
     <script>
+        // 1. Ρύθμιση του Worker URL σου
         const API_BASE_URL = "https://YOUR-WORKER-SUBDOMAIN.workers.dev";
 
+        // 2. Ανάγνωση slug από το URL (π.χ. ?slug=maria-massage)
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
 
+        const dateInput = document.getElementById('date');
+        const timeSelect = document.getElementById('time');
+        const serviceSelect = document.getElementById('service');
+        const bookingForm = document.getElementById('bookingForm');
+        const responseMessage = document.getElementById('responseMessage');
+
         let businessServices = [];
+
+        // Μετατροπή "HH:MM" σε λεπτά για τους υπολογισμούς επικάλυψης
+        const timeToMinutes = (timeStr) => {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        };
 
         async function initPage() {
             if (!slug) {
@@ -86,7 +119,6 @@
                 document.getElementById('businessName').textContent = data.name;
                 document.getElementById('pageTitle').textContent = `Κράτηση | ${data.name}`;
                 
-                const serviceSelect = document.getElementById('service');
                 businessServices.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.name;
@@ -95,100 +127,113 @@
                     serviceSelect.appendChild(opt);
                 });
 
-                document.getElementById('bookingForm').classList.remove('hidden');
+                bookingForm.classList.remove('hidden');
+
             } catch (err) {
                 document.getElementById('loadingError').classList.remove('hidden');
             }
         }
 
-        // Συνάρτηση παραγωγής slots (π.χ. από 09:00 έως 17:00 ανάλογα με τη διάρκεια)
-        async function updateAvailableSlots() {
-            const dateVal = document.getElementById('date').value;
-            const serviceSelect = document.getElementById('service');
-            const slotsContainer = document.getElementById('slotsContainer');
-            
-            if (!dateVal || !serviceSelect.value) return;
+        // 3. Αρχικοποίηση Flatpickr Calendar στα ελληνικά
+        const fp = flatpickr(dateInput, {
+            locale: 'gr',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            onChange: function(selectedDates, dateStr) {
+                if (dateStr && serviceSelect.value) {
+                    fetchAvailableSlots(dateStr);
+                }
+            }
+        });
 
-            slotsContainer.innerHTML = '<p class="col-span-3 text-xs text-gray-500">Φόρτωση διαθέσιμων ωρών...</p>';
+        // Αν αλλάξει υπηρεσία ενώ έχει επιλεχθεί ημερομηνία, ξαναυπολογίζουμε τα slots
+        serviceSelect.addEventListener('change', () => {
+            if (dateInput.value) {
+                fetchAvailableSlots(dateInput.value);
+            }
+        });
+
+        // 4. Συνάρτηση φόρτωσης διαθέσιμων ωρών
+        async function fetchAvailableSlots(dateStr) {
+            timeSelect.disabled = true;
+            timeSelect.innerHTML = '<option value="">Φόρτωση διαθεσιμοτήτων...</option>';
+
+            const ALL_SLOTS = [
+                "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
+                "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"
+            ];
+
+            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+            const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
 
             try {
-                const res = await fetch(`${API_BASE_URL}/api/${slug}/availability?date=${dateVal}`);
-                const data = await res.json();
+                const response = await fetch(`${API_BASE_URL}/api/${slug}/availability?date=${dateStr}`);
+                const data = await response.json();
                 const occupied = data.occupied || [];
 
-                // Δημιουργία τυπικών ωρών λειτουργίας (π.χ. 09:00 έως 20:00 ανά 1 ώρα)
-                // Μπορείς να το προσαρμόσεις ανάλογα με τις ανάγκες σου
-                const allSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
-                
-                slotsContainer.innerHTML = '';
+                // Φιλτράρισμα ωρών βάσει διάρκειας και επικάλυψης
+                const freeSlots = ALL_SLOTS.filter(slotStart => {
+                    const startMins = timeToMinutes(slotStart);
+                    const endMins = startMins + duration;
 
-                allSlots.forEach(timeStr => {
-                    // Έλεγχος αν η ώρα πέφτει πάνω σε κλεισμένο ραντεβού
-                    // Απλή λογική επικάλυψης: αν η ώρα υπάρχει στα occupied start_times
-                    const isOccupied = occupied.some(occ => {
-                        return timeStr >= occ.start_time && timeStr < occ.end_time;
+                    const isOverlapping = occupied.some(occ => {
+                        const occStart = timeToMinutes(occ.start_time);
+                        const occEnd = timeToMinutes(occ.end_time);
+                        return (startMins < occEnd && endMins > occStart);
                     });
 
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.textContent = timeStr;
-                    btn.className = "py-2 px-3 text-sm font-medium rounded-lg border transition duration-150";
-
-                    if (isOccupied) {
-                        btn.disabled = true;
-                        btn.className += " bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through";
-                    } else {
-                        btn.className += " bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:bg-indigo-50";
-                        btn.onclick = () => {
-                            // Αφαίρεση επιλογής από τα υπόλοιπα κουμπιά
-                            document.querySelectorAll('#slotsContainer button').forEach(b => {
-                                b.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
-                                if(!b.disabled) b.classList.add('bg-white', 'text-gray-700');
-                            });
-                            // Επιλογή αυτού
-                            btn.classList.remove('bg-white', 'text-gray-700');
-                            btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-                            document.getElementById('selectedTime').value = timeStr;
-                        };
-                    }
-                    slotsContainer.appendChild(btn);
+                    return !isOverlapping;
                 });
 
+                timeSelect.innerHTML = '';
+
+                if (freeSlots.length === 0) {
+                    timeSelect.innerHTML = '<option value="">Δεν υπάρχουν διαθέσιμες ώρες</option>';
+                    return;
+                }
+
+                timeSelect.innerHTML = '<option value="">-- Επιλέξτε Ώρα --</option>';
+                freeSlots.forEach(slot => {
+                    const opt = document.createElement('option');
+                    opt.value = slot;
+                    opt.textContent = slot;
+                    timeSelect.appendChild(opt);
+                });
+
+                timeSelect.disabled = false;
+
             } catch (err) {
-                slotsContainer.innerHTML = '<p class="col-span-3 text-xs text-red-500">Σφάλμα φόρτωσης ωρών.</p>';
+                timeSelect.innerHTML = '<option value="">Αποτυχία φόρτωσης ωρών</option>';
             }
         }
 
-        document.getElementById('date').addEventListener('change', updateAvailableSlots);
-        document.getElementById('service').addEventListener('change', updateAvailableSlots);
-
-        // Υποβολή φόρμας
-        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+        // 5. Υποβολή Φόρμας
+        bookingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const msgBox = document.getElementById('responseMessage');
-            const submitBtn = document.getElementById('submitBtn');
-            const selectedTime = document.getElementById('selectedTime').value;
 
-            if (!selectedTime) {
-                alert('Παρακαλώ επιλέξτε ώρα ραντεβού.');
+            // Έλεγχος Honeypot (Anti-bot)
+            if (document.getElementById('website').value !== '') {
                 return;
             }
-            
-            const serviceSelect = document.getElementById('service');
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Αποστολή...';
+            responseMessage.classList.add('hidden');
+
             const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-            const duration = selectedOption.getAttribute('data-duration') || 60;
+            const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
 
             const payload = {
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
+                instagram: document.getElementById('instagram').value,
                 service_name: serviceSelect.value,
-                date: document.getElementById('date').value,
-                time: selectedTime,
-                duration: parseInt(duration)
+                duration: duration,
+                date: dateInput.value,
+                time: timeSelect.value,
+                notes: document.getElementById('notes').value
             };
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Αποστολή...';
 
             try {
                 const res = await fetch(`${API_BASE_URL}/api/${slug}/bookings`, {
@@ -198,21 +243,25 @@
                 });
                 const data = await res.json();
 
-                msgBox.classList.remove('hidden');
+                responseMessage.classList.remove('hidden');
                 if (res.ok) {
-                    msgBox.className = "mt-4 text-center text-sm font-medium text-green-600";
-                    msgBox.textContent = data.message;
-                    document.getElementById('bookingForm').reset();
-                    document.getElementById('slotsContainer').innerHTML = '<p class="col-span-3 text-xs text-gray-400 italic">Επιλέξτε πρώτα ημερομηνία και υπηρεσία...</p>';
+                    responseMessage.className = "mt-4 text-center text-sm font-medium text-green-600";
+                    responseMessage.textContent = data.message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
+                    bookingForm.reset();
+                    timeSelect.disabled = true;
+                    timeSelect.innerHTML = '<option value="">-- Επιλέξτε πρώτα Ημερομηνία --</option>';
+                    fp.clear();
                 } else {
-                    msgBox.className = "mt-4 text-center text-sm font-medium text-red-600";
-                    msgBox.textContent = data.error || 'Προέκυψε σφάλμα.';
+                    responseMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
+                    responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
                 }
             } catch (err) {
-                msgBox.classList.add('hidden');
+                responseMessage.classList.remove('hidden');
+                responseMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
+                responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Υποβολή Κράτησης';
+                submitBtn.textContent = 'Υποβολή Αιτήματος Κράτησης';
             }
         });
 
