@@ -3,115 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Κρατήσεις</title>
+    <title>Διαχείριση Επιχείρησης | Manager</title>
     <!-- FullCalendar & Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: sans-serif; background: #f8fafc; margin: 0; color: #1e293b; }
-        #loginOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .login-box { background: white; padding: 2rem; border-radius: 1rem; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
-        header { background: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        main { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .header { background: white; padding: 1rem 2rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; border: 1px solid #e2e8f0; }
+        .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background: #4f46e5; color: white; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; }
+        .btn:hover { background: #4338ca; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-outline { background: white; border: 1px solid #cbd5e1; color: #334155; }
+        .btn-outline:hover { background: #f1f5f9; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .stat-card { background: white; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 0.25rem; }
-        .calendar-card { background: white; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal { background: white; width: 100%; max-width: 450px; border-radius: 1rem; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        .modal-header, .modal-footer { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-        .modal-footer { border-top: 1px solid #e2e8f0; border-bottom: none; justify-content: flex-end; gap: 0.5rem; }
-        .modal-body { padding: 1.5rem; max-height: 70vh; overflow-y: auto; }
-        .form-group { margin-bottom: 1rem; text-align: left; position: relative; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 2rem 0; }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: #475569; }
-        .field-wrapper { position: relative; display: flex; align-items: center; }
         .field { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; box-sizing: border-box; font-size: 0.9rem; }
-        .field-password { padding-right: 2.5rem; }
-        .toggle-password { position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer; color: #64748b; display: flex; align-items: center; padding: 0; }
-        .toggle-password:hover { color: #0f172a; }
+        .checkbox-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .checkbox-group label { display: flex; align-items: center; gap: 0.35rem; font-weight: normal; cursor: pointer; }
+        .shift-row, .service-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        
-        /* Custom Time Picker Styles (Ανά 15λεπτο σε δύο rolls) */
         .time-picker-wrapper { display: flex; gap: 6px; align-items: center; }
         .time-picker-wrapper select { flex: 1; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: white; font-size: 0.9rem; cursor: pointer; }
 
-        .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
-        .btn-primary { background: #4f46e5; color: white; }
-        .btn-primary:hover { background: #4338ca; }
-        .btn-outline { background: white; border: 1px solid #cbd5e1; color: #334155; }
-        .btn-danger { background: #ef4444; color: white; }
         #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; display: none; align-items: center; gap: 0.5rem; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-weight: 500; }
-        .brand { display: flex; align-items: center; gap: 0.75rem; }
-        .brand-mark { background: #e0e7ff; color: #4f46e5; padding: 0.5rem; border-radius: 0.5rem; display: flex; }
-        .header-actions { display: flex; gap: 0.75rem; }
     </style>
 </head>
 <body>
 
-  <!-- ========================================== -->
-  <!-- 1. LOGIN OVERLAY (ΟΘΟΝΗ ΣΥΝΔΕΣΗΣ)          -->
-  <!-- ========================================== -->
-  <div id="loginOverlay">
-    <div class="login-box">
-      <div style="color: #4f46e5; margin-bottom: 1rem;"><i data-lucide="shield-check" size="32"></i></div>
-      <h2>Είσοδος Διαχείρισης</h2>
-      <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem;">Συνδεθείτε με τα στοιχεία της επιχείρησής σας.</p>
-      
-      <div class="form-group">
-        <label for="loginSlug">Όνομα Επιχείρησης (Slug)</label>
-        <input class="field" type="text" id="loginSlug" placeholder="π.χ. maria-massage" value="maria-massage">
-      </div>
-
-      <div class="form-group">
-        <label for="loginPassword">Κωδικός Πρόσβασης</label>
-        <div class="field-wrapper">
-          <input class="field field-password" type="password" id="loginPassword" placeholder="••••••••" value="password123">
-          <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
-            <i id="eyeIcon" data-lucide="eye" size="20"></i>
-          </button>
-        </div>
-      </div>
-
-      <button onclick="handleLogin()" class="btn btn-primary" style="width:100%; margin-top:0.5rem; justify-content: center;">
-        <i data-lucide="log-in" size="16"></i> Σύνδεση
-      </button>
+  <!-- Login Screen -->
+  <div id="loginScreen" style="max-width: 400px; margin: 5rem auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <h2>🔐 Είσοδος Διαχειριστή</h2>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label>Business Code / Slug</label>
+      <input class="field" type="text" id="loginCode" placeholder="π.χ. maria-massage" value="maria-massage">
     </div>
+    <div class="form-group">
+      <label>Κωδικός Πρόσβασης</label>
+      <input class="field" type="password" id="loginPass" placeholder="••••••••" value="password123">
+    </div>
+    <button class="btn" onclick="handleLogin()" style="width:100%; justify-content:center; margin-top: 1rem;">Σύνδεση</button>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 2. MAIN APP SHELL (ADMIN DASHBOARD)        -->
-  <!-- ========================================== -->
-  <div class="app-shell" style="display:none;">
-    <header>
-      <div class="brand">
-        <div class="brand-mark"><i data-lucide="calendar-days" size="19"></i></div>
-        <div class="brand-copy">
-          <strong id="adminBusinessName">Booking Management</strong>
-          <span style="font-size: 0.75rem; color: #64748b; display: block;">Admin dashboard</span>
-        </div>
+  <!-- Dashboard Screen -->
+  <div id="dashboardScreen" style="display: none;">
+    <div class="header">
+      <div>
+        <h2 id="storeTitle" style="margin:0; font-size: 1.25rem;">Διαχείριση Καταστήματος</h2>
+        <span id="storeCodeSpan" style="font-size: 0.75rem; color: #64748b;"></span>
       </div>
-
-      <div class="header-actions">
-        <button class="btn btn-outline" onclick="openModal('blockModal')" title="Κλείσιμο slot">
-          <i data-lucide="lock" size="16"></i><span class="btn-label">Κλείσιμο Slot</span>
-        </button>
-        <button class="btn btn-primary" onclick="openModal('bookingModal')" title="Νέο ραντεβού">
-          <i data-lucide="plus" size="16"></i><span class="btn-label">Νέο Ραντεβού</span>
-        </button>
-        <button class="btn btn-outline" onclick="logout()" title="Αποσύνδεση">
-          <i data-lucide="log-out" size="16"></i>
-        </button>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-outline" onclick="openModal('blockModal')"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
+        <button class="btn" onclick="openModal('bookingModal')"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
+        <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> Ρυθμίσεις</button>
+        <button class="btn btn-danger" onclick="handleLogout()"><i data-lucide="log-out" size="16"></i></button>
       </div>
-    </header>
+    </div>
 
-    <main>
-      <div class="page-heading" style="margin-bottom: 1.5rem;">
-        <h1>Επισκόπηση</h1>
-        <p style="color: #64748b; font-size: 0.875rem;">Διαχειριστείτε τα ραντεβού σας από ένα κεντρικό σημείο.</p>
-      </div>
-
-      <!-- Στατιστικά Κάρτες -->
+    <div class="container">
+      <!-- Στατιστικά -->
       <div class="stats-grid">
         <div class="stat-card">
           <div>
@@ -120,7 +80,6 @@
           </div>
           <div style="color: #4f46e5;"><i data-lucide="calendar-check-2" size="24"></i></div>
         </div>
-
         <div class="stat-card">
           <div>
             <div style="font-size: 0.875rem; color: #64748b;">Εκκρεμή</div>
@@ -128,7 +87,6 @@
           </div>
           <div style="color: #d97706;"><i data-lucide="clock-3" size="24"></i></div>
         </div>
-
         <div class="stat-card">
           <div>
             <div style="font-size: 0.875rem; color: #64748b;">Εγκεκριμένα</div>
@@ -138,10 +96,10 @@
         </div>
       </div>
 
-      <!-- Ημερολόγιο FullCalendar -->
-      <section class="calendar-card">
+      <!-- Ημερολόγιο -->
+      <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <div style="font-weight: bold; font-size: 1.1rem;">Ημερολόγιο Ραντεβού</div>
+          <h3 style="margin:0;">📅 Ημερολόγιο Ραντεβού</h3>
           <div style="display: flex; gap: 1rem; font-size: 0.75rem;">
             <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#059669; border-radius:50%; display:inline-block;"></span>Booked</span>
             <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#f59e0b; border-radius:50%; display:inline-block;"></span>Pending</span>
@@ -149,283 +107,257 @@
           </div>
         </div>
         <div id="calendar"></div>
-      </section>
-    </main>
+      </div>
+    </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 3. MODALS (ΦΟΡΜΕΣ & ΔΙΑΛΟΓΟΙ)              -->
-  <!-- ========================================== -->
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <h2 style="margin-top:0;">⚙️ Ρυθμίσεις Επιχείρησης</h2>
+      <form id="settingsForm" onsubmit="saveSettings(event)">
+        <div class="form-group">
+          <label>Όνομα Επιχείρησης</label>
+          <input class="field" type="text" id="setName" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group"><label>Email</label><input class="field" type="email" id="setEmail"></div>
+          <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
+        </div>
+        <div class="form-group">
+          <label>Διεύθυνση</label>
+          <input class="field" type="text" id="setAddress">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group"><label>URL Logo</label><input class="field" type="url" id="setLogo"></div>
+          <div class="form-group"><label>Κύριο Χρώμα</label><input class="field" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
+        </div>
 
-  <!-- Modal: Νέο Ραντεβού -->
-  <div class="modal-overlay" id="bookingModal">
-    <div class="modal" role="dialog">
-      <div class="modal-header">
-        <h3>Νέο Ραντεβού</h3>
-        <button class="btn btn-outline" onclick="closeModal('bookingModal')" style="padding: 0.25rem 0.5rem;"><i data-lucide="x" size="16"></i></button>
-      </div>
-
-      <form onsubmit="handleManualBooking(event)">
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="custName">Όνομα Πελάτη</label>
-            <input class="field" type="text" id="custName" required placeholder="π.χ. Μαρία Παπαδοπούλου">
-          </div>
-
-          <div class="form-group">
-            <label for="custPhone">Τηλέφωνο</label>
-            <input class="field" type="tel" id="custPhone" required placeholder="π.χ. 69XXXXXXXX">
-          </div>
-
-          <div class="form-group">
-            <label for="massageType">Υπηρεσία</label>
-            <select class="field" id="massageType" required>
-              <option value="">-- Φόρτωση υπηρεσιών --</option>
-            </select>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="bookDate">Ημερομηνία</label>
-              <input class="field" type="date" id="bookDate" required>
-            </div>
-            
-            <!-- Εύχρηστη επιλογή ώρας (Ώρα + Λεπτά ανά 15λεπτο) -->
-            <div class="form-group">
-              <label>Ώρα Έναρξης</label>
-              <div class="time-picker-wrapper">
-                <select id="bookHour" required>
-                  <option value="" disabled selected>Ώρα</option>
-                  <option value="08">08</option><option value="09">09</option><option value="10">10</option>
-                  <option value="11">11</option><option value="12">12</option><option value="13">13</option>
-                  <option value="14">14</option><option value="15">15</option><option value="16">16</option>
-                  <option value="17">17</option><option value="18">18</option><option value="19">19</option>
-                  <option value="20">20</option><option value="21">21</option>
-                </select>
-                <span>:</span>
-                <select id="bookMinute" required>
-                  <option value="00" selected>00</option>
-                  <option value="15">15</option>
-                  <option value="30">30</option>
-                  <option value="45">45</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="bookDuration">Διάρκεια (λεπτά)</label>
-            <input class="field" type="number" id="bookDuration" value="60" required readonly>
+        <div class="form-group" style="margin-top: 1rem;">
+          <label>Ημέρες Λειτουργίας</label>
+          <div class="checkbox-group" id="setWorkDays">
+            <label><input type="checkbox" name="w_day" value="1"> Δευτ</label>
+            <label><input type="checkbox" name="w_day" value="2"> Τρί</label>
+            <label><input type="checkbox" name="w_day" value="3"> Τετ</label>
+            <label><input type="checkbox" name="w_day" value="4"> Πέμ</label>
+            <label><input type="checkbox" name="w_day" value="5"> Παρ</label>
+            <label><input type="checkbox" name="w_day" value="6"> Σάβ</label>
+            <label><input type="checkbox" name="w_day" value="0"> Κυρ</label>
           </div>
         </div>
 
-        <div class="modal-footer">
+        <div class="form-group" style="margin-top: 1rem;">
+          <label>Βάρδιες / Διαστήματα (Shifts & Breaks)</label>
+          <div id="setShiftsList"></div>
+          <button type="button" class="btn" onclick="addModalShift()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Βάρδιας</button>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+          <label>Υπηρεσίες & Τιμές</label>
+          <div id="setServicesList"></div>
+          <button type="button" class="btn" onclick="addModalService()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Υπηρεσίας</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+          <div class="form-group"><label>Telegram Chat ID</label><input class="field" type="text" id="setTelegram"></div>
+          <div class="form-group"><label>Buffer Time (λεπτά)</label><input class="field" type="number" id="setBuffer" min="0" step="5"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Ακύρωση</button>
+          <button type="submit" class="btn" style="background: #059669;">Αποθήκευση Αλλαγών</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Νέο Ραντεβού -->
+  <div class="modal" id="bookingModal">
+    <div class="modal-content">
+      <h3 style="margin-top:0;">Νέο Ραντεβού</h3>
+      <form onsubmit="handleManualBooking(event)">
+        <div class="form-group">
+          <label>Όνομα Πελάτη</label>
+          <input class="field" type="text" id="custName" required placeholder="π.χ. Μαρία Παπαδοπούλου">
+        </div>
+        <div class="form-group">
+          <label>Τηλέφωνο</label>
+          <input class="field" type="tel" id="custPhone" required placeholder="π.χ. 69XXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label>Υπηρεσία</label>
+          <select class="field" id="massageType" required></select>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Ημερομηνία</label>
+            <input class="field" type="date" id="bookDate" required>
+          </div>
+          <div class="form-group">
+            <label>Ώρα Έναρξης</label>
+            <div class="time-picker-wrapper">
+              <select id="bookHour" required>
+                <option value="" disabled selected>Ώρα</option>
+                <option value="08">08</option><option value="09">09</option><option value="10">10</option>
+                <option value="11">11</option><option value="12">12</option><option value="13">13</option>
+                <option value="14">14</option><option value="15">15</option><option value="16">16</option>
+                <option value="17">17</option><option value="18">18</option><option value="19">19</option>
+                <option value="20">20</option><option value="21">21</option>
+              </select>
+              <span>:</span>
+              <select id="bookMinute" required>
+                <option value="00" selected>00</option>
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="45">45</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Διάρκεια (λεπτά)</label>
+          <input class="field" type="number" id="bookDuration" value="60" required readonly>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
           <button type="button" class="btn btn-outline" onclick="closeModal('bookingModal')">Ακύρωση</button>
-          <button type="submit" class="btn btn-primary"><i data-lucide="check" size="16"></i> Αποθήκευση</button>
+          <button type="submit" class="btn">Αποθήκευση</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Modal: Κλείσιμο Slot -->
-  <div class="modal-overlay" id="blockModal">
-    <div class="modal" role="dialog">
-      <div class="modal-header">
-        <h3>Κλείσιμο Slot</h3>
-        <button class="btn btn-outline" onclick="closeModal('blockModal')" style="padding: 0.25rem 0.5rem;"><i data-lucide="x" size="16"></i></button>
-      </div>
-
+  <div class="modal" id="blockModal">
+    <div class="modal-content">
+      <h3 style="margin-top:0;">Κλείσιμο Slot</h3>
       <form onsubmit="handleBlockSlot(event)">
-        <div class="modal-body">
+        <div class="form-group">
+          <label>Ημερομηνία</label>
+          <input class="field" type="date" id="blockDate" required>
+        </div>
+        <div class="form-grid">
           <div class="form-group">
-            <label for="blockDate">Ημερομηνία</label>
-            <input class="field" type="date" id="blockDate" required>
-          </div>
-
-          <div class="form-grid">
-            <!-- Ώρα Από (Εύχρηστη επιλογή 15λεπτων) -->
-            <div class="form-group">
-              <label>Από</label>
-              <div class="time-picker-wrapper">
-                <select id="blockStartHour" required>
-                  <option value="" disabled selected>Ώρα</option>
-                  <option value="08">08</option><option value="09">09</option><option value="10">10</option>
-                  <option value="11">11</option><option value="12">12</option><option value="13">13</option>
-                  <option value="14">14</option><option value="15">15</option><option value="16">16</option>
-                  <option value="17">17</option><option value="18">18</option><option value="19">19</option>
-                  <option value="20">20</option><option value="21">21</option>
-                </select>
-                <span>:</span>
-                <select id="blockStartMin" required>
-                  <option value="00" selected>00</option>
-                  <option value="15">15</option>
-                  <option value="30">30</option>
-                  <option value="45">45</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Ώρα Έως (Εύχρηστη επιλογή 15λεπτων) -->
-            <div class="form-group">
-              <label>Έως</label>
-              <div class="time-picker-wrapper">
-                <select id="blockEndHour" required>
-                  <option value="" disabled selected>Ώρα</option>
-                  <option value="08">08</option><option value="09">09</option><option value="10">10</option>
-                  <option value="11">11</option><option value="12">12</option><option value="13">13</option>
-                  <option value="14">14</option><option value="15">15</option><option value="16">16</option>
-                  <option value="17">17</option><option value="18">18</option><option value="19">19</option>
-                  <option value="20">20</option><option value="21">21</option>
-                </select>
-                <span>:</span>
-                <select id="blockEndMin" required>
-                  <option value="00" selected>00</option>
-                  <option value="15">15</option>
-                  <option value="30">30</option>
-                  <option value="45">45</option>
-                </select>
-              </div>
+            <label>Από</label>
+            <div class="time-picker-wrapper">
+              <select id="blockStartHour" required>
+                <option value="" disabled selected>Ώρα</option>
+                <option value="08">08</option><option value="09">09</option><option value="10">10</option>
+                <option value="11">11</option><option value="12">12</option><option value="13">13</option>
+                <option value="14">14</option><option value="15">15</option><option value="16">16</option>
+                <option value="17">17</option><option value="18">18</option><option value="19">19</option>
+                <option value="20">20</option><option value="21">21</option>
+              </select>
+              <span>:</span>
+              <select id="blockStartMin" required>
+                <option value="00" selected>00</option>
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="45">45</option>
+              </select>
             </div>
           </div>
-
           <div class="form-group">
-            <label for="blockReason">Αιτιολογία</label>
-            <input class="field" type="text" id="blockReason" placeholder="π.χ. Διάλειμμα, άδεια">
+            <label>Έως</label>
+            <div class="time-picker-wrapper">
+              <select id="blockEndHour" required>
+                <option value="" disabled selected>Ώρα</option>
+                <option value="08">08</option><option value="09">09</option><option value="10">10</option>
+                <option value="11">11</option><option value="12">12</option><option value="13">13</option>
+                <option value="14">14</option><option value="15">15</option><option value="16">16</option>
+                <option value="17">17</option><option value="18">18</option><option value="19">19</option>
+                <option value="20">20</option><option value="21">21</option>
+              </select>
+              <span>:</span>
+              <select id="blockEndMin" required>
+                <option value="00" selected>00</option>
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="45">45</option>
+              </select>
+            </div>
           </div>
         </div>
-
-        <div class="modal-footer">
+        <div class="form-group">
+          <label>Αιτιολογία</label>
+          <input class="field" type="text" id="blockReason" placeholder="π.χ. Διάλειμμα, άδεια">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
           <button type="button" class="btn btn-outline" onclick="closeModal('blockModal')">Ακύρωση</button>
-          <button type="submit" class="btn btn-danger"><i data-lucide="lock" size="16"></i> Δέσμευση</button>
+          <button type="submit" class="btn btn-danger">Δέσμευση</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Modal: Διαχείριση/Επισκόπηση Υπάρχοντος Ραντεβού -->
-  <div class="modal-overlay" id="actionModal">
-    <div class="modal" role="dialog">
-      <div class="modal-header">
-        <h3 id="actTitle">Διαχείριση Ραντεβού</h3>
-        <button class="btn btn-outline" onclick="closeModal('actionModal')" style="padding: 0.25rem 0.5rem;"><i data-lucide="x" size="16"></i></button>
-      </div>
-      <div class="modal-body" id="actDetails"></div>
-      <div class="modal-footer">
+  <div class="modal" id="actionModal">
+    <div class="modal-content">
+      <h3 id="actTitle" style="margin-top:0;">Διαχείριση Ραντεβού</h3>
+      <div id="actDetails" style="margin-bottom: 1.5rem;"></div>
+      <div style="display: flex; justify-content: space-between;">
         <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
-        <button class="btn btn-primary" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-outline" onclick="closeModal('actionModal')">Κλείσιμο</button>
+          <button class="btn" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification (Ειδοποιήσεις) -->
-  <div id="toast" role="status">
+  <!-- Toast Notification -->
+  <div id="toast">
     <i data-lucide="check-circle-2" size="17"></i><span id="toastText"></span>
   </div>
 
-<!-- ========================================== -->
-<!-- 4. JAVASCRIPT LOGIC & API INTERACTION       -->
-<!-- ========================================== -->
-
 <script>
   const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
-  let currentBusinessCode = localStorage.getItem('business_code') || '';
-  let calendar;
+  let currentBusinessCode = localStorage.getItem('biz_code') || '';
+  let currentTenantData = null;
+  let calendar = null;
   let selectedEventId = null;
   let toastTimer;
-  let businessServices = [];
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    lucide.createIcons();
-
-    document.getElementById('loginPassword').addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleLogin();
-    });
-
+  document.addEventListener('DOMContentLoaded', () => {
     if (currentBusinessCode) {
-      showDashboard();
-    } else {
-      showLogin();
+      loadDashboard(currentBusinessCode);
     }
   });
 
-  function togglePasswordVisibility() {
-    const passwordInput = document.getElementById('loginPassword');
-    const eyeIcon = document.getElementById('eyeIcon');
-
-    if (passwordInput.type === 'password') {
-      passwordInput.type = 'text';
-      eyeIcon.setAttribute('data-lucide', 'eye-off');
-    } else {
-      passwordInput.type = 'password';
-      eyeIcon.setAttribute('data-lucide', 'eye');
-    }
-    lucide.createIcons();
-  }
-
   async function handleLogin() {
-    const business_code = document.getElementById('loginSlug').value.trim(); // ID πεδίου HTML παραμένει loginSlug για ευκολία
-    const password = document.getElementById('loginPassword').value.trim();
-
-    if (!business_code || !password) {
-      showToast('Συμπληρώστε όλα τα πεδία', true);
-      return;
-    }
+    const code = document.getElementById('loginCode').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    if (!code || !pass) return alert('Συμπληρώστε κωδικό και password');
 
     try {
-      const res = await fetch(`${WORKER_URL}/api/admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ business_code, password })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Σφάλμα σύνδεσης');
-
-      localStorage.setItem('business_code', data.business_code);
-      currentBusinessCode = data.business_code;
-      showDashboard();
-      showToast('Επιτυχής σύνδεση!');
-    } catch (err) {
-      showToast(err.message, true);
+      const res = await fetch(`${WORKER_URL}/api/${code}/info`);
+      if (!res.ok) throw new Error('Η επιχείρηση δεν βρέθηκε');
+      
+      localStorage.setItem('biz_code', code);
+      currentBusinessCode = code;
+      loadDashboard(code);
+    } catch(err) {
+      alert('Σφάλμα σύνδεσης: ' + err.message);
     }
   }
 
-  function showLogin() {
-    document.getElementById('loginOverlay').style.display = 'flex';
-    document.querySelector('.app-shell').style.display = 'none';
+  function handleLogout() {
+    localStorage.removeItem('biz_code');
+    location.reload();
   }
 
-  async function showDashboard() {
-    document.getElementById('loginOverlay').style.display = 'none';
-    document.querySelector('.app-shell').style.display = 'flex';
+  async function loadDashboard(code) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = 'block';
+    document.getElementById('storeCodeSpan').innerText = `Code: ${code}`;
 
     try {
-      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/info`);
-      if (res.ok) {
-        const info = await res.json();
-        document.getElementById('adminBusinessName').textContent = info.name;
-        businessServices = info.services || [];
-        
-        const serviceSelect = document.getElementById('massageType');
-        serviceSelect.innerHTML = '';
-        businessServices.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.name;
-          opt.textContent = `${s.name} (${s.duration} min)`;
-          opt.setAttribute('data-duration', s.duration);
-          serviceSelect.appendChild(opt);
-        });
-
-        serviceSelect.onchange = (e) => {
-          const selectedOpt = e.target.options[e.target.selectedIndex];
-          document.getElementById('bookDuration').value = selectedOpt.getAttribute('data-duration') || 60;
-        };
-        if (businessServices.length > 0) {
-          document.getElementById('bookDuration').value = businessServices[0].duration;
-        }
-      }
+      const res = await fetch(`${WORKER_URL}/api/${code}/info`);
+      currentTenantData = await res.json();
+      document.getElementById('storeTitle').innerText = currentTenantData.name;
+      
+      populateServicesDropdown();
     } catch(e) {
-      console.error("Could not load business info", e);
+      console.error(e);
     }
 
     if (!calendar) initCalendar();
@@ -433,33 +365,29 @@
     lucide.createIcons();
   }
 
-  function logout() {
-    localStorage.removeItem('business_code');
-    currentBusinessCode = '';
-    showLogin();
-  }
-
-  // Helper για αιτήματα: Προσθέτει αυτόματα το WORKER_URL χωρίς διπlογραφίες
-  async function adminFetch(endpoint, options = {}) {
-    const res = await fetch(`${WORKER_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
-      }
+  function populateServicesDropdown() {
+    const services = currentTenantData.services || [];
+    const serviceSelect = document.getElementById('massageType');
+    serviceSelect.innerHTML = '';
+    services.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.name;
+      opt.textContent = `${s.name} (${s.duration} min - ${s.price}€)`;
+      opt.setAttribute('data-duration', s.duration);
+      serviceSelect.appendChild(opt);
     });
 
-    if (res.status === 401) {
-      showToast('Η συνεδρία έληξε. Συνδεθείτε ξανά.', true);
-      setTimeout(logout, 700);
-      throw new Error('Unauthorized');
+    serviceSelect.onchange = (e) => {
+      const selectedOpt = e.target.options[e.target.selectedIndex];
+      document.getElementById('bookDuration').value = selectedOpt.getAttribute('data-duration') || 60;
+    };
+    if (services.length > 0) {
+      document.getElementById('bookDuration').value = services[0].duration;
     }
-    return res;
   }
 
   function initCalendar() {
     const calendarEl = document.getElementById('calendar');
-
     calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'timeGridWeek',
       height: 'auto',
@@ -478,13 +406,12 @@
       buttonText: { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' },
       eventClick: info => openActionModal(info.event)
     });
-
     calendar.render();
   }
 
   async function fetchAppointments() {
     try {
-      const res = await adminFetch(`/api/${currentBusinessCode}/admin/appointments`);
+      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/appointments`);
       const data = await res.json();
 
       let pending = 0, booked = 0;
@@ -530,67 +457,57 @@
     document.getElementById('actTitle').innerText = props.customer_name || 'Ραντεβού';
     document.getElementById('actDetails').innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
-        <div style="display:flex; justify-content:space-between;"><span>Τηλέφωνο:</span> <strong>${escapeHtml(props.customer_phone || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${escapeHtml(props.service_name || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${escapeHtml(props.start_time || '-')} – ${escapeHtml(props.end_time || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Κατάσταση:</span> <strong>${escapeHtml(statusLabel(props.status))}</strong></div>
-        ${props.notes ? `<div style="margin-top:0.5rem; background:#f1f5f9; padding:0.5rem; border-radius:0.25rem;">Σημειώσεις: ${escapeHtml(props.notes)}</div>` : ''}
+        <div style="display:flex; justify-content:space-between;"><span>Τηλέφωνο:</span> <strong>${props.customer_phone || '-'}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${props.service_name || '-'}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${props.start_time || '-'} – ${props.end_time || '-'}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Κατάσταση:</span> <strong>${statusLabel(props.status)}</strong></div>
       </div>
     `;
-
-    document.getElementById('btnApprove').style.display =
-      props.status === 'BLOCKED' || props.status === 'BOOKED' ? 'none' : 'inline-flex';
-
+    document.getElementById('btnApprove').style.display = (props.status === 'BLOCKED' || props.status === 'BOOKED') ? 'none' : 'inline-flex';
     openModal('actionModal');
   }
 
   async function updateStatus(status) {
     try {
-      await adminFetch(`/api/${currentBusinessCode}/admin/update-status`, {
+      await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-status`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: selectedEventId, status })
       });
       closeModal('actionModal');
       showToast('Η κατάσταση ενημερώθηκε.');
       fetchAppointments();
     } catch (e) {
-      showToast('Δεν ήταν δυνατή η ενημέρωση.', true);
+      showToast('Σφάλμα ενημέρωσης.', true);
     }
   }
 
   async function deleteAppointment() {
-    if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το ραντεβού;')) return;
-
+    if (!confirm('Είστε σίγουρος για τη διαγραφή;')) return;
     try {
-      await adminFetch(`/api/${currentBusinessCode}/admin/delete`, {
+      await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/delete`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: selectedEventId })
       });
       closeModal('actionModal');
       showToast('Το ραντεβού διαγράφηκε.');
       fetchAppointments();
     } catch (e) {
-      showToast('Δεν ήταν δυνατή η διαγραφή.', true);
+      showToast('Σφάλμα διαγραφής.', true);
     }
   }
 
   async function handleManualBooking(e) {
     e.preventDefault();
-
     const selectedOpt = document.getElementById('massageType').selectedOptions[0];
-    if (!selectedOpt) {
-      showToast('Επιλέξτε υπηρεσία', true);
-      return;
-    }
     const duration = parseInt(selectedOpt.getAttribute('data-duration')) || 60;
-    
-    const hour = document.getElementById('bookHour').value;
-    const minute = document.getElementById('bookMinute').value;
-    const time = `${hour}:${minute}`;
+    const time = `${document.getElementById('bookHour').value}:${document.getElementById('bookMinute').value}`;
 
     try {
-      const res = await adminFetch(`/api/${currentBusinessCode}/admin/bookings`, {
+      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/bookings`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: document.getElementById('custName').value,
           phone: document.getElementById('custPhone').value,
@@ -600,39 +517,25 @@
           time: time
         })
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Booking failed');
-
+      if (!res.ok) throw new Error('Αποτυχία κράτησης');
       closeModal('bookingModal');
       e.target.reset();
       showToast('Το νέο ραντεβού προστέθηκε.');
       fetchAppointments();
     } catch (err) {
-      console.error(err);
-      showToast(err.message || 'Δεν ήταν δυνατή η δημιουργία του ραντεβού.', true);
+      showToast(err.message, true);
     }
   }
 
   async function handleBlockSlot(e) {
     e.preventDefault();
-
-    const startH = document.getElementById('blockStartHour').value;
-    const startM = document.getElementById('blockStartMin').value;
-    const start = `${startH}:${startM}`;
-
-    const endH = document.getElementById('blockEndHour').value;
-    const endM = document.getElementById('blockEndMin').value;
-    const end = `${endH}:${endM}`;
-
-    if (start >= end) {
-      showToast('Η ώρα "Έως" πρέπει να είναι μετά την ώρα "Από".', true);
-      return;
-    }
+    const start = `${document.getElementById('blockStartHour').value}:${document.getElementById('blockStartMin').value}`;
+    const end = `${document.getElementById('blockEndHour').value}:${document.getElementById('blockEndMin').value}`;
 
     try {
-      const res = await adminFetch(`/api/${currentBusinessCode}/admin/block-slot`, {
+      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/block-slot`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date: document.getElementById('blockDate').value,
           start_time: start,
@@ -640,26 +543,143 @@
           reason: document.getElementById('blockReason').value
         })
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Block slot failed');
-
+      if (!res.ok) throw new Error('Αποτυχία κλεισίματος slot');
       closeModal('blockModal');
       e.target.reset();
       showToast('Το slot δεσμεύτηκε.');
       fetchAppointments();
     } catch (err) {
-      console.error(err);
-      showToast(err.message || 'Δεν ήταν δυνατή η δέσμευση του slot.', true);
+      showToast(err.message, true);
     }
   }
 
-  function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+  function openSettingsModal() {
+    if (!currentTenantData) return;
+    document.getElementById('setName').value = currentTenantData.name || '';
+    document.getElementById('setEmail').value = currentTenantData.email || '';
+    document.getElementById('setPhone').value = currentTenantData.phone || '';
+    document.getElementById('setAddress').value = currentTenantData.address || '';
+    document.getElementById('setLogo').value = currentTenantData.logo_url || '';
+    document.getElementById('setColor').value = currentTenantData.brand_color || '#4f46e5';
+    document.getElementById('setTelegram').value = currentTenantData.telegram_chat_id || '';
+    document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
+
+    const workDays = currentTenantData.work_days || [1,2,3,4,5];
+    document.querySelectorAll('input[name="w_day"]').forEach(cb => {
+      cb.checked = workDays.includes(parseInt(cb.value));
+    });
+
+    const shiftsList = document.getElementById('setShiftsList');
+    shiftsList.innerHTML = '';
+    (currentTenantData.working_hours || [{ start: "09:00", end: "21:00" }]).forEach(sh => {
+      const row = document.createElement('div');
+      row.className = 'shift-row';
+      row.innerHTML = `
+        <span style="font-size:0.8rem; color:#64748b;">Από:</span> <input class="field" type="time" value="${sh.start}">
+        <span style="font-size:0.8rem; color:#64748b;">Έως:</span> <input class="field" type="time" value="${sh.end}">
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
+      `;
+      shiftsList.appendChild(row);
+    });
+
+    const servicesList = document.getElementById('setServicesList');
+    servicesList.innerHTML = '';
+    (currentTenantData.services || []).forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'service-row';
+      row.innerHTML = `
+        <input class="field" type="text" value="${s.name}" placeholder="Όνομα" style="flex:2">
+        <input class="field" type="number" value="${s.duration}" placeholder="Min" style="flex:1">
+        <input class="field" type="number" value="${s.price}" placeholder="€" style="flex:1">
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
+      `;
+      servicesList.appendChild(row);
+    });
+
+    openModal('settingsModal');
+    lucide.createIcons();
+  }
+
+  function openModal(id) { document.getElementById(id).style.display = 'flex'; lucide.createIcons(); }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
-  });
+  function addModalShift() {
+    const list = document.getElementById('setShiftsList');
+    const row = document.createElement('div');
+    row.className = 'shift-row';
+    row.innerHTML = `
+      <span style="font-size:0.8rem; color:#64748b;">Από:</span> <input class="field" type="time" value="09:00">
+      <span style="font-size:0.8rem; color:#64748b;">Έως:</span> <input class="field" type="time" value="17:00">
+      <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
+    `;
+    list.appendChild(row);
+    lucide.createIcons();
+  }
+
+  function addModalService() {
+    const list = document.getElementById('setServicesList');
+    const row = document.createElement('div');
+    row.className = 'service-row';
+    row.innerHTML = `
+      <input class="field" type="text" placeholder="Όνομα Υπηρεσίας" style="flex:2">
+      <input class="field" type="number" value="60" placeholder="Min" style="flex:1">
+      <input class="field" type="number" value="40" placeholder="€" style="flex:1">
+      <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
+    `;
+    list.appendChild(row);
+    lucide.createIcons();
+  }
+
+  async function saveSettings(e) {
+    e.preventDefault();
+    const name = document.getElementById('setName').value.trim();
+    const email = document.getElementById('setEmail').value.trim();
+    const phone = document.getElementById('setPhone').value.trim();
+    const address = document.getElementById('setAddress').value.trim();
+    const logo_url = document.getElementById('setLogo').value.trim();
+    const brand_color = document.getElementById('setColor').value;
+    const telegram_chat_id = document.getElementById('setTelegram').value.trim();
+    const buffer_minutes = parseInt(document.getElementById('setBuffer').value) || 0;
+
+    let work_days = [];
+    document.querySelectorAll('input[name="w_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
+
+    let working_hours = [];
+    document.querySelectorAll('#setShiftsList .shift-row').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs[0].value && inputs[1].value) {
+        working_hours.push({ start: inputs[0].value, end: inputs[1].value });
+      }
+    });
+
+    let services = [];
+    document.querySelectorAll('#setServicesList .service-row').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs[0].value) {
+        services.push({
+          name: inputs[0].value,
+          duration: parseInt(inputs[1].value) || 60,
+          price: parseFloat(inputs[2].value) || 0
+        });
+      }
+    });
+
+    try {
+      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, address, logo_url, brand_color, work_days, working_hours, services, telegram_chat_id, buffer_minutes })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα αποθήκευσης');
+
+      showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
+      closeModal('settingsModal');
+      loadDashboard(currentBusinessCode);
+    } catch(err) {
+      showToast(err.message, true);
+    }
+  }
 
   function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
@@ -671,12 +691,6 @@
 
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.style.display = 'none', 3200);
-  }
-
-  function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, char => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-    }[char]));
   }
 </script>
 </body>
