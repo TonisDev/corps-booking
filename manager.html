@@ -729,43 +729,38 @@
       }
     });
 
-    try {
-  const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      name, email, phone, address, logo_url, brand_color, 
-      client_theme, work_days, working_hours, services, 
-      telegram_chat_id, buffer_minutes 
-    })
-  });
+ try {
+    const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, email, phone, address, logo_url, brand_color,
+        client_theme, work_days, working_hours, services,
+        telegram_chat_id, buffer_minutes
+      })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Σφάλμα αποθήκευσης ρυθμίσεων');
 
-  if (!res.ok) {
-    throw new Error(data.error || 'Σφάλμα αποθήκευσης ρυθμίσεων');
+    showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
+    closeModal('settingsModal');
+    loadDashboard(currentBusinessCode);
+  } catch (err) {
+    showToast(err.message, true);
   }
+} // <-- close saveSettings here
 
-  showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
-  closeModal('settingsModal');
-  loadDashboard(currentBusinessCode);
+function showToast(text, isError = false) {
+  const toast = document.getElementById('toast');
+  const toastText = document.getElementById('toastText');
+  toastText.innerText = text;
+  toast.style.background = isError ? '#ef4444' : '#1e293b';
+  toast.style.display = 'flex';
 
-} catch (err) {
-  showToast(err.message, true);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }
-
-  function showToast(text, isError = false) {
-    const toast = document.getElementById('toast');
-    const toastText = document.getElementById('toastText');
-    toastText.innerText = text;
-    toast.style.background = isError ? '#ef4444' : '#1e293b';
-    toast.style.display = 'flex';
-    
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      toast.style.display = 'none';
-    }, 3000);
-  }
 </script>
 </body>
 </html>
