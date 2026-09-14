@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin | Onboarding Νέου Πελάτη</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: sans-serif; background: #f1f5f9; margin: 0; color: #1e293b; padding: 2rem; }
+        .container { max-width: 700px; margin: 0 auto; background: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        h1 { margin-top: 0; color: #0f172a; font-size: 1.5rem; }
+        .section-box { border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.25rem; background: #fafafa; }
+        .section-header { display: flex; align-items: center; gap: 0.75rem; font-weight: bold; cursor: pointer; }
+        .section-content { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; display: none; }
+        .section-content.active { display: block; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: #475569; }
+        .field { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; box-sizing: border-box; }
+        .checkbox-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .checkbox-group label { display: flex; align-items: center; gap: 0.35rem; font-weight: normal; cursor: pointer; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background: #4f46e5; color: white; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn:hover { background: #4338ca; }
+        .service-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
+        #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; display: none; background: #f0fdf4; color: #166534; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🚀 Onboarding Νέας Επιχείρησης</h1>
+    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 2rem;">Συμπληρώστε τα βασικά στοιχεία και ενεργοποιήστε τις επιθυμητές λειτουργίες.</p>
+
+    <form id="onboardingForm" onsubmit="handleOnboarding(event)">
+      
+      <!-- Βασικά Στοιχεία (Υποχρεωτικά) -->
+      <div class="section-box" style="background: white; border-color: #cbd5e1;">
+        <h3>1. Βασικά Στοιχεία</h3>
+        <div class="form-group">
+          <label>Όνομα Επιχείρησης</label>
+          <input class="field" type="text" id="name" placeholder="π.χ. Maria Massage Studio" required>
+        </div>
+        <div class="form-group">
+          <label>Slug (μοναδικό URL name, π.χ. maria-massage)</label>
+          <input class="field" type="text" id="slug" placeholder="maria-massage" required>
+        </div>
+        <div class="form-group">
+          <label>Κωδικός Πρόσβασης (Admin Password)</label>
+          <input class="field" type="password" id="password" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <!-- 2. Logo -->
+      <div class="section-box">
+        <div class="section-header">
+          <input type="checkbox" id="enableLogo" onchange="toggleSection('logoSection', this)">
+          <label for="enableLogo" style="cursor:pointer; margin:0;">Προσθήκη Λογότυπου</label>
+        </div>
+        <div class="section-content" id="logoSection">
+          <div class="form-group">
+            <label>URL Λογότυπου (Image Link)</label>
+            <input class="field" type="url" id="logo_url" placeholder="https://example.com/logo.png">
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Χρώματα Branding -->
+      <div class="section-box">
+        <div class="section-header">
+          <input type="checkbox" id="enableColor" onchange="toggleSection('colorSection', this)">
+          <label for="enableColor" style="cursor:pointer; margin:0;">Προσαρμογή Χρωμάτων</label>
+        </div>
+        <div class="section-content" id="colorSection">
+          <div class="form-group">
+            <label>Κύριο Χρώμα (Brand Color)</label>
+            <input class="field" type="color" id="brand_color" value="#4f46e5" style="height: 40px; padding: 0.25rem; cursor:pointer;">
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Ωράριο & Μέρες Λειτουργίας -->
+      <div class="section-box">
+        <div class="section-header">
+          <input type="checkbox" id="enableHours" onchange="toggleSection('hoursSection', this)">
+          <label for="enableHours" style="cursor:pointer; margin:0;">Ωράριο & Ημέρες Λειτουργίας</label>
+        </div>
+        <div class="section-content" id="hoursSection">
+          <div class="form-group">
+            <label>Ημέρες Εβδομάδας</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="work_day" value="1" checked> Δευτ</label>
+              <label><input type="checkbox" name="work_day" value="2" checked> Τρί</label>
+              <label><input type="checkbox" name="work_day" value="3" checked> Τετ</label>
+              <label><input type="checkbox" name="work_day" value="4" checked> Πέμ</label>
+              <label><input type="checkbox" name="work_day" value="5" checked> Παρ</label>
+              <label><input type="checkbox" name="work_day" value="6"> Σάβ</label>
+              <label><input type="checkbox" name="work_day" value="0"> Κυρ</label>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group"><label>Ώρα Έναρξης</label><input class="field" type="time" id="open_time" value="09:00"></div>
+            <div class="form-group"><label>Ώρα Λήξης</label><input class="field" type="time" id="close_time" value="21:00"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Υπηρεσίες -->
+      <div class="section-box">
+        <div class="section-header">
+          <input type="checkbox" id="enableServices" onchange="toggleSection('servicesSection', this)">
+          <label for="enableServices" style="cursor:pointer; margin:0;">Ορισμός Υπηρεσιών & Τιμών</label>
+        </div>
+        <div class="section-content" id="servicesSection">
+          <div id="servicesList">
+            <div class="service-row">
+              <input class="field" type="text" placeholder="Όνομα Υπηρεσίας (π.χ. Classic Massage)" style="flex:2">
+              <input class="field" type="number" placeholder="Διάρκεια (min)" value="60" style="flex:1">
+              <input class="field" type="number" placeholder="Τιμή (€)" value="40" style="flex:1">
+              <button type="button" class="btn" onclick="this.parentElement.remove()" style="background:#ef4444; padding: 0.65rem;"><i data-lucide="trash-2" size="16"></i></button>
+            </div>
+          </div>
+          <button type="button" class="btn" onclick="addServiceRow()" style="background:#059669; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;">+ Προσθήκη Υπηρεσίας</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 1rem;">
+        <i data-lucide="check-circle" size="18"></i> Δημιουργία Επιχείρησης
+      </button>
+
+    </form>
+  </div>
+
+  <div id="toast"><span id="toastText">Επιτυχία!</span></div>
+
+<script>
+  const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
+  document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+
+  function toggleSection(sectionId, checkbox) {
+    const section = document.getElementById(sectionId);
+    if (checkbox.checked) {
+      section.classList.add('active');
+    } else {
+      section.classList.remove('active');
+    }
+  }
+
+  function addServiceRow() {
+    const list = document.getElementById('servicesList');
+    const row = document.createElement('div');
+    row.className = 'service-row';
+    row.innerHTML = `
+      <input class="field" type="text" placeholder="Όνομα Υπηρεσίας" style="flex:2">
+      <input class="field" type="number" placeholder="Διάρκεια (min)" value="60" style="flex:1">
+      <input class="field" type="number" placeholder="Τιμή (€)" value="40" style="flex:1">
+      <button type="button" class="btn" onclick="this.parentElement.remove()" style="background:#ef4444; padding: 0.65rem;"><i data-lucide="trash-2" size="16"></i></button>
+    `;
+    list.appendChild(row);
+    lucide.createIcons();
+  }
+
+  async function handleOnboarding(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    const slug = document.getElementById('slug').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    // Μαζεύουμε προαιρετικά στοιχεία αν είναι τσεκαρισμένα
+    const logo_url = document.getElementById('enableLogo').checked ? document.getElementById('logo_url').value : '';
+    const brand_color = document.getElementById('enableColor').checked ? document.getElementById('brand_color').value : '#4f46e5';
+    
+    let work_days = [];
+    if (document.getElementById('enableHours').checked) {
+      document.querySelectorAll('input[name="work_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
+    }
+    const open_time = document.getElementById('open_time').value;
+    const close_time = document.getElementById('close_time').value;
+
+    let services = [];
+    if (document.getElementById('enableServices').checked) {
+      document.querySelectorAll('.service-row').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs[0].value) {
+          services.push({
+            name: inputs[0].value,
+            duration: parseInt(inputs[1].value) || 60,
+            price: parseFloat(inputs[2].value) || 0
+          });
+        }
+      });
+    }
+
+    try {
+      const res = await fetch(`${WORKER_URL}/api/super-admin/create-tenant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, slug, password, logo_url, brand_color, work_days, open_time, close_time, services })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα δημιουργίας');
+
+      showToast('Η επιχείρηση δημιουργήθηκε επιτυχώς!');
+      setTimeout(() => e.target.reset(), 1500);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').innerText = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>
