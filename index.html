@@ -10,6 +10,54 @@
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Ορισμός των CSS variables που χρησιμοποιεί το style.css.
+           Χωρίς αυτό, τα var(--card-bg) κλπ. είναι undefined και αγνοούνται. */
+        :root {
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #f3f4f6;
+            --field-bg: #ffffff;
+            --field-border: #d1d5db;
+            --brand-color: #4f46e5;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --field-bg: #0f172a;
+            --field-border: #475569;
+        }
+
+        body {
+            background-color: var(--bg-color) !important;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        /* Εφαρμογή του brand_color (dynamic, ανά επιχείρηση) σε ό,τι πριν
+           ήταν hardcoded indigo. */
+        #submitBtn {
+            background-color: var(--brand-color) !important;
+            filter: brightness(1);
+            transition: filter 0.15s;
+        }
+        #submitBtn:hover {
+            filter: brightness(0.9);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--brand-color) !important;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-color) 30%, transparent) !important;
+            outline: none !important;
+        }
+        #businessAddress, #businessPhone {
+            color: var(--brand-color) !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
