@@ -8,41 +8,68 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: sans-serif; background: #f8fafc; margin: 0; color: #1e293b; }
-        .header { background: white; padding: 1rem 2rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --header-bg: #ffffff;
+            --field-bg: #ffffff;
+            --field-border: #cbd5e1;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --header-bg: #1e293b;
+            --field-bg: #0f172a;
+            --field-border: #475569;
+        }
+
+        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; transition: background 0.3s, color 0.3s; }
+        .header { background: var(--header-bg); padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; border: 1px solid #e2e8f0; }
+        .card { background: var(--card-bg); border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
         .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background: #4f46e5; color: white; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; }
         .btn:hover { background: #4338ca; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
-        .btn-outline { background: white; border: 1px solid #cbd5e1; color: #334155; }
-        .btn-outline:hover { background: #f1f5f9; }
+        .btn-outline { background: var(--card-bg); border: 1px solid var(--field-border); color: var(--text-color); }
+        .btn-outline:hover { background: var(--border-color); }
         
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 0.25rem; }
 
         /* Modal Styles */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 2rem 0; }
-        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 2rem 0; }
+        .modal-content { background: var(--card-bg); color: var(--text-color); padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
         .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: #475569; }
-        .field { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; box-sizing: border-box; font-size: 0.9rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: var(--text-muted); }
+        .field { width: 100%; padding: 0.65rem; border: 1px solid var(--field-border); background: var(--field-bg); color: var(--text-color); border-radius: 0.5rem; box-sizing: border-box; font-size: 0.9rem; }
         .checkbox-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
-        .checkbox-group label { display: flex; align-items: center; gap: 0.35rem; font-weight: normal; cursor: pointer; }
+        .checkbox-group label { display: flex; align-items: center; gap: 0.35rem; font-weight: normal; cursor: pointer; color: var(--text-color); }
         .shift-row, .service-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .time-picker-wrapper { display: flex; gap: 6px; align-items: center; }
-        .time-picker-wrapper select { flex: 1; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: white; font-size: 0.9rem; cursor: pointer; }
+        .time-picker-wrapper select { flex: 1; padding: 0.65rem; border: 1px solid var(--field-border); border-radius: 0.5rem; background: var(--field-bg); color: var(--text-color); font-size: 0.9rem; cursor: pointer; }
 
-        #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; display: none; align-items: center; gap: 0.5rem; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-weight: 500; }
+        #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; background: #1e293b; color: white; display: none; align-items: center; gap: 0.5rem; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: 500; }
+        
+        /* FullCalendar Customizations for Dark Mode */
+        [data-theme="dark"] .fc { color: #f8fafc; }
+        [data-theme="dark"] .fc-theme-standard td, [data-theme="dark"] .fc-theme-standard th, [data-theme="dark"] .fc-theme-standard .fc-scrollgrid { border-color: #334155; }
+        [data-theme="dark"] .fc-button-primary { background-color: #4f46e5; border-color: #4f46e5; }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
   <!-- Login Screen -->
-  <div id="loginScreen" style="max-width: 400px; margin: 5rem auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+  <div id="loginScreen" style="max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
     <h2>🔐 Είσοδος Διαχειριστή</h2>
     <div class="form-group" style="margin-top: 1rem;">
       <label>Business Code / Slug</label>
@@ -60,13 +87,14 @@
     <div class="header">
       <div>
         <h2 id="storeTitle" style="margin:0; font-size: 1.25rem;">Διαχείριση Καταστήματος</h2>
-        <span id="storeCodeSpan" style="font-size: 0.75rem; color: #64748b;"></span>
+        <span id="storeCodeSpan" style="font-size: 0.75rem; color: var(--text-muted);"></span>
       </div>
-      <div style="display: flex; gap: 0.5rem;">
-          <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας κρατήσεων"><i data-lucide="external-link" size="16"></i> Σελίδα Πελάτη </button>
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> Σελίδα Πελάτη</button>
         <button class="btn btn-outline" onclick="openModal('blockModal')"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
         <button class="btn" onclick="openModal('bookingModal')"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> Ρυθμίσεις</button>
+        <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
         <button class="btn btn-danger" onclick="handleLogout()"><i data-lucide="log-out" size="16"></i></button>
       </div>
     </div>
@@ -76,21 +104,21 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div>
-            <div style="font-size: 0.875rem; color: #64748b;">Συνολικά Ραντεβού</div>
+            <div style="font-size: 0.875rem; color: var(--text-muted);">Συνολικά Ραντεβού</div>
             <div class="stat-value" id="statTotal">0</div>
           </div>
           <div style="color: #4f46e5;"><i data-lucide="calendar-check-2" size="24"></i></div>
         </div>
         <div class="stat-card">
           <div>
-            <div style="font-size: 0.875rem; color: #64748b;">Εκκρεμή</div>
+            <div style="font-size: 0.875rem; color: var(--text-muted);">Εκκρεμή</div>
             <div class="stat-value" id="statPending" style="color: #d97706;">0</div>
           </div>
           <div style="color: #d97706;"><i data-lucide="clock-3" size="24"></i></div>
         </div>
         <div class="stat-card">
           <div>
-            <div style="font-size: 0.875rem; color: #64748b;">Εγκεκριμένα</div>
+            <div style="font-size: 0.875rem; color: var(--text-muted);">Εγκεκριμένα</div>
             <div class="stat-value" id="statBooked" style="color: #059669;">0</div>
           </div>
           <div style="color: #059669;"><i data-lucide="badge-check" size="24"></i></div>
@@ -101,7 +129,7 @@
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h3 style="margin:0;">📅 Ημερολόγιο Ραντεβού</h3>
-          <div style="display: flex; gap: 1rem; font-size: 0.75rem;">
+          <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted);">
             <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#059669; border-radius:50%; display:inline-block;"></span>Booked</span>
             <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#f59e0b; border-radius:50%; display:inline-block;"></span>Pending</span>
             <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#64748b; border-radius:50%; display:inline-block;"></span>Blocked</span>
@@ -115,7 +143,7 @@
   <!-- Settings Modal -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
-      <h2 style="margin-top:0;">⚙️ Ρυθμίσεις Επιχείρησης</h2>
+      <h2 style="margin-top:0;">⚙️ Ρυθμίσεις Επιχείρησης & Σελίδας Πελάτη</h2>
       <form id="settingsForm" onsubmit="saveSettings(event)">
         <div class="form-group">
           <label>Όνομα Επιχείρησης</label>
@@ -131,7 +159,15 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <div class="form-group"><label>URL Logo</label><input class="field" type="url" id="setLogo"></div>
-          <div class="form-group"><label>Κύριο Χρώμα</label><input class="field" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
+          <div class="form-group"><label>Κύριο Χρώμα Φόρμας (Brand Color)</label><input class="field" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
+        </div>
+        
+        <div class="form-group">
+          <label>Θέμα Σελίδας Πελάτη (Client Theme)</label>
+          <select class="field" id="setClientTheme">
+            <option value="light">Light Theme (Φωτεινό)</option>
+            <option value="dark">Dark Theme (Σκοτεινό)</option>
+          </select>
         </div>
 
         <div class="form-group" style="margin-top: 1rem;">
@@ -319,10 +355,36 @@
   let toastTimer;
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Φόρτωση αποθηκευμένου Admin Theme
+    const savedTheme = localStorage.getItem('admin_theme') || 'light';
+    setAdminTheme(savedTheme);
+
     if (currentBusinessCode) {
       loadDashboard(currentBusinessCode);
     }
   });
+
+  function toggleTheme() {
+    const current = document.body.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    setAdminTheme(next);
+    localStorage.setItem('admin_theme', next);
+  }
+
+  function setAdminTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+      btn.innerHTML = theme === 'dark' ? '<i data-lucide="sun" size="16"></i>' : '<i data-lucide="moon" size="16"></i>';
+      lucide.createIcons();
+    }
+  }
+
+  function openPublicPage() {
+    if (!currentBusinessCode) return;
+    const url = `https://tonisdev.github.io/corps-booking/?business_code=${currentBusinessCode}`;
+    window.open(url, '_blank');
+  }
 
   async function handleLogin() {
     const code = document.getElementById('loginCode').value.trim();
@@ -553,12 +615,6 @@
       showToast(err.message, true);
     }
   }
-   
-  function openPublicPage() {
-   if (!currentBusinessCode) return;
-   const url = `https://tonisdev.github.io/corps-booking/?business_code=${currentBusinessCode}`;
-  window.open(url, '_blank');
- }
 
   function openSettingsModal() {
     if (!currentTenantData) return;
@@ -568,6 +624,7 @@
     document.getElementById('setAddress').value = currentTenantData.address || '';
     document.getElementById('setLogo').value = currentTenantData.logo_url || '';
     document.getElementById('setColor').value = currentTenantData.brand_color || '#4f46e5';
+    document.getElementById('setClientTheme').value = currentTenantData.client_theme || 'light';
     document.getElementById('setTelegram').value = currentTenantData.telegram_chat_id || '';
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
 
@@ -582,8 +639,8 @@
       const row = document.createElement('div');
       row.className = 'shift-row';
       row.innerHTML = `
-        <span style="font-size:0.8rem; color:#64748b;">Από:</span> <input class="field" type="time" value="${sh.start}">
-        <span style="font-size:0.8rem; color:#64748b;">Έως:</span> <input class="field" type="time" value="${sh.end}">
+        <span style="font-size:0.8rem; color:var(--text-muted);">Από:</span> <input class="field" type="time" value="${sh.start}">
+        <span style="font-size:0.8rem; color:var(--text-muted);">Έως:</span> <input class="field" type="time" value="${sh.end}">
         <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
       `;
       shiftsList.appendChild(row);
@@ -615,8 +672,8 @@
     const row = document.createElement('div');
     row.className = 'shift-row';
     row.innerHTML = `
-      <span style="font-size:0.8rem; color:#64748b;">Από:</span> <input class="field" type="time" value="09:00">
-      <span style="font-size:0.8rem; color:#64748b;">Έως:</span> <input class="field" type="time" value="17:00">
+      <span style="font-size:0.8rem; color:var(--text-muted);">Από:</span> <input class="field" type="time" value="09:00">
+      <span style="font-size:0.8rem; color:var(--text-muted);">Έως:</span> <input class="field" type="time" value="17:00">
       <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
     `;
     list.appendChild(row);
@@ -645,6 +702,7 @@
     const address = document.getElementById('setAddress').value.trim();
     const logo_url = document.getElementById('setLogo').value.trim();
     const brand_color = document.getElementById('setColor').value;
+    const client_theme = document.getElementById('setClientTheme').value;
     const telegram_chat_id = document.getElementById('setTelegram').value.trim();
     const buffer_minutes = parseInt(document.getElementById('setBuffer').value) || 0;
 
@@ -671,35 +729,42 @@
       }
     });
 
-      
-
     try {
-      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
+      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/api/admin/update-settings`, { // Προσαρμόστε αναλόγως το endpoint του worker σας αν χρειάζεται
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, address, logo_url, brand_color, work_days, working_hours, services, telegram_chat_id, buffer_minutes })
+        body: JSON.stringify({ name, email, phone, address, logo_url, brand_color, client_theme, work_days, working_hours, services, telegram_chat_id, buffer_minutes })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Σφάλμα αποθήκευσης');
+      
+      // Fallback endpoint URL fix if needed based on your existing structure
+      // Αν το endpoint σας είναι /api/${currentBusinessCode}/admin/update-settings:
+      const resFixed = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, address, logo_url, brand_color, client_theme, work_days, working_hours, services, telegram_chat_id, buffer_minutes })
+      });
+
+      if (!resFixed.ok) throw new Error('Σφάλμα αποθήκευσης ρυθμίσεων');
 
       showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
       closeModal('settingsModal');
       loadDashboard(currentBusinessCode);
-    } catch(err) {
+    } catch (err) {
       showToast(err.message, true);
     }
   }
 
-  function showToast(message, isError = false) {
+  function showToast(text, isError = false) {
     const toast = document.getElementById('toast');
-    const text = document.getElementById('toastText');
-    text.innerText = message;
+    const toastText = document.getElementById('toastText');
+    toastText.innerText = text;
+    toast.style.background = isError ? '#ef4444' : '#1e293b';
     toast.style.display = 'flex';
-    toast.style.color = isError ? '#b91c1c' : '#166534';
-    toast.style.background = isError ? '#fef2f2' : '#f0fdf4';
-
+    
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.style.display = 'none', 3200);
+    toastTimer = setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3000);
   }
 </script>
 </body>
