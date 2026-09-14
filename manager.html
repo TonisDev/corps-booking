@@ -26,11 +26,16 @@
         .form-group { margin-bottom: 1rem; text-align: left; position: relative; }
         .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: #475569; }
         .field-wrapper { position: relative; display: flex; align-items: center; }
-        .field { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; box-sizing: border-box; }
+        .field { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; box-sizing: border-box; font-size: 0.9rem; }
         .field-password { padding-right: 2.5rem; }
         .toggle-password { position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer; color: #64748b; display: flex; align-items: center; padding: 0; }
         .toggle-password:hover { color: #0f172a; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        
+        /* Custom Time Picker Styles (Ανά 15λεπτο σε δύο rolls) */
+        .time-picker-wrapper { display: flex; gap: 6px; align-items: center; }
+        .time-picker-wrapper select { flex: 1; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: white; font-size: 0.9rem; cursor: pointer; }
+
         .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
         .btn-primary { background: #4f46e5; color: white; }
         .btn-primary:hover { background: #4338ca; }
@@ -44,7 +49,9 @@
 </head>
 <body>
 
-  <!-- Login Overlay -->
+  <!-- ========================================== -->
+  <!-- 1. LOGIN OVERLAY (ΟΘΟΝΗ ΣΥΝΔΕΣΗΣ)          -->
+  <!-- ========================================== -->
   <div id="loginOverlay">
     <div class="login-box">
       <div style="color: #4f46e5; margin-bottom: 1rem;"><i data-lucide="shield-check" size="32"></i></div>
@@ -72,6 +79,9 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- 2. MAIN APP SHELL (ADMIN DASHBOARD)        -->
+  <!-- ========================================== -->
   <div class="app-shell" style="display:none;">
     <header>
       <div class="brand">
@@ -101,6 +111,7 @@
         <p style="color: #64748b; font-size: 0.875rem;">Διαχειριστείτε τα ραντεβού σας από ένα κεντρικό σημείο.</p>
       </div>
 
+      <!-- Στατιστικά Κάρτες -->
       <div class="stats-grid">
         <div class="stat-card">
           <div>
@@ -127,6 +138,7 @@
         </div>
       </div>
 
+      <!-- Ημερολόγιο FullCalendar -->
       <section class="calendar-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <div style="font-weight: bold; font-size: 1.1rem;">Ημερολόγιο Ραντεβού</div>
@@ -141,7 +153,11 @@
     </main>
   </div>
 
-  <!-- New booking Modal -->
+  <!-- ========================================== -->
+  <!-- 3. MODALS (ΦΟΡΜΕΣ & ΔΙΑΛΟΓΟΙ)              -->
+  <!-- ========================================== -->
+
+  <!-- Modal: Νέο Ραντεβού -->
   <div class="modal-overlay" id="bookingModal">
     <div class="modal" role="dialog">
       <div class="modal-header">
@@ -173,9 +189,27 @@
               <label for="bookDate">Ημερομηνία</label>
               <input class="field" type="date" id="bookDate" required>
             </div>
+            
+            <!-- Εύχρηστη επιλογή ώρας (Ώρα + Λεπτά ανά 15λεπτο) -->
             <div class="form-group">
-              <label for="bookTime">Ώρα</label>
-              <input class="field" type="time" id="bookTime" required>
+              <label>Ώρα Έναρξης</label>
+              <div class="time-picker-wrapper">
+                <select id="bookHour" required>
+                  <option value="" disabled selected>Ώρα</option>
+                  <option value="08">08</option><option value="09">09</option><option value="10">10</option>
+                  <option value="11">11</option><option value="12">12</option><option value="13">13</option>
+                  <option value="14">14</option><option value="15">15</option><option value="16">16</option>
+                  <option value="17">17</option><option value="18">18</option><option value="19">19</option>
+                  <option value="20">20</option><option value="21">21</option>
+                </select>
+                <span>:</span>
+                <select id="bookMinute" required>
+                  <option value="00" selected>00</option>
+                  <option value="15">15</option>
+                  <option value="30">30</option>
+                  <option value="45">45</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -193,7 +227,7 @@
     </div>
   </div>
 
-  <!-- Block slot Modal -->
+  <!-- Modal: Κλείσιμο Slot -->
   <div class="modal-overlay" id="blockModal">
     <div class="modal" role="dialog">
       <div class="modal-header">
@@ -209,13 +243,48 @@
           </div>
 
           <div class="form-grid">
+            <!-- Ώρα Από (Εύχρηστη επιλογή 15λεπτων) -->
             <div class="form-group">
-              <label for="blockStart">Από</label>
-              <input class="field" type="time" id="blockStart" required>
+              <label>Από</label>
+              <div class="time-picker-wrapper">
+                <select id="blockStartHour" required>
+                  <option value="" disabled selected>Ώρα</option>
+                  <option value="08">08</option><option value="09">09</option><option value="10">10</option>
+                  <option value="11">11</option><option value="12">12</option><option value="13">13</option>
+                  <option value="14">14</option><option value="15">15</option><option value="16">16</option>
+                  <option value="17">17</option><option value="18">18</option><option value="19">19</option>
+                  <option value="20">20</option><option value="21">21</option>
+                </select>
+                <span>:</span>
+                <select id="blockStartMin" required>
+                  <option value="00" selected>00</option>
+                  <option value="15">15</option>
+                  <option value="30">30</option>
+                  <option value="45">45</option>
+                </select>
+              </div>
             </div>
+
+            <!-- Ώρα Έως (Εύχρηστη επιλογή 15λεπτων) -->
             <div class="form-group">
-              <label for="blockEnd">Έως</label>
-              <input class="field" type="time" id="blockEnd" required>
+              <label>Έως</label>
+              <div class="time-picker-wrapper">
+                <select id="blockEndHour" required>
+                  <option value="" disabled selected>Ώρα</option>
+                  <option value="08">08</option><option value="09">09</option><option value="10">10</option>
+                  <option value="11">11</option><option value="12">12</option><option value="13">13</option>
+                  <option value="14">14</option><option value="15">15</option><option value="16">16</option>
+                  <option value="17">17</option><option value="18">18</option><option value="19">19</option>
+                  <option value="20">20</option><option value="21">21</option>
+                </select>
+                <span>:</span>
+                <select id="blockEndMin" required>
+                  <option value="00" selected>00</option>
+                  <option value="15">15</option>
+                  <option value="30">30</option>
+                  <option value="45">45</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -233,7 +302,7 @@
     </div>
   </div>
 
-  <!-- Appointment actions Modal -->
+  <!-- Modal: Διαχείριση/Επισκόπηση Υπάρχοντος Ραντεβού -->
   <div class="modal-overlay" id="actionModal">
     <div class="modal" role="dialog">
       <div class="modal-header">
@@ -248,10 +317,14 @@
     </div>
   </div>
 
+  <!-- Toast Notification (Ειδοποιήσεις) -->
   <div id="toast" role="status">
     <i data-lucide="check-circle-2" size="17"></i><span id="toastText"></span>
   </div>
 
+<!-- ========================================== -->
+<!-- 4. JAVASCRIPT LOGIC & API INTERACTION       -->
+<!-- ========================================== -->
 <script>
   const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
   let currentSlug = localStorage.getItem('tenant_slug') || '';
@@ -260,9 +333,11 @@
   let toastTimer;
   let businessServices = [];
 
+  // Αρχικοποίηση εφαρμογής με τη φόρτωση της σελίδας
   document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
 
+    // Event listener για το Enter στο πεδίο κωδικού
     document.getElementById('loginPassword').addEventListener('keydown', e => {
       if (e.key === 'Enter') handleLogin();
     });
@@ -274,7 +349,7 @@
     }
   });
 
-  // Συνάρτηση εναλλαγής ορατότητας κωδικού
+  // Εναλλαγή εμφάνισης/κρύψης κωδικού πρόσβασης
   function togglePasswordVisibility() {
     const passwordInput = document.getElementById('loginPassword');
     const eyeIcon = document.getElementById('eyeIcon');
@@ -289,6 +364,7 @@
     lucide.createIcons();
   }
 
+  // Διαχείριση Σύνδεσης Admin
   async function handleLogin() {
     const slug = document.getElementById('loginSlug').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
@@ -322,6 +398,7 @@
     document.querySelector('.app-shell').style.display = 'none';
   }
 
+  // Φόρτωση Dashboard και βασικών πληροφοριών επιχείρησης
   async function showDashboard() {
     document.getElementById('loginOverlay').style.display = 'none';
     document.querySelector('.app-shell').style.display = 'flex';
@@ -366,6 +443,7 @@
     showLogin();
   }
 
+  // Helper για αιτήματα προς τα Admin Endpoints με έλεγχο συνεδρίας
   async function adminFetch(endpoint, options = {}) {
     const res = await fetch(`${WORKER_URL}${endpoint}`, {
       ...options,
@@ -383,6 +461,7 @@
     return res;
   }
 
+  // Αρχικοποίηση FullCalendar
   function initCalendar() {
     const calendarEl = document.getElementById('calendar');
 
@@ -408,6 +487,7 @@
     calendar.render();
   }
 
+  // Ανάκτηση και προβολή ραντεβού στο ημερολόγιο
   async function fetchAppointments() {
     try {
       const res = await adminFetch(`/api/${currentSlug}/admin/appointments`);
@@ -449,6 +529,7 @@
     return labels[status] || status;
   }
 
+  // Άνοιγμα modal διαχείρισης ραντεβού
   function openActionModal(event) {
     selectedEventId = event.id;
     const props = event.extendedProps;
@@ -470,6 +551,7 @@
     openModal('actionModal');
   }
 
+  // Ενημέρωση κατάστασης ραντεβού (π.χ. Έγκριση)
   async function updateStatus(status) {
     try {
       await adminFetch(`/api/${currentSlug}/admin/update-status`, {
@@ -484,6 +566,7 @@
     }
   }
 
+  // Διαγραφή ραντεβού
   async function deleteAppointment() {
     if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το ραντεβού;')) return;
 
@@ -500,11 +583,17 @@
     }
   }
 
+  // Δημιουργία χειροκίνητης κράτησης από τον Admin
   async function handleManualBooking(e) {
     e.preventDefault();
 
     const selectedOpt = document.getElementById('massageType').selectedOptions[0];
     const duration = parseInt(selectedOpt.getAttribute('data-duration')) || 60;
+    
+    // Σύνδεση ώρας και λεπτών από τα selects
+    const hour = document.getElementById('bookHour').value;
+    const minute = document.getElementById('bookMinute').value;
+    const time = `${hour}:${minute}`;
 
     try {
       const res = await adminFetch(`/api/${currentSlug}/admin/bookings`, {
@@ -515,7 +604,7 @@
           service_name: document.getElementById('massageType').value,
           duration: duration,
           date: document.getElementById('bookDate').value,
-          time: document.getElementById('bookTime').value
+          time: time
         })
       });
 
@@ -531,11 +620,17 @@
     }
   }
 
+  // Δέσμευση χρονικού διαστήματος (Block Slot)
   async function handleBlockSlot(e) {
     e.preventDefault();
 
-    const start = document.getElementById('blockStart').value;
-    const end = document.getElementById('blockEnd').value;
+    const startH = document.getElementById('blockStartHour').value;
+    const startM = document.getElementById('blockStartMin').value;
+    const start = `${startH}:${startM}`;
+
+    const endH = document.getElementById('blockEndHour').value;
+    const endM = document.getElementById('blockEndMin').value;
+    const end = `${endH}:${endM}`;
 
     if (start >= end) {
       showToast('Η ώρα "Έως" πρέπει να είναι μετά την ώρα "Από".', true);
@@ -562,6 +657,7 @@
     }
   }
 
+  // Διαχείριση Modals
   function openModal(id) { document.getElementById(id).style.display = 'flex'; }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
@@ -569,6 +665,7 @@
     overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
   });
 
+  // Ειδοποιήσεις (Toasts)
   function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     const text = document.getElementById('toastText');
@@ -581,6 +678,7 @@
     toastTimer = setTimeout(() => toast.style.display = 'none', 3200);
   }
 
+  // Ασφάλεια HTML escaping
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, char => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
