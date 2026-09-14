@@ -1,52 +1,25 @@
-/* Εδώ μπορείς να προσθέσεις όποιο custom CSS θες πέρα από το Tailwind */
-:root {
-  --bg-color: #f8fafc;
-  --card-bg: #ffffff;
-  --text-color: #1e293b;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  --field-bg: #ffffff;
-  --field-border: #cbd5e1;
-  --brand-color: #4f46e5; /* Εδώ μπαίνει δυναμικά το χρώμα */
+/* Εφαρμογή των CSS variables στα βασικά στοιχεία της φόρμας */
+.max-w-md {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
 }
 
-[data-theme="dark"] {
-  --bg-color: #0f172a;
-  --card-bg: #1e293b;
-  --text-color: #f8fafc;
-  --text-muted: #94a3b8;
-  --border-color: #334155;
-  --field-bg: #0f172a;
-  --field-border: #475569;
+h1, h2, h3, label {
+  color: var(--text-color) !important;
 }
 
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: background 0.3s, color 0.3s;
+p, span, .text-gray-500, .text-gray-400 {
+  color: var(--text-muted) !important;
 }
 
-.card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+input, select, textarea {
+  background-color: var(--field-bg) !important;
+  border-color: var(--field-border) !important;
+  color: var(--text-color) !important;
 }
 
-.btn {
-  background-color: var(--brand-color);
-  color: white;
-}
-
-/* Για τα επιλεγμένα slots ή borders */
-.slot-btn.selected {
-  background-color: var(--brand-color);
-  color: white;
-}
-/* Παράδειγμα custom animation για τα μηνύματα */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-#responseMessage, #loadingError {
-    animation: fadeIn 0.3s ease-in-out;
+/* Διόρθωση για τα disabled select fields */
+select:disabled {
+  background-color: var(--border-color) !important;
+  opacity: 0.7;
 }
