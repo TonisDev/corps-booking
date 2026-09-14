@@ -730,29 +730,29 @@
     });
 
     try {
-      const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/api/admin/update-settings`, { // Προσαρμόστε αναλόγως το endpoint του worker σας αν χρειάζεται
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, address, logo_url, brand_color, client_theme, work_days, working_hours, services, telegram_chat_id, buffer_minutes })
-      });
-      
-      // Fallback endpoint URL fix if needed based on your existing structure
-      // Αν το endpoint σας είναι /api/${currentBusinessCode}/admin/update-settings:
-      const resFixed = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, address, logo_url, brand_color, client_theme, work_days, working_hours, services, telegram_chat_id, buffer_minutes })
-      });
+  const res = await fetch(`${WORKER_URL}/api/${currentBusinessCode}/admin/update-settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      name, email, phone, address, logo_url, brand_color, 
+      client_theme, work_days, working_hours, services, 
+      telegram_chat_id, buffer_minutes 
+    })
+  });
 
-      if (!resFixed.ok) throw new Error('Σφάλμα αποθήκευσης ρυθμίσεων');
+  const data = await res.json();
 
-      showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
-      closeModal('settingsModal');
-      loadDashboard(currentBusinessCode);
-    } catch (err) {
-      showToast(err.message, true);
-    }
+  if (!res.ok) {
+    throw new Error(data.error || 'Σφάλμα αποθήκευσης ρυθμίσεων');
   }
+
+  showToast('Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!');
+  closeModal('settingsModal');
+  loadDashboard(currentBusinessCode);
+
+} catch (err) {
+  showToast(err.message, true);
+}
 
   function showToast(text, isError = false) {
     const toast = document.getElementById('toast');
