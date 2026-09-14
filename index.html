@@ -159,6 +159,7 @@
                 if (businessData.brand_color) {
                   document.documentElement.style.setProperty('--brand-color', businessData.brand_color);
                 }
+                document.getElementById('businessName').textContent = businessData.name;
 
                 // Αν υπάρχουν προαιρετικά στοιχεία διεύθυνσης/τηλεφώνου από τη βάση
                 if (businessData.address) {
