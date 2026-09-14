@@ -584,10 +584,15 @@
   }
 
   // Δημιουργία χειροκίνητης κράτησης από τον Admin
+// Δημιουργία χειροκίνητης κράτησης από τον Admin
   async function handleManualBooking(e) {
     e.preventDefault();
 
     const selectedOpt = document.getElementById('massageType').selectedOptions[0];
+    if (!selectedOpt) {
+      showToast('Επιλέξτε υπηρεσία', true);
+      return;
+    }
     const duration = parseInt(selectedOpt.getAttribute('data-duration')) || 60;
     
     // Σύνδεση ώρας και λεπτών από τα selects
@@ -596,8 +601,9 @@
     const time = `${hour}:${minute}`;
 
     try {
-      const res = await adminFetch(`/api/${currentSlug}/admin/bookings`, {
+      const res = await adminFetch(`${WORKER_URL}/api/${currentSlug}/admin/bookings`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: document.getElementById('custName').value,
           phone: document.getElementById('custPhone').value,
@@ -608,7 +614,8 @@
         })
       });
 
-      if (!res.ok) throw new Error('Booking failed');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Booking failed');
 
       closeModal('bookingModal');
       e.target.reset();
@@ -616,7 +623,7 @@
       fetchAppointments();
     } catch (err) {
       console.error(err);
-      showToast('Δεν ήταν δυνατή η δημιουργία του ραντεβού.', true);
+      showToast(err.message || 'Δεν ήταν δυνατή η δημιουργία του ραντεβού.', true);
     }
   }
 
@@ -638,8 +645,9 @@
     }
 
     try {
-      await adminFetch(`/api/${currentSlug}/admin/block-slot`, {
+      const res = await adminFetch(`${WORKER_URL}/api/${currentSlug}/admin/block-slot`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date: document.getElementById('blockDate').value,
           start_time: start,
@@ -648,15 +656,18 @@
         })
       });
 
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Block slot failed');
+
       closeModal('blockModal');
       e.target.reset();
       showToast('Το slot δεσμεύτηκε.');
       fetchAppointments();
     } catch (err) {
-      showToast('Δεν ήταν δυνατή η δέσμευση του slot.', true);
+      console.error(err);
+      showToast(err.message || 'Δεν ήταν δυνατή η δέσμευση του slot.', true);
     }
   }
-
   // Διαχείριση Modals
   function openModal(id) { document.getElementById(id).style.display = 'flex'; }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
