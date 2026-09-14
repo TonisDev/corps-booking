@@ -1,7 +1,7 @@
 /* Εφαρμογή των CSS variables στα βασικά στοιχεία της φόρμας */
 .max-w-md {
   background-color: var(--card-bg) !important;
-  border-color: var(--border-color) !important;
+ /* border-color: var(--border-color) !important;*/
 }
 
 h1, h2, h3, label {
