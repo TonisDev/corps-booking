@@ -152,16 +152,13 @@
                 
                 businessData = await res.json();
                 // 1. Εφαρμογή Theme (Dark/Light) στη δημόσια σελίδα
-                const clientTheme = tenantData.client_theme || 'light';
+                const clientTheme = businessData.client_theme || 'light';
                 document.body.setAttribute('data-theme', clientTheme);
                 
                 // 2. Εφαρμογή Brand Color στα κουμπιά / highlights
-                if (tenantData.brand_color) {
-                  document.documentElement.style.setProperty('--brand-color', tenantData.brand_color);
+                if (businessData.brand_color) {
+                  document.documentElement.style.setProperty('--brand-color', businessData.brand_color);
                 }
-                // Εμφάνιση στοιχείων επιχείρησης στο Header
-                document.getElementById('businessName').textContent = businessData.name;
-                document.getElementById('pageTitle').textContent = `Κράτηση | ${businessData.name}`;
 
                 // Αν υπάρχουν προαιρετικά στοιχεία διεύθυνσης/τηλεφώνου από τη βάση
                 if (businessData.address) {
