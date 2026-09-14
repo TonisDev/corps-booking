@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Κράτηση Ραντεβού</title>
-    <!-- Tailwind CSS για μοντέρνα και γρήγορη εμφάνιση -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex items-center justify-center p-4">
@@ -43,6 +43,8 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Ώρα</label>
                 <input type="time" id="time" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <!-- Μήνυμα διαθεσιμότητας -->
+                <p id="availabilityHint" class="text-xs text-gray-500 mt-1"></p>
             </div>
 
             <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md">
@@ -50,18 +52,19 @@
             </button>
         </form>
 
-        <!-- Μηνύματα Επιτυχίας / Σφάλματος -->
+        <!-- Μηνύματα -->
         <div id="responseMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
         <div id="loadingError" class="text-center text-red-600 text-sm font-medium hidden">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
     </div>
 
     <script>
-        // 1. Ρύθμιση του Worker URL σου εδώ (π.χ. https://my-booking-worker.workers.dev)
-        const API_BASE_URL = "https://corporate-bookings.tonisdevv.workers.dev";
+        // Βάλτε εδώ το Cloudflare Worker URL σας
+        const API_BASE_URL = "https://YOUR-WORKER-SUBDOMAIN.workers.dev";
 
-        // 2. Παίρνουμε το slug από το URL (π.χ. index.html?slug=maria-massage)
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
+
+        let occupiedSlots = [];
 
         async function initPage() {
             if (!slug) {
@@ -71,17 +74,14 @@
             }
 
             try {
-                // Ζητάμε τα στοιχεία της επιχείρησης από τον Worker
                 const res = await fetch(`${API_BASE_URL}/api/${slug}/info`);
                 if (!res.ok) throw new Error('Business not found');
                 
                 const data = await res.json();
 
-                // Ενημερώνουμε το UI
                 document.getElementById('businessName').textContent = data.name;
                 document.getElementById('pageTitle').textContent = `Κράτηση | ${data.name}`;
                 
-                // Γεμίζουμε το dropdown με τις υπηρεσίες
                 const serviceSelect = document.getElementById('service');
                 data.services.forEach(s => {
                     const opt = document.createElement('option');
@@ -91,7 +91,6 @@
                     serviceSelect.appendChild(opt);
                 });
 
-                // Εμφανίζουμε τη φόρμα
                 document.getElementById('bookingForm').classList.remove('hidden');
 
             } catch (err) {
@@ -99,7 +98,31 @@
             }
         }
 
-        // 3. Διαχείριση υποβολής ραντεβού
+        // Όταν ο χρήστης αλλάζει ημερομηνία, τραβάμε τα ήδη κλεισμένα ραντεβού
+        document.getElementById('date').addEventListener('change', async (e) => {
+            const selectedDate = e.target.value;
+            const hint = document.getElementById('availabilityHint');
+            if (!selectedDate) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/${slug}/availability?date=${selectedDate}`);
+                const data = await res.json();
+                occupiedSlots = data.occupied || [];
+
+                if (occupiedSlots.length > 0) {
+                    const times = occupiedSlots.map(s => `${s.start_time} - ${s.end_time}`).join(', ');
+                    hint.textContent = `⚠️ Κλεισμένες ώρες για αυτή τη μέρα: ${times}`;
+                    hint.className = "text-xs text-amber-600 mt-1 font-medium";
+                } else {
+                    hint.textContent = "✨ Η ημέρα είναι ελεύθερη!";
+                    hint.className = "text-xs text-green-600 mt-1 font-medium";
+                }
+            } catch (err) {
+                hint.textContent = "";
+            }
+        });
+
+        // Υποβολή φόρμας
         document.getElementById('bookingForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const msgBox = document.getElementById('responseMessage');
@@ -134,6 +157,7 @@
                     msgBox.className = "mt-4 text-center text-sm font-medium text-green-600";
                     msgBox.textContent = data.message;
                     document.getElementById('bookingForm').reset();
+                    document.getElementById('availabilityHint').textContent = '';
                 } else {
                     msgBox.className = "mt-4 text-center text-sm font-medium text-red-600";
                     msgBox.textContent = data.error || 'Προέκυψε σφάλμα.';
