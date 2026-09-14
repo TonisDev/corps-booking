@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -13,8 +14,8 @@
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
     <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
-        
-        <!-- Loading State Αρχικής Φόρτωση Επιχείρησης -->
+
+        <!-- Loading State Αρχικής Φόρτωσης Επιχείρησης -->
         <div id="initialLoader" class="text-center py-8">
             <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -23,11 +24,11 @@
             <p class="text-sm text-gray-500">Φόρτωση επιχείρησης...</p>
         </div>
 
-        <!-- Header Επιχείρησης (Εμπλουτισμένο) -->
+        <!-- Header Επιχείρησης -->
         <div id="businessHeader" class="text-center mb-6 hidden">
             <h1 id="businessName" class="text-2xl font-bold text-gray-900"></h1>
             <p id="businessSubtitle" class="text-sm text-gray-500 mt-1">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
-            
+
             <!-- Διεύθυνση & Τηλέφωνο Επιχείρησης -->
             <div id="businessMeta" class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1 hidden">
                 <p id="businessAddressContainer">📍 <a id="businessAddress" href="#" target="_blank" class="text-indigo-600 hover:underline"></a></p>
@@ -37,8 +38,8 @@
 
         <!-- Φόρμα Κράτησης -->
         <form id="bookingForm" class="space-y-4 hidden">
-            
-            <!-- Honeypot field ضد spam -->
+
+            <!-- Honeypot field κατά spam -->
             <div style="display:none !important;">
                 <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
             </div>
@@ -85,7 +86,6 @@
 
             <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md flex items-center justify-center space-x-2">
                 <span id="submitBtnText">Υποβολή Αιτήματος Κράτησης</span>
-                <!-- Spinner (κρυφό από προεπιλογή) -->
                 <svg id="submitSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -93,10 +93,9 @@
             </button>
         </form>
 
-        <!-- Μ μηνύματα Επιτυχίας / Google Calendar Action -->
+        <!-- Μηνύματα Επιτυχίας / Google Calendar Action -->
         <div id="responseContainer" class="mt-4 hidden text-center">
             <div id="responseMessage" class="text-sm font-medium mb-3"></div>
-            <!-- Google Calendar Button -->
             <a id="gcalBtn" href="#" target="_blank" class="inline-flex items-center justify-center space-x-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition duration-200 shadow-sm hidden">
                 📅 Προσθήκη στο Google Calendar
             </a>
@@ -126,6 +125,9 @@
         const businessHeader = document.getElementById('businessHeader');
 
         let businessData = null;
+        // Guards against a slow /availability response landing after the user
+        // has already changed the date or service (stale-response race condition).
+        let availabilityRequestId = 0;
 
         const timeToMinutes = (timeStr) => {
             const [h, m] = timeStr.split(':').map(Number);
@@ -138,6 +140,29 @@
             return `${h}:${m}`;
         };
 
+        // Μετατρέπει working_hours + work_days του tenant σε λίστα διαστημάτων
+        // (σε λεπτά) για τη συγκεκριμένη ημερομηνία, ή [] αν η μέρα είναι κλειστή.
+        function getShiftsForDate(dateStr) {
+            const workDays = (businessData && businessData.work_days && businessData.work_days.length > 0)
+                ? businessData.work_days
+                : [1, 2, 3, 4, 5];
+            const workingHours = (businessData && businessData.working_hours && businessData.working_hours.length > 0)
+                ? businessData.working_hours
+                : [{ start: "09:00", end: "21:00" }];
+
+            // dateStr is 'YYYY-MM-DD'; avoid `new Date(dateStr)` timezone issues
+            // by constructing the date from parts explicitly.
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0=Κυρ ... 6=Σαβ
+
+            if (!workDays.includes(dayOfWeek)) return [];
+
+            return workingHours.map(sh => ({
+                start: timeToMinutes(sh.start),
+                end: timeToMinutes(sh.end)
+            }));
+        }
+
         async function initPage() {
             if (!business_code) {
                 initialLoader.classList.add('hidden');
@@ -149,19 +174,18 @@
             try {
                 const res = await fetch(`${API_BASE_URL}/api/${business_code}/info`);
                 if (!res.ok) throw new Error('Business not found');
-                
+
                 businessData = await res.json();
-                // 1. Εφαρμογή Theme (Dark/Light) στη δημόσια σελίδα
+
                 const clientTheme = businessData.client_theme || 'light';
                 document.body.setAttribute('data-theme', clientTheme);
-                
-                // 2. Εφαρμογή Brand Color στα κουμπιά / highlights
+
                 if (businessData.brand_color) {
-                  document.documentElement.style.setProperty('--brand-color', businessData.brand_color);
+                    document.documentElement.style.setProperty('--brand-color', businessData.brand_color);
                 }
                 document.getElementById('businessName').textContent = businessData.name;
+                document.getElementById('pageTitle').textContent = `Κράτηση Ραντεβού | ${businessData.name}`;
 
-                // Αν υπάρχουν προαιρετικά στοιχεία διεύθυνσης/τηλεφώνου από τη βάση
                 if (businessData.address) {
                     const addrLink = document.getElementById('businessAddress');
                     addrLink.textContent = businessData.address;
@@ -176,8 +200,8 @@
                 }
 
                 businessHeader.classList.remove('hidden');
-                
-                businessData.services.forEach(s => {
+
+                (businessData.services || []).forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.name;
                     opt.setAttribute('data-duration', s.duration || 60);
@@ -198,7 +222,7 @@
             locale: 'gr',
             dateFormat: 'Y-m-d',
             minDate: 'today',
-            onChange: function(selectedDates, dateStr) {
+            onChange: function (selectedDates, dateStr) {
                 if (dateStr && serviceSelect.value) {
                     fetchAvailableSlots(dateStr);
                 }
@@ -212,38 +236,58 @@
         });
 
         async function fetchAvailableSlots(dateStr) {
+            const requestId = ++availabilityRequestId;
+
             timeSlotSelect.disabled = true;
             timeSlotSelect.innerHTML = '<option value="">Υπολογισμός διαθεσιμότητας...</option>';
             slotHint.textContent = 'Παρακαλώ περιμένετε...';
+            slotHint.className = 'text-xs text-gray-400 mt-1';
 
             const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
             const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
+            const bufferMinutes = (businessData && businessData.buffer_minutes) || 0;
+
+            // Η μέρα μπορεί να είναι κλειστή βάσει work_days, ανεξάρτητα από τα ραντεβού.
+            const shifts = getShiftsForDate(dateStr);
+            if (shifts.length === 0) {
+                if (requestId !== availabilityRequestId) return;
+                timeSlotSelect.innerHTML = '<option value="">Κλειστό αυτή την ημέρα</option>';
+                slotHint.textContent = '⚠️ Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
+                slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/${business_code}/availability?date=${dateStr}`);
+                if (!response.ok) throw new Error('Availability request failed');
                 const data = await response.json();
+
+                // Αγνόησε την απάντηση αν ο χρήστης άλλαξε ημερομηνία/υπηρεσία στο μεταξύ.
+                if (requestId !== availabilityRequestId) return;
+
                 const occupied = data.occupied || [];
-
-                const workStartMins = timeToMinutes("09:00");
-                const workEndMins = timeToMinutes("20:00");
-                const stepMinutes = 30;
-
+                const stepMinutes = 15;
                 let freeSlots = [];
 
-                for (let currentMins = workStartMins; currentMins + duration <= workEndMins; currentMins += stepMinutes) {
-                    const slotStartMins = currentMins;
-                    const slotEndMins = currentMins + duration;
+                shifts.forEach(shift => {
+                    for (let currentMins = shift.start; currentMins + duration <= shift.end; currentMins += stepMinutes) {
+                        const slotStartMins = currentMins;
+                        const slotEndMins = currentMins + duration + bufferMinutes;
 
-                    const isOverlapping = occupied.some(occ => {
-                        const occStart = timeToMinutes(occ.start_time);
-                        const occEnd = timeToMinutes(occ.end_time);
-                        return (slotStartMins < occEnd && slotEndMins > occStart);
-                    });
+                        const isOverlapping = occupied.some(occ => {
+                            const occStart = timeToMinutes(occ.start_time);
+                            const occEnd = timeToMinutes(occ.end_time);
+                            return (slotStartMins < occEnd && slotEndMins > occStart);
+                        });
 
-                    if (!isOverlapping) {
-                        freeSlots.push(minutesToTime(slotStartMins));
+                        if (!isOverlapping) {
+                            freeSlots.push(minutesToTime(slotStartMins));
+                        }
                     }
-                }
+                });
+
+                // Αφαίρεση τυχόν διπλότυπων ωρών αν επικαλύπτονται βάρδιες.
+                freeSlots = [...new Set(freeSlots)].sort();
 
                 timeSlotSelect.innerHTML = '';
 
@@ -266,19 +310,17 @@
                 }
 
             } catch (err) {
+                if (requestId !== availabilityRequestId) return;
                 timeSlotSelect.innerHTML = '<option value="">Σφάλμα φόρτωσης</option>';
                 slotHint.textContent = '❌ Αποτυχία σύνδεσης με τον διακομιστή.';
                 slotHint.className = 'text-xs text-red-600 mt-1 font-medium';
             }
         }
 
-        // Συνάρτηση δημιουργίας Google Calendar Link
         function generateGoogleCalendarUrl(serviceName, dateStr, timeStr, durationMinutes) {
-            // Καθαρισμός ημερομηνίας και ώρας για το Google format (YYYYMMDDTHHMMSS)
             const cleanDate = dateStr.replace(/-/g, '');
             const startCleanTime = timeStr.replace(/:/g, '') + '00';
-            
-            // Υπολογισμός λήξης
+
             const startMins = timeToMinutes(timeStr);
             const endMins = startMins + durationMinutes;
             const endCleanTime = minutesToTime(endMins).replace(/:/g, '') + '00';
@@ -297,6 +339,15 @@
             e.preventDefault();
 
             if (document.getElementById('website').value !== '') return;
+
+            // Πρόσθετος client-side έλεγχος: αν δεν έχει επιλεγεί έγκυρη ώρα, μην στείλεις.
+            if (!timeSlotSelect.value) {
+                responseContainer.classList.remove('hidden');
+                gcalBtn.classList.add('hidden');
+                responseMessage.className = 'text-sm font-medium text-red-600 mb-3';
+                responseMessage.textContent = 'Παρακαλώ επιλέξτε μια διαθέσιμη ώρα.';
+                return;
+            }
 
             const submitBtn = document.getElementById('submitBtn');
             const submitBtnText = document.getElementById('submitBtnText');
@@ -337,8 +388,7 @@
                 if (res.ok) {
                     responseMessage.className = "text-sm font-medium text-green-600 mb-3";
                     responseMessage.textContent = data.message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
-                    
-                    // Δημιουργία και ενεργοποίηση Google Calendar link
+
                     const gcalUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
                     gcalBtn.href = gcalUrl;
                     gcalBtn.classList.remove('hidden');
