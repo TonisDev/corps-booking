@@ -1,804 +1,1070 @@
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const corsHeaders = corsHeadersFor(request, env);
 
-<!DOCTYPE html>
-<html lang="el">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Κράτηση Ραντεβού</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Flatpickr CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Επιφανειακά θέματα φόρμας πελάτη. Το brand_color της επιχείρησης
-           συνεχίζει να βάφει κουμπί/focus από πάνω. */
-        :root, [data-theme="light"] {
-            --bg-color: #f3f4f6;
-            --bg-accent: #e5e7eb;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
-            --field-bg: #ffffff;
-            --field-border: #d1d5db;
-            --brand-color: #4f46e5;
-            --card-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-            --card-radius: 1.25rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    try {
+      // --- PUBLIC / AUTH ENDPOINTS ---
+
+      // Public: Admin Login -> επιστρέφει ένα signed session token
+      if (path === '/api/admin/login' && request.method === 'POST') {
+        const loginLimit = consumeRateLimit(`login:${clientIp(request)}`, 6, 15 * 60 * 1000);
+        if (!loginLimit.ok) {
+          return jsonResponse({ error: 'Πολλές προσπάθειες σύνδεσης. Δοκιμάστε σε λίγο.' }, 429, {
+            ...corsHeaders,
+            'Retry-After': String(loginLimit.retryAfter)
+          });
         }
 
-        [data-theme="dark"] {
-            --bg-color: #0b1220;
-            --bg-accent: #1e293b;
-            --card-bg: #151c2c;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --field-bg: #0f172a;
-            --field-border: #475569;
-            --brand-color: #818cf8;
-            --card-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
-            --card-radius: 1.25rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+        const { business_code, password } = await request.json();
+        if (!business_code || !password) {
+          return jsonResponse({ error: 'Απαιτούνται κωδικός επιχείρησης και password' }, 400, corsHeaders);
         }
 
-        [data-theme="warm"] {
-            --bg-color: #f6efe6;
-            --bg-accent: #ead9c6;
-            --card-bg: #fffaf4;
-            --text-color: #3f2a1d;
-            --text-muted: #8a6d57;
-            --border-color: #ead9c6;
-            --field-bg: #fffdf9;
-            --field-border: #dcc4ab;
-            --brand-color: #c2410c;
-            --card-shadow: 0 18px 40px rgba(124, 63, 22, 0.12);
-            --card-radius: 1.5rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Serif", "Noto Serif", serif;
+        const tenant = await env.DB.prepare(
+          'SELECT * FROM tenants WHERE business_code = ?'
+        ).bind(business_code).first();
+
+        if (!tenant) {
+          return jsonResponse({ error: 'Η επιχείρηση δεν βρέθηκε' }, 404, corsHeaders);
         }
 
-        [data-theme="ocean"] {
-            --bg-color: #e8f4f4;
-            --bg-accent: #cfe7e8;
-            --card-bg: #f7fcfc;
-            --text-color: #134e4a;
-            --text-muted: #5b7c7b;
-            --border-color: #cfe3e2;
-            --field-bg: #ffffff;
-            --field-border: #b6d4d3;
-            --brand-color: #0f766e;
-            --card-shadow: 0 18px 40px rgba(15, 118, 110, 0.12);
-            --card-radius: 1.25rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+        const isValid = await verifyPassword(password, tenant.password_hash, tenant.password_salt);
+        if (!isValid) {
+          return jsonResponse({ error: 'Λάθος κωδικός πρόσβασης' }, 401, corsHeaders);
         }
 
-        body {
-            background-color: var(--bg-color) !important;
-            background-image: radial-gradient(circle at top, var(--bg-accent), transparent 55%);
-            color: var(--text-color);
-            font-family: var(--body-font);
-            transition: background-color 0.2s, color 0.2s;
+        if (!env.SESSION_SECRET) {
+          return jsonResponse({ error: 'Server misconfiguration: SESSION_SECRET not set' }, 500, corsHeaders);
         }
 
-        h1, h2, h3 {
-            font-family: var(--heading-font);
-        }
+        const token = await createSessionToken(tenant.business_code, env.SESSION_SECRET);
 
-        .booking-card {
-            background-color: var(--card-bg) !important;
-            border-color: var(--border-color) !important;
-            box-shadow: var(--card-shadow) !important;
-            border-radius: var(--card-radius) !important;
-        }
+        return jsonResponse({
+          success: true,
+          business_code: tenant.business_code,
+          name: tenant.name,
+          token
+        }, 200, corsHeaders);
+      }
 
-        /* Εφαρμογή του brand_color (dynamic, ανά επιχείρηση) σε ό,τι πριν
-           ήταν hardcoded indigo. */
-        #submitBtn {
-            background-color: var(--brand-color) !important;
-            filter: brightness(1);
-            transition: filter 0.15s;
-        }
-        #submitBtn:hover {
-            filter: brightness(0.9);
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--brand-color) !important;
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-color) 30%, transparent) !important;
-            outline: none !important;
-        }
-        .time-picker-wrapper { display: flex; gap: 8px; align-items: center; }
-        .time-picker-wrapper select { flex: 1; }
+      // --- SUPER ADMIN (τοπικό εργαλείο + X-Admin-Key) ---
+      if (path.startsWith('/api/super-admin/')) {
+        const adminDenied = requireSuperAdmin(request, env, corsHeaders);
+        if (adminDenied) return adminDenied;
 
-        .business-logo {
-            width: 84px;
-            height: 84px;
-            margin: 0 auto 1rem;
-            border-radius: 1.25rem;
-            object-fit: cover;
-            background: var(--field-bg);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
-        }
-
-        .welcome-text {
-            padding: 0.75rem 1rem;
-            border-radius: 0.85rem;
-            background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg));
-            border: 1px solid color-mix(in srgb, var(--brand-color) 20%, var(--border-color));
-        }
-
-        .meta-label {
-            display: inline-block;
-            min-width: 4.6rem;
-            color: var(--text-muted);
-        }
-
-        .powered-by {
-            color: var(--text-muted);
-            opacity: 0.8;
-        }
-
-        .powered-by a {
-            color: var(--brand-color);
-            font-weight: 600;
-        }
-
-        .rhapsodus-stamp {
-            position: fixed;
-            right: 0.9rem;
-            bottom: 0.75rem;
-            z-index: 15;
-            margin: 0;
-            text-align: right;
-            font-size: 0.68rem;
-            letter-spacing: 0.06em;
-            pointer-events: none;
-        }
-        .rhapsodus-stamp strong {
-            font-weight: 700;
-            color: var(--text-color);
-        }
-
-        @media (max-width: 640px) {
-            body {
-                align-items: flex-start !important;
-                padding: 0 !important;
-                background-image: none;
-            }
-
-            .booking-card {
-                min-height: 100vh;
-                margin: 0 !important;
-                padding: 1.35rem !important;
-                border: 0 !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-            }
-
-            .business-logo {
-                width: 72px;
-                height: 72px;
-            }
-
-            #submitBtn {
-                position: sticky;
-                bottom: max(0.75rem, env(safe-area-inset-bottom));
-                z-index: 20;
-                box-shadow: 0 10px 24px color-mix(in srgb, var(--brand-color) 32%, transparent);
-            }
-
-            .rhapsodus-stamp {
-                bottom: calc(4.7rem + env(safe-area-inset-bottom));
-            }
-
-            input, select, textarea {
-                font-size: 16px !important;
-            }
-        }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex items-center justify-center p-4">
-
-    <div class="max-w-md w-full booking-card p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
-
-        <!-- Loading State Αρχικής Φόρτωσης Επιχείρησης -->
-        <div id="initialLoader" class="text-center py-8">
-            <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-sm text-gray-500">Φόρτωση επιχείρησης...</p>
-        </div>
-
-        <!-- Header Επιχείρησης -->
-        <div id="businessHeader" class="text-center mb-6 hidden">
-            <img id="businessLogo" class="business-logo" src="demo-logo.svg" alt="Λογότυπο επιχείρησης">
-            <h1 id="businessName" class="text-2xl font-bold text-gray-900"></h1>
-            <p id="businessSubtitle" class="text-sm text-gray-500 mt-1">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
-
-            <!-- Διεύθυνση & Τηλέφωνο Επιχείρησης -->
-            <div id="businessMeta" class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1 hidden">
-                <p id="businessAddressContainer"><span class="meta-label">Διεύθυνση</span> <a id="businessAddress" href="#" target="_blank" class="text-indigo-600 hover:underline"></a></p>
-                <p id="businessPhoneContainer"><span class="meta-label">Τηλέφωνο</span> <a id="businessPhone" href="#" class="text-indigo-600 hover:underline"></a></p>
-            </div>
-        </div>
-
-        <p id="welcomeText" class="welcome-text text-sm text-center mb-5 hidden"></p>
-
-        <!-- Φόρμα Κράτησης -->
-        <form id="bookingForm" class="space-y-4 hidden">
-
-            <!-- Honeypot field κατά spam -->
-            <div style="display:none !important;">
-                <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ονοματεπώνυμο *</label>
-                <input type="text" id="name" required placeholder="Ονοματεπώνυμο" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Τηλέφωνο Επικοινωνίας *</label>
-                <input type="tel" id="phone" required placeholder="69XXXXXXXX" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <input type="email" id="email" required placeholder="name@email.com" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                <p class="text-xs text-gray-400 mt-1">Θα ενημερωθείτε εδώ αν το ραντεβού εγκριθεί ή απορριφθεί.</p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Instagram Username (προαιρετικό)</label>
-                <input type="text" id="instagram" placeholder="@username" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Υπηρεσία *</label>
-                <select id="service" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    <option value="">-- Επιλέξτε Υπηρεσία --</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ημερομηνία *</label>
-                <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly class="w-full px-4 py-2 border rounded-lg bg-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            </div>
-
-            <div>
-                <label id="timeLabel" class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμη Ώρα *</label>
-                <div class="time-picker-wrapper">
-                    <select id="timeHour" required disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <option value="">Ώρα</option>
-                    </select>
-                    <span>:</span>
-                    <select id="timeMinute" required disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <option value="">--</option>
-                        <option value="00">00</option>
-                        <option value="30">30</option>
-                    </select>
-                </div>
-                <p id="slotHint" class="text-xs text-gray-400 mt-1">Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.</p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Σημειώσεις / Παρατηρήσεις</label>
-                <textarea id="notes" rows="2" placeholder="Προαιρετικές σημειώσεις για το ραντεβού" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-            </div>
-
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md flex items-center justify-center space-x-2">
-                <span id="submitBtnText">Υποβολή Αιτήματος Κράτησης</span>
-                <svg id="submitSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </button>
-        </form>
-
-        <!-- Μηνύματα Επιτυχίας / Google Calendar Action -->
-        <div id="responseContainer" class="mt-4 hidden text-center">
-            <div id="responseMessage" class="text-sm font-medium mb-3"></div>
-            <a id="gcalBtn" href="#" target="_blank" class="inline-flex items-center justify-center space-x-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition duration-200 shadow-sm hidden">
-                Προσθήκη στο Google Calendar
-            </a>
-        </div>
-
-        <div id="loadingError" class="text-center text-red-600 text-sm font-medium hidden mt-4">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
-    </div>
-
-    <p class="powered-by rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
-
-    <!-- Flatpickr JS & Ελληνική γλώσσα -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/gr.js"></script>
-
-    <script>
-        const API_BASE_URL = "https://corporate-bookings.tonisdevv.workers.dev";
-        const CLIENT_THEMES = ['light', 'dark', 'warm', 'ocean'];
-        const urlParams = new URLSearchParams(window.location.search);
-        const business_code = urlParams.get('business_code');
-
-        function parseOptionalPrice(raw) {
-            if (raw === null || raw === undefined || raw === '') return null;
-            const n = Number(raw);
-            return Number.isFinite(n) ? n : null;
-        }
-
-        function formatServiceLabel(service) {
-            const duration = service.duration || 60;
-            const price = parseOptionalPrice(service && service.price);
-            if (price === null) return `${service.name} (${duration} min)`;
-            return `${service.name} (${duration} min · ${price}€)`;
-        }
-
-        function applyClientTheme(theme) {
-            const next = CLIENT_THEMES.includes(theme) ? theme : 'light';
-            document.body.setAttribute('data-theme', next);
-        }
-
-        const dateInput = document.getElementById('date');
-        const timeHourSelect = document.getElementById('timeHour');
-        const timeMinuteSelect = document.getElementById('timeMinute');
-        const serviceSelect = document.getElementById('service');
-        const bookingForm = document.getElementById('bookingForm');
-        const responseContainer = document.getElementById('responseContainer');
-        const responseMessage = document.getElementById('responseMessage');
-        const gcalBtn = document.getElementById('gcalBtn');
-        const slotHint = document.getElementById('slotHint');
-        const initialLoader = document.getElementById('initialLoader');
-        const businessHeader = document.getElementById('businessHeader');
-
-        let businessData = null;
-        let availableSlots = [];
-        let waitlistMode = false;
-
-        function isRequestMode() {
-            return businessData && businessData.intake_mode === 'request';
-        }
-
-        function waitlistAllowed() {
-            return Boolean(businessData && Number(businessData.waitlist_enabled) === 1);
-        }
-
-        function preferredSlotsForDate(dateStr) {
-            const shifts = getShiftsForDate(dateStr);
-            const slots = [];
-            const step = 30;
-            shifts.forEach((shift) => {
-                const alignedStart = Math.ceil(shift.start / step) * step;
-                for (let mins = alignedStart; mins < shift.end; mins += step) {
-                    slots.push(minutesToTime(mins));
-                }
+        if (path === '/api/super-admin/tenants' && request.method === 'GET') {
+          const listLimit = consumeRateLimit(`sa-list:${clientIp(request)}`, 40, 15 * 60 * 1000);
+          if (!listLimit.ok) {
+            return jsonResponse({ error: 'Πολλά αιτήματα. Δοκιμάστε σε λίγο.' }, 429, {
+              ...corsHeaders,
+              'Retry-After': String(listLimit.retryAfter)
             });
-            return [...new Set(slots)].sort();
+          }
+
+          let rows;
+          try {
+            const listed = await env.DB.prepare(
+              `SELECT business_code, name, email, phone, address, is_active
+               FROM tenants ORDER BY name COLLATE NOCASE`
+            ).all();
+            rows = listed.results || [];
+          } catch (err) {
+            const listed = await env.DB.prepare(
+              `SELECT business_code, name, email, phone, address FROM tenants ORDER BY name COLLATE NOCASE`
+            ).all();
+            rows = (listed.results || []).map((row) => ({ ...row, is_active: 1 }));
+          }
+
+          return jsonResponse({
+            tenants: rows.map((row) => ({
+              business_code: row.business_code,
+              name: row.name,
+              email: row.email || '',
+              phone: row.phone || '',
+              address: row.address || '',
+              is_active: tenantIsActive(row)
+            }))
+          }, 200, corsHeaders);
         }
 
-        function fillPreferredTimes(hint, asWaitlist, dateStr) {
-            waitlistMode = !!asWaitlist;
-            availableSlots = preferredSlotsForDate(dateStr);
-            if (!availableSlots.length) {
-                resetTimePickers('Κλειστό');
-                slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
-                slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
-                return;
-            }
-            const hours = [...new Set(availableSlots.map((slot) => slot.slice(0, 2)))];
-            timeHourSelect.innerHTML = '<option value="">Ώρα</option>';
-            hours.forEach((hour) => {
-                const opt = document.createElement('option');
-                opt.value = hour;
-                opt.textContent = hour;
-                timeHourSelect.appendChild(opt);
+        if (path === '/api/super-admin/create-tenant' && request.method === 'POST') {
+          const createLimit = consumeRateLimit(`sa-create:${clientIp(request)}`, 8, 15 * 60 * 1000);
+          if (!createLimit.ok) {
+            return jsonResponse({ error: 'Πολλές δημιουργίες επιχειρήσεων. Δοκιμάστε σε λίγο.' }, 429, {
+              ...corsHeaders,
+              'Retry-After': String(createLimit.retryAfter)
             });
-            timeHourSelect.disabled = false;
-            timeHourSelect.classList.remove('bg-gray-50');
-            timeMinuteSelect.innerHTML = '<option value="">--</option><option value="00">00</option><option value="30">30</option>';
-            timeMinuteSelect.disabled = true;
-            timeMinuteSelect.classList.add('bg-gray-50');
-            slotHint.textContent = hint;
-            slotHint.className = asWaitlist
-                ? 'text-xs text-amber-700 mt-1 font-medium'
-                : 'text-xs text-gray-500 mt-1';
+          }
+
+          const data = await request.json();
+          const business_code = String(data.business_code || '').trim();
+          const name = String(data.name || '').trim();
+          const password = String(data.password || '');
+
+          if (!business_code || !name || !password) {
+            return jsonResponse({ error: 'Απαιτούνται business_code, όνομα και κωδικός' }, 400, corsHeaders);
+          }
+          if (!isValidBusinessCode(business_code)) {
+            return jsonResponse({
+              error: 'Το Business Code πρέπει να είναι 2–48 χαρακτήρες: μόνο πεζά λατινικά, αριθμοί και παύλες (π.χ. studio-name).'
+            }, 400, corsHeaders);
+          }
+          if (password.length < 8) {
+            return jsonResponse({ error: 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες' }, 400, corsHeaders);
+          }
+
+          const existing = await env.DB.prepare('SELECT business_code FROM tenants WHERE business_code = ?').bind(business_code).first();
+          if (existing) {
+            return jsonResponse({ error: 'Ο κωδικός επιχείρησης χρησιμοποιείται ήδη!' }, 400, corsHeaders);
+          }
+
+          const { hash, salt } = await hashPassword(password);
+          const finalWorkDays = (data.work_days && data.work_days.length > 0) ? data.work_days : [1, 2, 3, 4, 5];
+          const finalWorkingHours = normalizeWorkingHours(data.working_hours);
+          const finalServices = (data.services && data.services.length > 0) ? normalizeServices(data.services) : [
+            { name: 'Classic Massage', duration: 60, price: 40 },
+            { name: 'Deep Tissue', duration: 60, price: 50 }
+          ];
+
+          await env.DB.prepare(`
+            INSERT INTO tenants (business_code, name, email, phone, address, password_hash, password_salt, logo_url, brand_color, work_days, working_hours, services_json, telegram_chat_id, buffer_minutes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            business_code,
+            name,
+            data.email || '',
+            data.phone || '',
+            data.address || '',
+            hash,
+            salt,
+            data.logo_url || '',
+            data.brand_color || '#4f46e5',
+            JSON.stringify(finalWorkDays),
+            JSON.stringify(finalWorkingHours),
+            JSON.stringify(finalServices),
+            '',
+            data.buffer_minutes || 0
+          ).run();
+
+          const intake = await applyIntakeSettings(env, business_code, data);
+          if (!intake.ok) {
+            return jsonResponse({
+              success: true,
+              business_code,
+              message: 'Η επιχείρηση δημιουργήθηκε. Τρέξε το migration 0004_intake_mode.sql για δήλωση ενδιαφέροντος.'
+            }, 200, corsHeaders);
+          }
+
+          return jsonResponse({ success: true, business_code, message: 'Η επιχείρηση δημιουργήθηκε με επιτυχία!' }, 200, corsHeaders);
         }
 
-        function selectedTimeValue() {
-            if (!timeHourSelect.value || !timeMinuteSelect.value) return '';
-            return `${timeHourSelect.value}:${timeMinuteSelect.value}`;
-        }
-
-        function resetTimePickers(hourLabel = 'Ώρα') {
-            timeHourSelect.innerHTML = `<option value="">${hourLabel}</option>`;
-            timeHourSelect.disabled = true;
-            timeHourSelect.classList.add('bg-gray-50');
-            timeMinuteSelect.innerHTML = '<option value="">--</option><option value="00">00</option><option value="30">30</option>';
-            timeMinuteSelect.value = '';
-            timeMinuteSelect.disabled = true;
-            timeMinuteSelect.classList.add('bg-gray-50');
-            availableSlots = [];
-        }
-
-        function refreshMinuteOptions() {
-            const hour = timeHourSelect.value;
-            const minutes = availableSlots
-                .filter(slot => slot.startsWith(`${hour}:`))
-                .map(slot => slot.slice(3));
-            timeMinuteSelect.innerHTML = '<option value="">--</option>';
-            ['00', '30'].forEach(min => {
-                if (minutes.includes(min)) {
-                    const opt = document.createElement('option');
-                    opt.value = min;
-                    opt.textContent = min;
-                    timeMinuteSelect.appendChild(opt);
-                }
+        if (path === '/api/super-admin/reset-password' && request.method === 'POST') {
+          const resetLimit = consumeRateLimit(`sa-reset:${clientIp(request)}`, 10, 15 * 60 * 1000);
+          if (!resetLimit.ok) {
+            return jsonResponse({ error: 'Πολλά reset κωδικών. Δοκιμάστε σε λίγο.' }, 429, {
+              ...corsHeaders,
+              'Retry-After': String(resetLimit.retryAfter)
             });
-            timeMinuteSelect.disabled = !hour || timeMinuteSelect.options.length < 2;
-            if (timeMinuteSelect.disabled) timeMinuteSelect.classList.add('bg-gray-50');
-            else timeMinuteSelect.classList.remove('bg-gray-50');
-        }
-        // Guards against a slow /availability response landing after the user
-        // has already changed the date or service (stale-response race condition).
-        let availabilityRequestId = 0;
+          }
 
-        const timeToMinutes = (timeStr) => {
-            const [h, m] = timeStr.split(':').map(Number);
-            return h * 60 + m;
-        };
+          const data = await request.json();
+          const business_code = String(data.business_code || '').trim();
+          const password = String(data.password || '');
+          if (!business_code || !password) {
+            return jsonResponse({ error: 'Απαιτούνται business_code και νέος κωδικός' }, 400, corsHeaders);
+          }
+          if (password.length < 8) {
+            return jsonResponse({ error: 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες' }, 400, corsHeaders);
+          }
 
-        const minutesToTime = (totalMins) => {
-            const h = Math.floor(totalMins / 60).toString().padStart(2, '0');
-            const m = (totalMins % 60).toString().padStart(2, '0');
-            return `${h}:${m}`;
-        };
+          const tenant = await env.DB.prepare('SELECT business_code FROM tenants WHERE business_code = ?').bind(business_code).first();
+          if (!tenant) {
+            return jsonResponse({ error: 'Η επιχείρηση δεν βρέθηκε' }, 404, corsHeaders);
+          }
 
-        // Μετατρέπει working_hours + work_days του tenant σε λίστα διαστημάτων
-        // (σε λεπτά) για τη συγκεκριμένη ημερομηνία, ή [] αν η μέρα είναι κλειστή.
-        function shiftsForWeekday(workingHours, dayOfWeek) {
-            const fallback = [{ start: '09:00', end: '21:00' }];
-            if (Array.isArray(workingHours) && workingHours.length > 0) return workingHours;
-            if (workingHours && typeof workingHours === 'object') {
-                const key = String(dayOfWeek);
-                const list = workingHours[key] || (workingHours.by_day && workingHours.by_day[key]);
-                if (Array.isArray(list) && list.length > 0) return list;
-                if (Array.isArray(workingHours.shared) && workingHours.shared.length > 0) return workingHours.shared;
-                return [];
-            }
-            return fallback;
+          const { hash, salt } = await hashPassword(password);
+          await env.DB.prepare(
+            'UPDATE tenants SET password_hash = ?, password_salt = ? WHERE business_code = ?'
+          ).bind(hash, salt, business_code).run();
+
+          return jsonResponse({ success: true, message: 'Ο κωδικός ενημερώθηκε.' }, 200, corsHeaders);
         }
 
-        function getShiftsForDate(dateStr) {
-            const workDays = (businessData && businessData.work_days && businessData.work_days.length > 0)
-                ? businessData.work_days
-                : [1, 2, 3, 4, 5];
+        if (path === '/api/super-admin/set-active' && request.method === 'POST') {
+          const pauseLimit = consumeRateLimit(`sa-pause:${clientIp(request)}`, 20, 15 * 60 * 1000);
+          if (!pauseLimit.ok) {
+            return jsonResponse({ error: 'Πολλά αιτήματα. Δοκιμάστε σε λίγο.' }, 429, {
+              ...corsHeaders,
+              'Retry-After': String(pauseLimit.retryAfter)
+            });
+          }
 
-            const [y, m, d] = dateStr.split('-').map(Number);
-            const dayOfWeek = new Date(y, m - 1, d).getDay();
+          const data = await request.json();
+          const business_code = String(data.business_code || '').trim();
+          if (!business_code) {
+            return jsonResponse({ error: 'Απαιτείται business_code' }, 400, corsHeaders);
+          }
 
-            if (!workDays.map(Number).includes(dayOfWeek)) return [];
+          const tenant = await env.DB.prepare('SELECT business_code FROM tenants WHERE business_code = ?').bind(business_code).first();
+          if (!tenant) {
+            return jsonResponse({ error: 'Η επιχείρηση δεν βρέθηκε' }, 404, corsHeaders);
+          }
 
-            return shiftsForWeekday(businessData && businessData.working_hours, dayOfWeek).map(sh => ({
-                start: timeToMinutes(sh.start),
-                end: timeToMinutes(sh.end)
-            }));
+          const isActive = data.is_active === true || data.is_active === 1 || data.is_active === '1';
+          try {
+            await env.DB.prepare(
+              'UPDATE tenants SET is_active = ? WHERE business_code = ?'
+            ).bind(isActive ? 1 : 0, business_code).run();
+          } catch (err) {
+            return jsonResponse({
+              error: 'Λείπει η στήλη is_active. Τρέξε το migration 0003_tenant_is_active.sql στη D1.'
+            }, 500, corsHeaders);
+          }
+
+          return jsonResponse({
+            success: true,
+            business_code,
+            is_active: isActive,
+            message: isActive ? 'Η επιχείρηση ενεργοποιήθηκε.' : 'Η επιχείρηση μπήκε σε παύση.'
+          }, 200, corsHeaders);
         }
 
-        async function initPage() {
-            if (!business_code) {
-                initialLoader.classList.add('hidden');
-                document.getElementById('loadingError').textContent = 'Δεν καθορίστηκε επιχείρηση (Missing business_code).';
-                document.getElementById('loadingError').classList.remove('hidden');
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/${business_code}/info`);
-                let payload = {};
-                try { payload = await res.json(); } catch (e) {}
-                if (!res.ok) {
-                    throw new Error(payload.error || 'Η επιχείρηση δεν βρέθηκε.');
-                }
-
-                businessData = payload;
-
-                applyClientTheme(businessData.client_theme || 'light');
-
-                if (businessData.brand_color) {
-                    document.documentElement.style.setProperty('--brand-color', businessData.brand_color);
-                }
-                document.getElementById('businessName').textContent = businessData.name;
-                document.getElementById('pageTitle').textContent = `Κράτηση Ραντεβού | ${businessData.name}`;
-                const businessLogo = document.getElementById('businessLogo');
-                businessLogo.src = businessData.logo_url || 'demo-logo.svg';
-                businessLogo.alt = `Λογότυπο ${businessData.name}`;
-                businessLogo.onerror = () => {
-                    businessLogo.onerror = null;
-                    businessLogo.src = 'demo-logo.svg';
-                };
-                document.getElementById('businessSubtitle').textContent =
-                    businessData.booking_subtitle || 'Κλείστε το ραντεβού σας εύκολα και γρήγορα';
-                const welcomeText = document.getElementById('welcomeText');
-                if (businessData.welcome_text) {
-                    welcomeText.textContent = businessData.welcome_text;
-                    welcomeText.classList.remove('hidden');
-                } else {
-                    welcomeText.classList.add('hidden');
-                }
-
-                if (businessData.address) {
-                    const addrLink = document.getElementById('businessAddress');
-                    addrLink.textContent = businessData.address;
-                    addrLink.href = `https://maps.google.com/?q=${encodeURIComponent(businessData.address)}`;
-                    document.getElementById('businessMeta').classList.remove('hidden');
-                }
-                if (businessData.phone) {
-                    const phoneLink = document.getElementById('businessPhone');
-                    phoneLink.textContent = businessData.phone;
-                    phoneLink.href = `tel:${businessData.phone}`;
-                    document.getElementById('businessMeta').classList.remove('hidden');
-                }
-
-                fp.set('disable', [(date) => {
-                    const workDays = (businessData.work_days && businessData.work_days.length > 0)
-                        ? businessData.work_days.map(Number)
-                        : [1, 2, 3, 4, 5];
-                    return !workDays.includes(date.getDay());
-                }]);
-
-                businessHeader.classList.remove('hidden');
-
-                (businessData.services || []).forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.name;
-                    opt.setAttribute('data-duration', s.duration || 60);
-                    opt.textContent = formatServiceLabel(s);
-                    serviceSelect.appendChild(opt);
-                });
-
-                initialLoader.classList.add('hidden');
-                bookingForm.classList.remove('hidden');
-
-                if (isRequestMode()) {
-                    document.getElementById('timeLabel').textContent = 'Προτιμώμενη ώρα *';
-                    slotHint.textContent = 'Δεν κλείνει ώρα. Προτείνετε μέρα και ώρα· θα επικοινωνήσουμε για επιβεβαίωση.';
-                    document.getElementById('submitBtnText').textContent = 'Δήλωση ενδιαφέροντος';
-                    if (!businessData.booking_subtitle) {
-                        document.getElementById('businessSubtitle').textContent = 'Δηλώστε ενδιαφέρον για μέρα και ώρα';
-                    }
-                }
-
-            } catch (err) {
-                initialLoader.classList.add('hidden');
-                const errorEl = document.getElementById('loadingError');
-                errorEl.textContent = err.message || 'Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.';
-                errorEl.classList.remove('hidden');
-            }
+        if (path === '/api/super-admin/tenant' && request.method === 'GET') {
+          const code = String(url.searchParams.get('code') || '').trim();
+          if (!code) {
+            return jsonResponse({ error: 'Απαιτείται code' }, 400, corsHeaders);
+          }
+          const tenant = await env.DB.prepare('SELECT * FROM tenants WHERE business_code = ?').bind(code).first();
+          if (!tenant) {
+            return jsonResponse({ error: 'Η επιχείρηση δεν βρέθηκε' }, 404, corsHeaders);
+          }
+          return jsonResponse({ tenant: serializeTenantSettings(tenant) }, 200, corsHeaders);
         }
 
-        const fp = flatpickr(dateInput, {
-            locale: 'gr',
-            dateFormat: 'Y-m-d',
-            minDate: 'today',
-            onChange: function (selectedDates, dateStr) {
-                if (dateStr && serviceSelect.value) {
-                    fetchAvailableSlots(dateStr);
-                }
-            }
-        });
+        if (path === '/api/super-admin/update-tenant' && request.method === 'POST') {
+          const updateLimit = consumeRateLimit(`sa-update:${clientIp(request)}`, 20, 15 * 60 * 1000);
+          if (!updateLimit.ok) {
+            return jsonResponse({ error: 'Πολλά αιτήματα. Δοκιμάστε σε λίγο.' }, 429, {
+              ...corsHeaders,
+              'Retry-After': String(updateLimit.retryAfter)
+            });
+          }
 
-        serviceSelect.addEventListener('change', () => {
-            if (dateInput.value) {
-                fetchAvailableSlots(dateInput.value);
-            }
-        });
+          const data = await request.json();
+          const business_code = String(data.business_code || '').trim();
+          const name = String(data.name || '').trim();
+          if (!business_code || !name) {
+            return jsonResponse({ error: 'Απαιτούνται business_code και όνομα' }, 400, corsHeaders);
+          }
 
-        timeHourSelect.addEventListener('change', refreshMinuteOptions);
+          const tenant = await env.DB.prepare('SELECT * FROM tenants WHERE business_code = ?').bind(business_code).first();
+          if (!tenant) {
+            return jsonResponse({ error: 'Η επιχείρηση δεν βρέθηκε' }, 404, corsHeaders);
+          }
 
-        async function fetchAvailableSlots(dateStr) {
-            const requestId = ++availabilityRequestId;
-            waitlistMode = false;
-            resetTimePickers('Υπολογισμός...');
-            slotHint.textContent = 'Παρακαλώ περιμένετε...';
-            slotHint.className = 'text-xs text-gray-400 mt-1';
+          const password = String(data.password || '');
+          if (password && password.length < 8) {
+            return jsonResponse({ error: 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες' }, 400, corsHeaders);
+          }
 
-            if (isRequestMode()) {
-                if (requestId !== availabilityRequestId) return;
-                fillPreferredTimes('Προτιμώμενη ώρα μέσα στο ωράριο — δεν δεσμεύεται αυτόματα.', false, dateStr);
-                return;
-            }
+          const allowedThemes = ['light', 'dark', 'warm', 'ocean'];
+          const clientTheme = allowedThemes.includes(data.client_theme) ? data.client_theme : (tenant.client_theme || 'light');
 
-            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-            const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
-            const bufferMinutes = (businessData && businessData.buffer_minutes) || 0;
+          let workDaysJson = tenant.work_days;
+          let hoursJson = tenant.working_hours;
+          let servicesJson = tenant.services_json;
+          let bufferMinutes = tenant.buffer_minutes || 0;
+          let logoUrl = tenant.logo_url || '';
+          let brandColor = tenant.brand_color || '#4f46e5';
 
-            const shifts = getShiftsForDate(dateStr);
-            if (shifts.length === 0) {
-                if (requestId !== availabilityRequestId) return;
-                resetTimePickers('Κλειστό');
-                slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
-                slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
-                return;
-            }
+          if (data.keep_hours !== true) {
+            workDaysJson = JSON.stringify((data.work_days && data.work_days.length > 0) ? data.work_days : [1, 2, 3, 4, 5]);
+            hoursJson = JSON.stringify(normalizeWorkingHours(data.working_hours));
+            bufferMinutes = data.buffer_minutes || 0;
+          }
+          if (data.keep_services !== true) {
+            servicesJson = JSON.stringify(normalizeServices(data.services));
+          }
+          if (data.keep_branding !== true) {
+            logoUrl = data.logo_url || '';
+            brandColor = data.brand_color || '#4f46e5';
+          }
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/${business_code}/availability?date=${dateStr}`);
-                if (!response.ok) throw new Error('Availability request failed');
-                const data = await response.json();
+          await env.DB.prepare(`
+            UPDATE tenants
+            SET name = ?, email = ?, phone = ?, address = ?, logo_url = ?, brand_color = ?, client_theme = ?,
+                booking_subtitle = ?, welcome_text = ?, success_message = ?,
+                work_days = ?, working_hours = ?, services_json = ?, buffer_minutes = ?
+            WHERE business_code = ?
+          `).bind(
+            name,
+            data.email || '',
+            data.phone || '',
+            data.address || '',
+            logoUrl,
+            brandColor,
+            clientTheme,
+            String(data.booking_subtitle || '').trim().slice(0, 120),
+            String(data.welcome_text || '').trim().slice(0, 240),
+            String(data.success_message || '').trim().slice(0, 160),
+            workDaysJson,
+            hoursJson,
+            servicesJson,
+            bufferMinutes,
+            business_code
+          ).run();
 
-                if (requestId !== availabilityRequestId) return;
+          if (password) {
+            const { hash, salt } = await hashPassword(password);
+            await env.DB.prepare(
+              'UPDATE tenants SET password_hash = ?, password_salt = ? WHERE business_code = ?'
+            ).bind(hash, salt, business_code).run();
+          }
 
-                const occupied = data.occupied || [];
-                const stepMinutes = 30;
-                let freeSlots = [];
+          const intake = await applyIntakeSettings(env, business_code, data);
+          if (!intake.ok) {
+            return jsonResponse({ error: intake.error }, 500, corsHeaders);
+          }
 
-                shifts.forEach(shift => {
-                    const alignedStart = Math.ceil(shift.start / stepMinutes) * stepMinutes;
-                    for (let currentMins = alignedStart; currentMins + duration <= shift.end; currentMins += stepMinutes) {
-                        const slotStartMins = currentMins;
-                        const slotEndMins = currentMins + duration + bufferMinutes;
-
-                        const isOverlapping = occupied.some(occ => {
-                            const occStart = timeToMinutes(occ.start_time);
-                            const occEnd = timeToMinutes(occ.end_time);
-                            return (slotStartMins < occEnd && slotEndMins > occStart);
-                        });
-
-                        if (!isOverlapping) {
-                            freeSlots.push(minutesToTime(slotStartMins));
-                        }
-                    }
-                });
-
-                freeSlots = [...new Set(freeSlots)].sort();
-                availableSlots = freeSlots;
-
-                if (freeSlots.length === 0) {
-                    if (waitlistAllowed()) {
-                        fillPreferredTimes('Δεν υπάρχει διαθέσιμη ώρα. Μπορείτε να δηλώσετε ενδιαφέρον σε περίπτωση ακύρωσης.', true, dateStr);
-                        return;
-                    }
-                    resetTimePickers('—');
-                    slotHint.textContent = 'Η ημέρα είναι πλήρης.';
-                    slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
-                    return;
-                }
-
-                const hours = [...new Set(freeSlots.map(slot => slot.slice(0, 2)))];
-                timeHourSelect.innerHTML = '<option value="">Ώρα</option>';
-                hours.forEach(hour => {
-                    const opt = document.createElement('option');
-                    opt.value = hour;
-                    opt.textContent = hour;
-                    timeHourSelect.appendChild(opt);
-                });
-                timeHourSelect.disabled = false;
-                timeHourSelect.classList.remove('bg-gray-50');
-                refreshMinuteOptions();
-                slotHint.textContent = `Διαθέσιμες ώρες: ${freeSlots.length} (ανά μισάωρο).`;
-                slotHint.className = 'text-xs text-green-600 mt-1 font-medium';
-
-            } catch (err) {
-                if (requestId !== availabilityRequestId) return;
-                resetTimePickers('Σφάλμα');
-                slotHint.textContent = 'Αποτυχία σύνδεσης με τον διακομιστή.';
-                slotHint.className = 'text-xs text-red-600 mt-1 font-medium';
-            }
+          return jsonResponse({ success: true, business_code, message: 'Οι ρυθμίσεις ενημερώθηκαν.' }, 200, corsHeaders);
         }
 
-        function generateGoogleCalendarUrl(serviceName, dateStr, timeStr, durationMinutes) {
-            const cleanDate = dateStr.replace(/-/g, '');
-            const startCleanTime = timeStr.replace(/:/g, '') + '00';
+        return jsonResponse({ error: 'Super-admin action not found' }, 404, corsHeaders);
+      }
 
-            const startMins = timeToMinutes(timeStr);
-            const endMins = startMins + durationMinutes;
-            const endCleanTime = minutesToTime(endMins).replace(/:/g, '') + '00';
-
-            const startDateTime = `${cleanDate}T${startCleanTime}`;
-            const endDateTime = `${cleanDate}T${endCleanTime}`;
-
-            const title = encodeURIComponent(`Ραντεβού: ${serviceName} (${businessData?.name || ''})`);
-            const details = encodeURIComponent(`Κράτηση ραντεβού μέσω ${businessData?.name || 'πλατφόρμας'}.`);
-            const location = encodeURIComponent(businessData?.address || '');
-
-            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}&ctz=Europe/Athens`;
+      // Public: Info επιχείρησης (με πλήρη υποστήριξη working_hours & buffer)
+      const infoMatch = path.match(/^\/api\/([^\/]+)\/info$/);
+      if (infoMatch && request.method === 'GET') {
+        const business_code = infoMatch[1];
+        const tenant = await env.DB.prepare('SELECT * FROM tenants WHERE business_code = ?').bind(business_code).first();
+        if (!tenant) return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
+        if (!tenantIsActive(tenant)) {
+          return jsonResponse({ error: 'Η επιχείρηση δεν δέχεται κρατήσεις αυτή τη στιγμή.' }, 403, corsHeaders);
         }
 
-        bookingForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        let services = [
+          { name: 'Classic Massage', duration: 60, price: 40 },
+          { name: 'Deep Tissue', duration: 60, price: 50 }
+        ];
+        let working_hours = [{ start: "09:00", end: "21:00" }];
+        let work_days = [1, 2, 3, 4, 5];
 
-            if (document.getElementById('website').value !== '') return;
+        try {
+          if (tenant.services_json) services = JSON.parse(tenant.services_json);
+          if (tenant.working_hours) working_hours = JSON.parse(tenant.working_hours);
+          if (tenant.work_days) work_days = JSON.parse(tenant.work_days);
+        } catch (e) {}
 
-            // Πρόσθετος client-side έλεγχος: αν δεν έχει επιλεγεί έγκυρη ώρα, μην στείλεις.
-            if (!selectedTimeValue() || !availableSlots.includes(selectedTimeValue())) {
-                responseContainer.classList.remove('hidden');
-                gcalBtn.classList.add('hidden');
-                responseMessage.className = 'text-sm font-medium text-red-600 mb-3';
-                responseMessage.textContent = 'Παρακαλώ επιλέξτε διαθέσιμη ώρα (π.χ. 18:00 ή 18:30).';
-                return;
+        return jsonResponse({
+          name: tenant.name,
+          business_code: tenant.business_code,
+          email: tenant.email || '',
+          phone: tenant.phone || '',
+          address: tenant.address || '',
+          logo_url: tenant.logo_url || '',
+          brand_color: tenant.brand_color || '#4f46e5',
+          client_theme: tenant.client_theme || 'light',
+          booking_subtitle: tenant.booking_subtitle || '',
+          welcome_text: tenant.welcome_text || '',
+          success_message: tenant.success_message || '',
+          work_days: work_days,
+          working_hours: working_hours,
+          buffer_minutes: tenant.buffer_minutes || 0,
+          intake_mode: intakeModeOf(tenant),
+          waitlist_enabled: waitlistEnabled(tenant),
+          daily_cap: dailyCapOf(tenant),
+          services
+        }, 200, corsHeaders);
+      }
+
+      // Public: Διαθεσιμότητα ωρών για συγκεκριμένη ημερομηνία
+      const availMatch = path.match(/^\/api\/([^\/]+)\/availability$/);
+      if (availMatch && request.method === 'GET') {
+        const business_code = availMatch[1];
+        const tenant = await env.DB.prepare('SELECT * FROM tenants WHERE business_code = ?').bind(business_code).first();
+        if (!tenant) return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
+        if (!tenantIsActive(tenant)) {
+          return jsonResponse({ error: 'Η επιχείρηση δεν δέχεται κρατήσεις αυτή τη στιγμή.' }, 403, corsHeaders);
+        }
+
+        const date = url.searchParams.get('date');
+        if (!date) return jsonResponse({ error: 'Missing date parameter' }, 400, corsHeaders);
+
+        const { results } = await env.DB.prepare(
+          `SELECT start_time, end_time, status FROM appointments
+           WHERE business_code = ? AND date = ? AND status IN ('BOOKED', 'PENDING', 'BLOCKED', 'CONFIRMED')`
+        ).bind(business_code, date).all();
+        const occupied = results || [];
+        const cap = dailyCapOf(tenant);
+        const bookedCount = occupied.filter((row) => row.status === 'BOOKED' || row.status === 'CONFIRMED').length;
+
+        return jsonResponse({
+          occupied: occupied.map((row) => ({ start_time: row.start_time, end_time: row.end_time })),
+          daily_cap: cap,
+          booked_count: bookedCount,
+          day_full: cap > 0 && bookedCount >= cap,
+          waitlist_enabled: waitlistEnabled(tenant)
+        }, 200, corsHeaders);
+      }
+
+// Public: Δημιουργία κράτησης από πελάτη (με Race Condition protection & Notes/Instagram)
+      const bookMatch = path.match(/^\/api\/([^\/]+)\/bookings$/);
+      if (bookMatch && request.method === 'POST') {
+        const bookLimit = consumeRateLimit(`book:${clientIp(request)}`, 8, 60 * 60 * 1000);
+        if (!bookLimit.ok) {
+          return jsonResponse({ error: 'Πολλές κρατήσεις από αυτή τη σύνδεση. Δοκιμάστε αργότερα.' }, 429, {
+            ...corsHeaders,
+            'Retry-After': String(bookLimit.retryAfter)
+          });
+        }
+
+        const business_code = bookMatch[1];
+        const tenant = await env.DB.prepare('SELECT * FROM tenants WHERE business_code = ?').bind(business_code).first();
+        if (!tenant) return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
+        if (!tenantIsActive(tenant)) {
+          return jsonResponse({ error: 'Η επιχείρηση δεν δέχεται κρατήσεις αυτή τη στιγμή.' }, 403, corsHeaders);
+        }
+
+        const data = await request.json();
+        
+        // 1. Validation για τα απαραίτητα πεδία
+        if (!data.name || !data.phone || !data.email || !data.date || !data.time || !data.service_name) {
+          return jsonResponse({ error: 'Λείπουν υποχρεωτικά πεδία κράτησης' }, 400, corsHeaders);
+        }
+        if (!isValidEmail(data.email)) {
+          return jsonResponse({ error: 'Μη έγκυρο email' }, 400, corsHeaders);
+        }
+
+        const duration = data.duration || 60;
+        const startTime = data.time;
+        const endTime = calculateEndTime(startTime, duration);
+        const requestMode = intakeModeOf(tenant) === 'request';
+        const allowWaitlist = waitlistEnabled(tenant);
+        const wantsWaitlist = data.waitlist === true;
+
+        if (!isTimeWithinWorkingHours(tenant, data.date, startTime)) {
+          return jsonResponse({ error: 'Η ώρα είναι εκτός ωραρίου λειτουργίας. Επιλέξτε ώρα μέσα στο ωράριο.' }, 400, corsHeaders);
+        }
+
+        const blocking = await env.DB.prepare(`
+          SELECT start_time, end_time, status FROM appointments
+          WHERE business_code = ? AND date = ? AND status IN ('BOOKED', 'PENDING', 'BLOCKED', 'CONFIRMED')
+        `).bind(business_code, data.date).all();
+        const blockingRows = blocking.results || [];
+
+        let status = 'PENDING';
+        const cap = dailyCapOf(tenant);
+        const bookedCount = blockingRows.filter((row) => row.status === 'BOOKED' || row.status === 'CONFIRMED').length;
+        const dayFull = cap > 0 && bookedCount >= cap;
+
+        if (dayFull) {
+          if (!allowWaitlist) {
+            return jsonResponse({ error: 'Η ημέρα έχει ήδη τα ραντεβού που δέχεται. Δοκιμάστε άλλη ημερομηνία.' }, 409, corsHeaders);
+          }
+          status = 'WAITLIST';
+        } else if (!requestMode) {
+          const newStartMins = timeToMinutes(startTime);
+          const newEndMins = timeToMinutes(endTime);
+          const isConflict = blockingRows.some(apt => {
+            const aptStart = timeToMinutes(apt.start_time);
+            const aptEnd = timeToMinutes(apt.end_time);
+            return (newStartMins < aptEnd && newEndMins > aptStart);
+          });
+
+          if (wantsWaitlist && allowWaitlist) {
+            status = 'WAITLIST';
+          } else if (isConflict) {
+            if (allowWaitlist) {
+              status = 'WAITLIST';
+            } else {
+              return jsonResponse({ error: 'Η επιλεγμένη ώρα μόλις κλείστηκε από άλλον πελάτη. Παρακαλώ επιλέξτε άλλη ώρα.' }, 409, corsHeaders);
             }
+          }
+        }
 
-            const submitBtn = document.getElementById('submitBtn');
-            const submitBtnText = document.getElementById('submitBtnText');
-            const submitSpinner = document.getElementById('submitSpinner');
+        const id = 'apt_' + Date.now() + Math.random().toString(36).substring(2, 7);
+        await env.DB.prepare(`
+          INSERT INTO appointments (id, business_code, customer_name, customer_phone, customer_email, instagram, service_name, duration, date, start_time, end_time, status, notes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          id, 
+          business_code, 
+          data.name, 
+          data.phone,
+          String(data.email).trim().toLowerCase(),
+          data.instagram || '', 
+          data.service_name, 
+          duration, 
+          data.date, 
+          startTime, 
+          endTime, 
+          status,
+          data.notes || ''
+        ).run();
 
-            submitBtn.disabled = true;
-            submitBtnText.textContent = 'Αποστολή...';
-            submitSpinner.classList.remove('hidden');
-            responseContainer.classList.add('hidden');
-            gcalBtn.classList.add('hidden');
+        const message = status === 'WAITLIST'
+          ? 'Η δήλωση ενδιαφέροντος καταχωρήθηκε. Θα επικοινωνήσουμε αν υπάρξει διαθέσιμος χρόνος.'
+          : (requestMode
+            ? 'Το ενδιαφέρον καταχωρήθηκε. Θα επικοινωνήσουμε για επιβεβαίωση ώρας.'
+            : 'Η κράτηση καταχωρήθηκε με επιτυχία!');
 
-            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-            const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
-            const dateVal = dateInput.value;
-            const timeVal = selectedTimeValue();
-            const serviceNameVal = serviceSelect.value;
+        return jsonResponse({ success: true, id, status, message }, 200, corsHeaders);
+      }
 
-            const payload = {
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                instagram: document.getElementById('instagram').value,
-                service_name: serviceNameVal,
-                duration: duration,
-                date: dateVal,
-                time: timeVal,
-                notes: document.getElementById('notes').value,
-                waitlist: waitlistMode
-            };
+      // --- ADMIN ENDPOINTS (require a valid session token for this business_code) ---
+      const adminMatch = path.match(/^\/api\/([^\/]+)\/admin\/(.+)$/);
+      if (adminMatch) {
+        const business_code = adminMatch[1];
+        const action = adminMatch[2];
 
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/${business_code}/bookings`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
+        const tenant = await env.DB.prepare('SELECT * FROM tenants WHERE business_code = ?').bind(business_code).first();
+        if (!tenant) return jsonResponse({ error: 'Unauthorized tenant' }, 401, corsHeaders);
 
-                responseContainer.classList.remove('hidden');
-                if (res.ok) {
-                    responseMessage.className = "text-sm font-medium text-green-600 mb-3";
-                    responseMessage.textContent = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
+        if (!env.SESSION_SECRET) {
+          return jsonResponse({ error: 'Server misconfiguration: SESSION_SECRET not set' }, 500, corsHeaders);
+        }
 
-                    if (data.status === 'WAITLIST' || isRequestMode()) {
-                        gcalBtn.classList.add('hidden');
-                    } else {
-                        const gcalUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
-                        gcalBtn.href = gcalUrl;
-                        gcalBtn.classList.remove('hidden');
-                    }
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        const session = await verifySessionToken(token, env.SESSION_SECRET);
 
-                    bookingForm.reset();
-                    resetTimePickers();
-                    waitlistMode = false;
-                    slotHint.textContent = isRequestMode()
-                        ? 'Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.'
-                        : 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
-                    slotHint.className = 'text-xs text-gray-400 mt-1';
-                    document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Δήλωση ενδιαφέροντος' : 'Υποβολή Αιτήματος Κράτησης';
-                    fp.clear();
-                } else {
-                    responseMessage.className = "text-sm font-medium text-red-600 mb-3";
-                    responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
-                }
-            } catch (err) {
-                responseContainer.classList.remove('hidden');
-                responseMessage.className = "text-sm font-medium text-red-600 mb-3";
-                responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
-            } finally {
-                submitBtn.disabled = false;
-                submitBtnText.textContent = 'Υποβολή Αιτήματος Κράτησης';
-                submitSpinner.classList.add('hidden');
-            }
-        });
+        if (!session || session.business_code !== business_code) {
+          return jsonResponse({ error: 'Unauthorized: invalid or expired session' }, 401, corsHeaders);
+        }
 
-        initPage();
-    </script>
-</body>
-</html>
+        if (action === 'appointments' && request.method === 'GET') {
+          const { results } = await env.DB.prepare(
+            'SELECT * FROM appointments WHERE business_code = ? ORDER BY date DESC, start_time DESC'
+          ).bind(business_code).all();
+          return jsonResponse(results, 200, corsHeaders);
+        }
+
+        if (action === 'update-status' && request.method === 'POST') {
+          const { id, status, reason } = await request.json();
+          const allowedStatuses = ['BOOKED', 'REJECTED', 'PENDING', 'WAITLIST'];
+          if (!allowedStatuses.includes(status)) {
+            return jsonResponse({ error: 'Μη έγκυρη κατάσταση' }, 400, corsHeaders);
+          }
+          if (status === 'REJECTED' && !String(reason || '').trim()) {
+            return jsonResponse({ error: 'Απαιτείται λόγος απόρριψης' }, 400, corsHeaders);
+          }
+
+          const statusReason = String(reason || '').trim().slice(0, 400);
+          try {
+            await env.DB.prepare(
+              'UPDATE appointments SET status = ?, status_reason = ? WHERE id = ? AND business_code = ?'
+            ).bind(status, statusReason, id, business_code).run();
+          } catch (err) {
+            if (!/status_reason/i.test(String(err.message || err))) throw err;
+            await env.DB.prepare(
+              'UPDATE appointments SET status = ? WHERE id = ? AND business_code = ?'
+            ).bind(status, id, business_code).run();
+          }
+
+          const appointment = await env.DB.prepare(
+            'SELECT * FROM appointments WHERE id = ? AND business_code = ?'
+          ).bind(id, business_code).first();
+
+          const mail = await notifyCustomerStatus(env, tenant, appointment, status, statusReason);
+          return jsonResponse({ success: true, email_sent: mail.sent, email_error: mail.error || null }, 200, corsHeaders);
+        }
+
+        if (action === 'delete' && request.method === 'POST') {
+          const { id } = await request.json();
+          await env.DB.prepare('DELETE FROM appointments WHERE id = ? AND business_code = ?')
+            .bind(id, business_code).run();
+          return jsonResponse({ success: true }, 200, corsHeaders);
+        }
+
+        if (action === 'bookings' && request.method === 'POST') {
+          const data = await request.json();
+          const id = 'apt_' + Date.now();
+          await env.DB.prepare(`
+            INSERT INTO appointments (id, business_code, customer_name, customer_phone, customer_email, service_name, duration, date, start_time, end_time, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BOOKED')
+          `).bind(
+            id, business_code, data.name, data.phone, data.email || '', data.service_name, data.duration, data.date, data.time, calculateEndTime(data.time, data.duration)
+          ).run();
+          return jsonResponse({ success: true, id }, 200, corsHeaders);
+        }
+
+        if (action === 'block-slot' && request.method === 'POST') {
+          const data = await request.json();
+          const id = 'block_' + Date.now();
+          await env.DB.prepare(`
+            INSERT INTO appointments (id, business_code, customer_name, customer_phone, service_name, duration, date, start_time, end_time, status, notes)
+            VALUES (?, ?, 'BLOCKED', '-', 'Κλειστό Slot', 0, ?, ?, ?, 'BLOCKED', ?)
+          `).bind(
+            id, business_code, data.date, data.start_time, data.end_time, data.reason || 'Μη διαθέσιμο'
+          ).run();
+          return jsonResponse({ success: true, id }, 200, corsHeaders);
+        }
+
+        if (action === 'update-settings' && request.method === 'POST') {
+          const data = await request.json();
+          const allowedThemes = ['light', 'dark', 'warm', 'ocean'];
+          const clientTheme = allowedThemes.includes(data.client_theme) ? data.client_theme : 'light';
+          const bookingSubtitle = String(data.booking_subtitle || '').trim().slice(0, 120);
+          const welcomeText = String(data.welcome_text || '').trim().slice(0, 240);
+          const successMessage = String(data.success_message || '').trim().slice(0, 160);
+
+          await env.DB.prepare(`
+            UPDATE tenants
+            SET name = ?, email = ?, phone = ?, address = ?, logo_url = ?, brand_color = ?, client_theme = ?,
+                booking_subtitle = ?, welcome_text = ?, success_message = ?,
+                work_days = ?, working_hours = ?, services_json = ?, buffer_minutes = ?
+            WHERE business_code = ?
+          `).bind(
+            data.name,
+            data.email || '',
+            data.phone || '',
+            data.address || '',
+            data.logo_url || '',
+            data.brand_color || '#4f46e5',
+            clientTheme,
+            bookingSubtitle,
+            welcomeText,
+            successMessage,
+            JSON.stringify(data.work_days || [1, 2, 3, 4, 5]),
+            JSON.stringify(normalizeWorkingHours(data.working_hours)),
+            JSON.stringify(normalizeServices(data.services)),
+            data.buffer_minutes || 0,
+            business_code
+          ).run();
+
+          return jsonResponse({ success: true, message: 'Οι ρυθμίσεις ενημερώθηκαν με επιτυχία!' }, 200, corsHeaders);
+        }
+
+        if (action === 'change-password' && request.method === 'POST') {
+          const passLimit = consumeRateLimit(`chgpass:${business_code}:${clientIp(request)}`, 6, 15 * 60 * 1000);
+          if (!passLimit.ok) {
+            return jsonResponse({ error: 'Πολλές προσπάθειες αλλαγής κωδικού. Δοκιμάστε σε λίγο.' }, 429, {
+              ...corsHeaders,
+              'Retry-After': String(passLimit.retryAfter)
+            });
+          }
+
+          const data = await request.json();
+          const currentPassword = String(data.current_password || '');
+          const newPassword = String(data.new_password || '');
+          if (!currentPassword || !newPassword) {
+            return jsonResponse({ error: 'Απαιτούνται ο τρέχων και ο νέος κωδικός' }, 400, corsHeaders);
+          }
+          if (newPassword.length < 8) {
+            return jsonResponse({ error: 'Ο νέος κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες' }, 400, corsHeaders);
+          }
+          if (currentPassword === newPassword) {
+            return jsonResponse({ error: 'Ο νέος κωδικός πρέπει να είναι διαφορετικός' }, 400, corsHeaders);
+          }
+
+          const valid = await verifyPassword(currentPassword, tenant.password_hash, tenant.password_salt);
+          if (!valid) {
+            return jsonResponse({ error: 'Λάθος τρέχων κωδικός' }, 403, corsHeaders);
+          }
+
+          const { hash, salt } = await hashPassword(newPassword);
+          await env.DB.prepare(
+            'UPDATE tenants SET password_hash = ?, password_salt = ? WHERE business_code = ?'
+          ).bind(hash, salt, business_code).run();
+
+          return jsonResponse({ success: true, message: 'Ο κωδικός άλλαξε.' }, 200, corsHeaders);
+        }
+
+        return jsonResponse({ error: 'Admin action not found' }, 404, corsHeaders);
+      } // <-- Εδώ κλείνει το if (adminMatch)
+
+      return jsonResponse({ error: 'Endpoint not found' }, 404, corsHeaders);
+
+    } catch (err) {
+      return jsonResponse({ error: err.message }, 500, corsHeaders);
+    }
+  }
+};
+
+function jsonResponse(data, status = 200, headers = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...headers }
+  });
+}
+
+function normalizeWorkingHours(value) {
+  if (Array.isArray(value) && value.length > 0) return value;
+  if (value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0) {
+    return value;
+  }
+  return [{ start: '09:00', end: '21:00' }];
+}
+
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://tonisdev.github.io',
+  'https://bookings-service.gr',
+  'https://www.bookings-service.gr'
+];
+
+function allowedOrigins(env) {
+  if (env && env.ALLOWED_ORIGINS) {
+    return String(env.ALLOWED_ORIGINS).split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return DEFAULT_ALLOWED_ORIGINS;
+}
+
+function corsHeadersFor(request, env) {
+  const origin = request.headers.get('Origin') || '';
+  const headers = {
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin'
+  };
+  if (origin && isAllowedOrigin(origin, env)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+  return headers;
+}
+
+function isAllowedOrigin(origin, env) {
+  if (!origin) return false;
+  if (allowedOrigins(env).includes(origin)) return true;
+  try {
+    const parsed = new URL(origin);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1');
+  } catch (err) {
+    return false;
+  }
+}
+
+function requireSuperAdmin(request, env, corsHeaders) {
+  if (!env.SUPER_ADMIN_KEY) {
+    return jsonResponse({ error: 'Server misconfiguration: SUPER_ADMIN_KEY not set' }, 500, corsHeaders);
+  }
+  const providedKey = request.headers.get('X-Admin-Key') || '';
+  if (!timingSafeEqual(providedKey, env.SUPER_ADMIN_KEY)) {
+    return jsonResponse({ error: 'Unauthorized' }, 401, corsHeaders);
+  }
+  return null;
+}
+
+function isValidBusinessCode(code) {
+  return typeof code === 'string' && code.length >= 2 && code.length <= 48 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code);
+}
+
+function normalizeServices(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map((s) => {
+    const name = String((s && s.name) || '').trim();
+    if (!name) return null;
+    const item = {
+      name,
+      duration: parseInt(s.duration, 10) || 60
+    };
+    if (s.price !== null && s.price !== undefined && s.price !== '') {
+      const n = Number(s.price);
+      if (Number.isFinite(n) && n > 0) item.price = n;
+    }
+    return item;
+  }).filter(Boolean);
+}
+
+function tenantIsActive(tenant) {
+  if (!tenant) return false;
+  if (tenant.is_active === undefined || tenant.is_active === null) return true;
+  return Number(tenant.is_active) !== 0;
+}
+
+function serializeTenantSettings(tenant) {
+  let services = [];
+  let working_hours = [{ start: '09:00', end: '21:00' }];
+  let work_days = [1, 2, 3, 4, 5];
+  try {
+    if (tenant.services_json) services = JSON.parse(tenant.services_json);
+    if (tenant.working_hours) working_hours = JSON.parse(tenant.working_hours);
+    if (tenant.work_days) work_days = JSON.parse(tenant.work_days);
+  } catch (e) {}
+  return {
+    business_code: tenant.business_code,
+    name: tenant.name || '',
+    email: tenant.email || '',
+    phone: tenant.phone || '',
+    address: tenant.address || '',
+    logo_url: tenant.logo_url || '',
+    brand_color: tenant.brand_color || '#4f46e5',
+    client_theme: tenant.client_theme || 'light',
+    booking_subtitle: tenant.booking_subtitle || '',
+    welcome_text: tenant.welcome_text || '',
+    success_message: tenant.success_message || '',
+    work_days,
+    working_hours,
+    buffer_minutes: tenant.buffer_minutes || 0,
+    services,
+    is_active: tenantIsActive(tenant),
+    intake_mode: intakeModeOf(tenant),
+    waitlist_enabled: waitlistEnabled(tenant),
+    daily_cap: dailyCapOf(tenant)
+  };
+}
+
+function intakeModeOf(tenant) {
+  return tenant && tenant.intake_mode === 'request' ? 'request' : 'slots';
+}
+
+function waitlistEnabled(tenant) {
+  return Boolean(tenant) && Number(tenant.waitlist_enabled) === 1;
+}
+
+function dailyCapOf(tenant) {
+  const n = Number(tenant && tenant.daily_cap);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(20, Math.floor(n));
+}
+
+async function applyIntakeSettings(env, business_code, data) {
+  const mode = data && data.intake_mode === 'request' ? 'request' : 'slots';
+  const waitlist = data && (data.waitlist_enabled === true || data.waitlist_enabled === 1 || data.waitlist_enabled === '1') ? 1 : 0;
+  let cap = parseInt(data && data.daily_cap, 10);
+  if (!Number.isFinite(cap) || cap < 0) cap = 0;
+  if (cap > 20) cap = 20;
+  try {
+    await env.DB.prepare(
+      'UPDATE tenants SET intake_mode = ?, waitlist_enabled = ?, daily_cap = ? WHERE business_code = ?'
+    ).bind(mode, waitlist, cap, business_code).run();
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error: 'Λείπουν οι στήλες intake. Τρέξε το migration 0004_intake_mode.sql στη D1.'
+    };
+  }
+}
+
+function clientIp(request) {
+  return request.headers.get('CF-Connecting-IP') || 'unknown';
+}
+
+const rateLimitBuckets = new Map();
+
+function consumeRateLimit(key, limit, windowMs) {
+  const now = Date.now();
+  const current = rateLimitBuckets.get(key);
+  if (!current || now >= current.resetAt) {
+    rateLimitBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { ok: true };
+  }
+  if (current.count >= limit) {
+    return { ok: false, retryAfter: Math.max(1, Math.ceil((current.resetAt - now) / 1000)) };
+  }
+  current.count += 1;
+  return { ok: true };
+}
+
+function isValidEmail(value) {
+  const email = String(value || '').trim();
+  return email.length > 4 && email.length < 160 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function notifyCustomerStatus(env, tenant, appointment, status, reason) {
+  if (!appointment || !isValidEmail(appointment.customer_email)) {
+    return { sent: false, error: 'missing_email' };
+  }
+  if (status !== 'BOOKED' && status !== 'REJECTED') {
+    return { sent: false, error: null };
+  }
+  if (!env.RESEND_API_KEY) {
+    return { sent: false, error: 'RESEND_API_KEY not set' };
+  }
+
+  const businessName = tenant?.name || 'η επιχείρηση';
+  const when = `${appointment.date} ${appointment.start_time || ''}`.trim();
+  const approved = status === 'BOOKED';
+  const subject = approved
+    ? `Το ραντεβού σας εγκρίθηκε — ${businessName}`
+    : `Το ραντεβού σας απορρίφθηκε — ${businessName}`;
+  const reasonHtml = reason
+    ? `<p><strong>Σχόλιο:</strong> ${escapeHtml(reason)}</p>`
+    : '';
+  const html = `
+    <p>Γεια σας ${escapeHtml(appointment.customer_name || '')},</p>
+    <p>Το αίτημα κράτησης για <strong>${escapeHtml(appointment.service_name || 'υπηρεσία')}</strong>
+    στις <strong>${escapeHtml(when)}</strong> ${approved ? 'εγκρίθηκε' : 'απορρίφθηκε'}.</p>
+    ${reasonHtml}
+    <p>${escapeHtml(businessName)}</p>
+  `;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: env.MAIL_FROM || 'Bookings <noreply@bookings-service.gr>',
+        to: [appointment.customer_email],
+        subject,
+        html
+      })
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      return { sent: false, error: body.slice(0, 180) };
+    }
+    return { sent: true, error: null };
+  } catch (err) {
+    return { sent: false, error: err.message };
+  }
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function calculateEndTime(startTime, durationMinutes) {
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const totalMins = hours * 60 + minutes + durationMinutes;
+  const newH = Math.floor(totalMins / 60) % 24;
+  const newM = totalMins % 60;
+  return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+}
+
+// Converts a time string like "14:30" into total minutes from midnight
+function timeToMinutes(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return 0;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return (hours || 0) * 60 + (minutes || 0);
+}
+
+function isTimeWithinWorkingHours(tenant, dateStr, timeStr) {
+  let workDays = [1, 2, 3, 4, 5];
+  let hours = [{ start: '09:00', end: '21:00' }];
+  try {
+    if (tenant && tenant.work_days) workDays = JSON.parse(tenant.work_days);
+    if (tenant && tenant.working_hours) hours = JSON.parse(tenant.working_hours);
+  } catch (e) {}
+  const [y, m, d] = String(dateStr || '').split('-').map(Number);
+  const day = new Date(y, m - 1, d).getDay();
+  if (!workDays.map(Number).includes(day)) return false;
+  const mins = timeToMinutes(timeStr);
+  const shifts = Array.isArray(hours) ? hours : (hours[String(day)] || []);
+  return shifts.some((sh) => mins >= timeToMinutes(sh.start) && mins < timeToMinutes(sh.end));
+}
+
+function hexToUint8Array(hexString) {
+  const bytes = new Uint8Array(hexString.length / 2);
+  for (let i = 0; i < hexString.length; i += 2) {
+    bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+  }
+  return bytes;
+}
+
+// Σταθερού-χρόνου σύγκριση strings, ώστε να μην διαρρέει πληροφορία μέσω timing attacks.
+function timingSafeEqual(a, b) {
+  const strA = String(a);
+  const strB = String(b);
+  if (strA.length !== strB.length) return false;
+  let result = 0;
+  for (let i = 0; i < strA.length; i++) {
+    result |= strA.charCodeAt(i) ^ strB.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial, 256
+  );
+  const hashHex = Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return { hash: hashHex, salt: saltHex };
+}
+
+async function verifyPassword(password, storedHashHex, storedSaltHex) {
+  const encoder = new TextEncoder();
+  const salt = hexToUint8Array(storedSaltHex);
+
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial, 256
+  );
+  const computedHashHex = Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return computedHashHex === storedHashHex;
+}
+
+// --- Session tokens (HMAC-SHA256 signed, stateless) ---
+// Format: base64url(business_code).base64url(expiryEpochSeconds).base64url(signatureHex)
+const SESSION_TTL_SECONDS = 24 * 60 * 60; // 24 ώρες
+
+async function getHmacKey(secret) {
+  const encoder = new TextEncoder();
+  return crypto.subtle.importKey(
+    "raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]
+  );
+}
+
+function b64urlEncode(str) {
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function b64urlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  return atob(str);
+}
+
+async function createSessionToken(business_code, secret) {
+  const expiry = Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS;
+  const payload = `${business_code}.${expiry}`;
+  const key = await getHmacKey(secret);
+  const encoder = new TextEncoder();
+  const sigBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  const sigHex = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  return `${b64urlEncode(business_code)}.${b64urlEncode(String(expiry))}.${sigHex}`;
+}
+
+async function verifySessionToken(token, secret) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  const [encCode, encExpiry, sigHex] = parts;
+  let business_code, expiry;
+  try {
+    business_code = b64urlDecode(encCode);
+    expiry = parseInt(b64urlDecode(encExpiry), 10);
+  } catch (e) {
+    return null;
+  }
+  if (!business_code || !expiry || isNaN(expiry)) return null;
+  if (Math.floor(Date.now() / 1000) > expiry) return null; // expired
+
+  const payload = `${business_code}.${expiry}`;
+  const key = await getHmacKey(secret);
+  const encoder = new TextEncoder();
+  const sigBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  const expectedSigHex = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  if (!timingSafeEqual(sigHex, expectedSigHex)) return null;
+
+  return { business_code, expiry };
+}
