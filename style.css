@@ -1,10 +1,31 @@
 /* Εφαρμογή των CSS variables στα βασικά στοιχεία της φόρμας */
+html {
+  font-synthesis: none;
+}
+
+body,
+.booking-card,
+.max-w-md,
+button,
+input,
+select,
+textarea,
+label {
+  font-family: var(--body-font) !important;
+}
+
+h1, h2, h3 {
+  font-family: var(--heading-font) !important;
+  color: var(--text-color) !important;
+  letter-spacing: 0;
+}
+
 .booking-card,
 .max-w-md {
   background-color: var(--card-bg) !important;
 }
 
-h1, h2, h3, label {
+label {
   color: var(--text-color) !important;
 }
 
