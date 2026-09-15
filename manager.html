@@ -1034,7 +1034,12 @@
         right: 'dayGridMonth,timeGridWeek,timeGridDay'
       },
       buttonText: { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' },
-      eventClick: info => openAppointmentDetails(info.event.extendedProps),
+      eventClick: info => {
+        const item = Object.assign({}, info.event.extendedProps, {
+          id: info.event.id || (info.event.extendedProps && info.event.extendedProps.id)
+        });
+        openAppointmentDetails(item);
+      },
       dateClick: info => openSlotChoice(info)
     });
     calendar.render();
