@@ -63,6 +63,8 @@
         .badge-blocked { background: #e2e8f0; color: #475569; }
         .badge-rejected { background: #fee2e2; color: #991b1b; }
         .list-empty { text-align: center; color: var(--text-muted); padding: 1.5rem 0; }
+        .today-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .today-empty { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
         @media (max-width: 760px) {
           .list-filters { grid-template-columns: 1fr; }
         }
@@ -207,6 +209,14 @@
           </div>
           <div style="color: #64748b;"><i data-lucide="history" size="24"></i></div>
         </button>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3 style="margin:0;">Σήμερα</h3>
+          <span id="todayDateLabel" style="font-size: 0.8rem; color: var(--text-muted);"></span>
+        </div>
+        <div id="todayList" class="today-list"></div>
       </div>
 
       <!-- Ημερολόγιο -->
@@ -511,11 +521,16 @@
   <div class="modal" id="actionModal">
     <div class="modal-content">
       <h3 id="actTitle" style="margin-top:0;">Διαχείριση Ραντεβού</h3>
-      <div id="actDetails" style="margin-bottom: 1.5rem;"></div>
-      <div style="display: flex; justify-content: space-between;">
+      <div id="actDetails" style="margin-bottom: 1rem;"></div>
+      <div class="form-group" id="reasonGroup">
+        <label>Λόγος προς τον πελάτη (υποχρεωτικός στην απόρριψη)</label>
+        <textarea class="field" id="actReason" rows="2" maxlength="400" placeholder="π.χ. Δεν υπάρχει διαθεσιμότητα εκείνη την ώρα. Επιλέξτε άλλη."></textarea>
+      </div>
+      <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
         <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
           <button class="btn btn-outline" onclick="closeModal('actionModal')">Κλείσιμο</button>
+          <button class="btn btn-danger" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
           <button class="btn" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
         </div>
       </div>
@@ -845,6 +860,7 @@
       document.getElementById('statPending').innerText = pending;
       document.getElementById('statBooked').innerText = booked;
       document.getElementById('statHistory').innerText = history;
+      renderTodayList();
       if (document.getElementById('listModal').style.display === 'flex') {
         renderAppointmentList();
       }
@@ -864,6 +880,45 @@
     if (!dateStr) return '-';
     const [y, m, d] = dateStr.split('-');
     return `${d}/${m}/${y}`;
+  }
+
+  function todayISO() {
+    const n = new Date();
+    return `${n.getFullYear()}-${pad2(n.getMonth() + 1)}-${pad2(n.getDate())}`;
+  }
+
+  function renderTodayList() {
+    const today = todayISO();
+    document.getElementById('todayDateLabel').textContent = formatGreekDate(today);
+    const rows = allAppointments
+      .filter(item => item.date === today && item.status !== 'BLOCKED')
+      .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
+
+    const list = document.getElementById('todayList');
+    if (!rows.length) {
+      list.innerHTML = '<p class="today-empty">Δεν υπάρχουν ραντεβού για σήμερα.</p>';
+      return;
+    }
+
+    list.innerHTML = rows.map(item => `
+      <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(item.start_time || '-')} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
+          <div class="apt-row-meta">
+            ${escapeHtml(item.service_name || '-')}
+            ${item.customer_phone ? ' · <a href="tel:' + escapeHtml(item.customer_phone) + '" onclick="event.stopPropagation()">' + escapeHtml(item.customer_phone) + '</a>' : ''}
+          </div>
+        </div>
+        <div style="display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end;">${statusBadge(item)}</div>
+      </button>
+    `).join('');
+
+    list.querySelectorAll('.apt-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const found = allAppointments.find(a => a.id === btn.getAttribute('data-id'));
+        openAppointmentDetails(found);
+      });
+    });
   }
 
   function statusBadge(item) {
@@ -976,29 +1031,43 @@
     document.getElementById('actDetails').innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
         <div style="display:flex; justify-content:space-between;"><span>Ημερομηνία:</span> <strong>${formatGreekDate(item.date)}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Τηλέφωνο:</span> <strong>${item.customer_phone || '-'}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${item.service_name || '-'}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Τηλέφωνο:</span> <strong>${escapeHtml(item.customer_phone || '-')}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Email:</span> <strong>${escapeHtml(item.customer_email || '-')}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${escapeHtml(item.service_name || '-')}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${item.start_time || '-'} – ${item.end_time || '-'}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Κατάσταση:</span> <strong>${statusLabel(item.status)}</strong></div>
         ${pastNote}
       </div>
     `;
     document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || item.status === 'BOOKED' || item.status === 'CONFIRMED') ? 'none' : 'inline-flex';
+    document.getElementById('btnReject').style.display = item.status === 'PENDING' ? 'inline-flex' : 'none';
+    document.getElementById('reasonGroup').style.display = (item.status === 'PENDING') ? 'block' : 'none';
+    document.getElementById('actReason').value = item.status_reason || '';
     openModal('actionModal');
   }
 
   async function updateStatus(status) {
+    const reason = (document.getElementById('actReason').value || '').trim();
+    if (status === 'REJECTED' && !reason) {
+      showToast('Γράψτε λόγο απόρριψης για τον πελάτη.', true);
+      return;
+    }
     try {
-      await adminFetch(`/api/${currentBusinessCode}/admin/update-status`, {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/update-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedEventId, status })
+        body: JSON.stringify({ id: selectedEventId, status, reason })
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα ενημέρωσης');
       closeModal('actionModal');
-      showToast('Η κατάσταση ενημερώθηκε.');
+      if (data.email_sent) showToast('Η κατάσταση ενημερώθηκε και στάλθηκε email.');
+      else if (data.email_error === 'missing_email') showToast('Η κατάσταση ενημερώθηκε. Δεν υπάρχει email πελάτη.');
+      else if (data.email_error) showToast('Η κατάσταση ενημερώθηκε. Το email δεν στάλθηκε ακόμα (λειπεί RESEND_API_KEY ή αποστολέας).');
+      else showToast('Η κατάσταση ενημερώθηκε.');
       fetchAppointments();
     } catch (e) {
-      if (e.message !== 'Unauthorized') showToast('Σφάλμα ενημέρωσης.', true);
+      if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα ενημέρωσης.', true);
     }
   }
 
