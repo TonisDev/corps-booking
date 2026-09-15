@@ -16,7 +16,6 @@
     <!-- FullCalendar & Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --bg-color: #f8fafc;
@@ -103,7 +102,6 @@
         .rhapsodus-stamp strong { font-weight: 700; }
         .help-box { background: var(--field-bg); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1rem; margin-top: 1.25rem; }
         .help-box h3 { margin: 0 0 0.45rem; font-size: 0.95rem; }
-        #managerQr { width: 148px; height: 148px; background: #fff; padding: 6px; border-radius: 0.5rem; border: 1px solid var(--border-color); }
         .readonly-url { font-family: ui-monospace, Menlo, monospace; font-size: 0.75rem; word-break: break-all; }
 
         /* Modal Styles */
@@ -409,13 +407,12 @@
 
         <div class="help-box">
           <h3>Κινητό</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Στείλε αυτό το link στο κινητό ή σκάναρε το QR. Μετά πρόσθεσέ το στην αρχική οθόνη.</p>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Στείλε αυτό το link στο κινητό. Μετά πρόσθεσέ το στην αρχική οθόνη.</p>
           <input class="field readonly-url" id="managerMobileUrl" readonly>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0.9rem;">
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
             <button type="button" class="btn btn-outline" onclick="copyManagerLink()">Αντιγραφή συνδέσμου</button>
             <button type="button" class="btn btn-outline" onclick="shareManagerLink()">Κοινοποίηση</button>
           </div>
-          <div id="managerQr"></div>
         </div>
 
         <div class="help-box">
@@ -628,7 +625,7 @@
   function parseOptionalPrice(raw) {
     if (raw === null || raw === undefined || raw === '') return null;
     const n = Number(raw);
-    return Number.isFinite(n) ? n : null;
+    return Number.isFinite(n) && n > 0 ? n : null;
   }
 
   function optionalPriceInputValue(price) {
@@ -639,7 +636,7 @@
   function formatServiceLabel(service) {
     const duration = service.duration || 60;
     const price = parseOptionalPrice(service && service.price);
-    if (price === null) return `${service.name} (${duration} min)`;
+    if (price === null) return `${service.name} (${duration} min · κατόπιν συνεννόησης)`;
     return `${service.name} (${duration} min · ${price}€)`;
   }
 
@@ -709,18 +706,6 @@
     const page = new URL('manager.html', location.href);
     if (slug) page.searchParams.set('code', slug);
     return page.toString();
-  }
-
-  function renderManagerQr() {
-    const box = document.getElementById('managerQr');
-    if (!box) return;
-    box.innerHTML = '';
-    const url = managerLoginUrl();
-    if (typeof QRCode === 'undefined') {
-      box.textContent = 'QR μη διαθέσιμο';
-      return;
-    }
-    new QRCode(box, { text: url, width: 136, height: 136, correctLevel: QRCode.CorrectLevel.M });
   }
 
   async function copyManagerLink() {
@@ -1396,7 +1381,6 @@
     document.getElementById('currentPassword').value = '';
     document.getElementById('newPassword').value = '';
     document.getElementById('newPassword2').value = '';
-    renderManagerQr();
 
     const workDays = currentTenantData.work_days || [1, 2, 3, 4, 5];
     document.querySelectorAll('input[name="w_day"]').forEach(cb => {
@@ -1418,7 +1402,7 @@
       row.innerHTML = `
         <input class="field" type="text" value="${s.name}" placeholder="Όνομα" style="flex:2">
         <input class="field" type="number" value="${s.duration}" placeholder="Min" min="5" style="flex:1">
-        <input class="field" type="number" value="${optionalPriceInputValue(s.price)}" placeholder="Τιμή (κενό = χωρίς τιμή)" min="0" step="any" style="flex:1">
+        <input class="field" type="number" value="${optionalPriceInputValue(s.price)}" placeholder="Κενό = κατόπιν συνεννόησης" min="0" step="any" style="flex:1">
         <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
       `;
       servicesList.appendChild(row);
@@ -1546,7 +1530,7 @@
     row.innerHTML = `
       <input class="field" type="text" placeholder="Όνομα Υπηρεσίας" style="flex:2">
       <input class="field" type="number" value="60" placeholder="Min" min="5" style="flex:1">
-      <input class="field" type="number" placeholder="Τιμή (κενό = χωρίς τιμή)" min="0" step="any" style="flex:1">
+      <input class="field" type="number" placeholder="Κενό = κατόπιν συνεννόησης" min="0" step="any" style="flex:1">
       <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
     `;
     list.appendChild(row);
@@ -1588,10 +1572,9 @@
       if (inputs[0].value) {
         const service = {
           name: inputs[0].value,
-          duration: parseInt(inputs[1].value, 10) || 60
+          duration: parseInt(inputs[1].value, 10) || 60,
+          price: parseOptionalPrice(inputs[2].value)
         };
-        const price = parseOptionalPrice(inputs[2].value);
-        if (price !== null) service.price = price;
         services.push(service);
       }
     });
