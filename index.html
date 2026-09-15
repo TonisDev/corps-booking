@@ -9,34 +9,94 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Ορισμός των CSS variables που χρησιμοποιεί το style.css.
-           Χωρίς αυτό, τα var(--card-bg) κλπ. είναι undefined και αγνοούνται. */
-        :root {
-            --bg-color: #f9fafb;
+        /* Επιφανειακά θέματα φόρμας πελάτη. Το brand_color της επιχείρησης
+           συνεχίζει να βάφει κουμπί/focus από πάνω. */
+        :root, [data-theme="light"] {
+            --bg-color: #f3f4f6;
+            --bg-accent: #e5e7eb;
             --card-bg: #ffffff;
             --text-color: #1f2937;
             --text-muted: #6b7280;
-            --border-color: #f3f4f6;
+            --border-color: #e5e7eb;
             --field-bg: #ffffff;
             --field-border: #d1d5db;
             --brand-color: #4f46e5;
+            --card-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+            --card-radius: 1.25rem;
+            --body-font: "Inter", sans-serif;
+            --heading-font: "Inter", sans-serif;
         }
 
         [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-color: #0b1220;
+            --bg-accent: #1e293b;
+            --card-bg: #151c2c;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
             --field-bg: #0f172a;
             --field-border: #475569;
+            --brand-color: #818cf8;
+            --card-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
+            --card-radius: 1.25rem;
+            --body-font: "Inter", sans-serif;
+            --heading-font: "Inter", sans-serif;
+        }
+
+        [data-theme="warm"] {
+            --bg-color: #f6efe6;
+            --bg-accent: #ead9c6;
+            --card-bg: #fffaf4;
+            --text-color: #3f2a1d;
+            --text-muted: #8a6d57;
+            --border-color: #ead9c6;
+            --field-bg: #fffdf9;
+            --field-border: #dcc4ab;
+            --brand-color: #c2410c;
+            --card-shadow: 0 18px 40px rgba(124, 63, 22, 0.12);
+            --card-radius: 1.5rem;
+            --body-font: "Inter", sans-serif;
+            --heading-font: "Playfair Display", serif;
+        }
+
+        [data-theme="ocean"] {
+            --bg-color: #e8f4f4;
+            --bg-accent: #cfe7e8;
+            --card-bg: #f7fcfc;
+            --text-color: #134e4a;
+            --text-muted: #5b7c7b;
+            --border-color: #cfe3e2;
+            --field-bg: #ffffff;
+            --field-border: #b6d4d3;
+            --brand-color: #0f766e;
+            --card-shadow: 0 18px 40px rgba(15, 118, 110, 0.12);
+            --card-radius: 1.25rem;
+            --body-font: "Manrope", sans-serif;
+            --heading-font: "Manrope", sans-serif;
         }
 
         body {
             background-color: var(--bg-color) !important;
+            background-image: radial-gradient(circle at top, var(--bg-accent), transparent 55%);
+            color: var(--text-color);
+            font-family: var(--body-font);
             transition: background-color 0.2s, color 0.2s;
+        }
+
+        h1, h2, h3 {
+            font-family: var(--heading-font);
+        }
+
+        .booking-card {
+            background-color: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+            box-shadow: var(--card-shadow) !important;
+            border-radius: var(--card-radius) !important;
         }
 
         /* Εφαρμογή του brand_color (dynamic, ανά επιχείρηση) σε ό,τι πριν
@@ -57,11 +117,72 @@
         #businessAddress, #businessPhone {
             color: var(--brand-color) !important;
         }
+
+        .business-logo {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 1rem;
+            border-radius: 1.25rem;
+            object-fit: cover;
+            background: var(--field-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+        }
+
+        .welcome-text {
+            padding: 0.75rem 1rem;
+            border-radius: 0.85rem;
+            background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg));
+            border: 1px solid color-mix(in srgb, var(--brand-color) 20%, var(--border-color));
+        }
+
+        .powered-by {
+            color: var(--text-muted);
+            opacity: 0.8;
+        }
+
+        .powered-by a {
+            color: var(--brand-color);
+            font-weight: 600;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                align-items: flex-start !important;
+                padding: 0 !important;
+                background-image: none;
+            }
+
+            .booking-card {
+                min-height: 100vh;
+                margin: 0 !important;
+                padding: 1.35rem !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+
+            .business-logo {
+                width: 72px;
+                height: 72px;
+            }
+
+            #submitBtn {
+                position: sticky;
+                bottom: max(0.75rem, env(safe-area-inset-bottom));
+                z-index: 20;
+                box-shadow: 0 10px 24px color-mix(in srgb, var(--brand-color) 32%, transparent);
+            }
+
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
+    <div class="max-w-md w-full booking-card p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
 
         <!-- Loading State Αρχικής Φόρτωσης Επιχείρησης -->
         <div id="initialLoader" class="text-center py-8">
@@ -74,6 +195,7 @@
 
         <!-- Header Επιχείρησης -->
         <div id="businessHeader" class="text-center mb-6 hidden">
+            <img id="businessLogo" class="business-logo" src="demo-logo.svg" alt="Λογότυπο επιχείρησης">
             <h1 id="businessName" class="text-2xl font-bold text-gray-900"></h1>
             <p id="businessSubtitle" class="text-sm text-gray-500 mt-1">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
 
@@ -83,6 +205,8 @@
                 <p id="businessPhoneContainer">📞 <a id="businessPhone" href="#" class="text-indigo-600 hover:underline"></a></p>
             </div>
         </div>
+
+        <p id="welcomeText" class="welcome-text text-sm text-center mb-5 hidden"></p>
 
         <!-- Φόρμα Κράτησης -->
         <form id="bookingForm" class="space-y-4 hidden">
@@ -150,6 +274,10 @@
         </div>
 
         <div id="loadingError" class="text-center text-red-600 text-sm font-medium hidden mt-4">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
+
+        <footer class="powered-by text-center text-xs mt-7">
+            Powered by <a href="https://bookings-service.gr" target="_blank" rel="noopener">bookings-service.gr</a>
+        </footer>
     </div>
 
     <!-- Flatpickr JS & Ελληνική γλώσσα -->
@@ -158,8 +286,14 @@
 
     <script>
         const API_BASE_URL = "https://corporate-bookings.tonisdevv.workers.dev";
+        const CLIENT_THEMES = ['light', 'dark', 'warm', 'ocean'];
         const urlParams = new URLSearchParams(window.location.search);
         const business_code = urlParams.get('business_code');
+
+        function applyClientTheme(theme) {
+            const next = CLIENT_THEMES.includes(theme) ? theme : 'light';
+            document.body.setAttribute('data-theme', next);
+        }
 
         const dateInput = document.getElementById('date');
         const timeSlotSelect = document.getElementById('timeSlot');
@@ -225,14 +359,29 @@
 
                 businessData = await res.json();
 
-                const clientTheme = businessData.client_theme || 'light';
-                document.body.setAttribute('data-theme', clientTheme);
+                applyClientTheme(businessData.client_theme || 'light');
 
                 if (businessData.brand_color) {
                     document.documentElement.style.setProperty('--brand-color', businessData.brand_color);
                 }
                 document.getElementById('businessName').textContent = businessData.name;
                 document.getElementById('pageTitle').textContent = `Κράτηση Ραντεβού | ${businessData.name}`;
+                const businessLogo = document.getElementById('businessLogo');
+                businessLogo.src = businessData.logo_url || 'demo-logo.svg';
+                businessLogo.alt = `Λογότυπο ${businessData.name}`;
+                businessLogo.onerror = () => {
+                    businessLogo.onerror = null;
+                    businessLogo.src = 'demo-logo.svg';
+                };
+                document.getElementById('businessSubtitle').textContent =
+                    businessData.booking_subtitle || 'Κλείστε το ραντεβού σας εύκολα και γρήγορα';
+                const welcomeText = document.getElementById('welcomeText');
+                if (businessData.welcome_text) {
+                    welcomeText.textContent = businessData.welcome_text;
+                    welcomeText.classList.remove('hidden');
+                } else {
+                    welcomeText.classList.add('hidden');
+                }
 
                 if (businessData.address) {
                     const addrLink = document.getElementById('businessAddress');
@@ -435,7 +584,7 @@
                 responseContainer.classList.remove('hidden');
                 if (res.ok) {
                     responseMessage.className = "text-sm font-medium text-green-600 mb-3";
-                    responseMessage.textContent = data.message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
+                    responseMessage.textContent = businessData?.success_message || data.message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
 
                     const gcalUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
                     gcalBtn.href = gcalUrl;

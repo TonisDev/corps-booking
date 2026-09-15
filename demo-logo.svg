@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Demo booking logo</title>
+  <desc id="desc">A calendar with a check mark</desc>
+  <defs>
+    <linearGradient id="bg" x1="18" y1="14" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <rect x="28" y="34" width="72" height="68" rx="12" fill="white"/>
+  <path d="M28 52h72" stroke="#c7d2fe" stroke-width="8"/>
+  <path d="M45 26v18M83 26v18" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  <path d="m45 77 12 12 27-29" fill="none" stroke="#4f46e5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -48,6 +48,7 @@
         /* Modal Styles */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 2rem 0; }
         .modal-content { background: var(--card-bg); color: var(--text-color); padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
+        #settingsModal .modal-content { max-width: 920px; }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: var(--text-muted); }
         .field { width: 100%; padding: 0.65rem; border: 1px solid var(--field-border); background: var(--field-bg); color: var(--text-color); border-radius: 0.5rem; box-sizing: border-box; font-size: 0.9rem; }
@@ -59,6 +60,55 @@
         .time-picker-wrapper select { flex: 1; padding: 0.65rem; border: 1px solid var(--field-border); border-radius: 0.5rem; background: var(--field-bg); color: var(--text-color); font-size: 0.9rem; cursor: pointer; }
 
         #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 0.5rem; background: #1e293b; color: white; display: none; align-items: center; gap: 0.5rem; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: 500; }
+
+        .theme-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .theme-option { position: relative; cursor: pointer; margin: 0; }
+        .theme-option input { position: absolute; opacity: 0; pointer-events: none; }
+        .theme-card {
+          display: block; border: 2px solid var(--field-border); border-radius: 0.75rem;
+          overflow: hidden; background: var(--field-bg); transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .theme-option input:checked + .theme-card {
+          border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+        }
+        .theme-preview { height: 52px; display: flex; align-items: flex-end; padding: 8px; }
+        .theme-preview-card { height: 28px; width: 100%; border-radius: 6px; border: 1px solid rgba(0,0,0,0.08); }
+        .theme-preview-light { background: #f3f4f6; }
+        .theme-preview-light .theme-preview-card { background: #fff; }
+        .theme-preview-dark { background: #0b1220; }
+        .theme-preview-dark .theme-preview-card { background: #151c2c; border-color: #334155; }
+        .theme-preview-warm { background: #f6efe6; }
+        .theme-preview-warm .theme-preview-card { background: #fffaf4; border-color: #ead9c6; }
+        .theme-preview-ocean { background: #e8f4f4; }
+        .theme-preview-ocean .theme-preview-card { background: #f7fcfc; border-color: #cfe3e2; }
+        .theme-label { display: block; padding: 0.5rem 0.65rem 0.6rem; font-size: 0.8rem; font-weight: 600; color: var(--text-color); }
+
+        .appearance-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 1.25rem; align-items: start; }
+        .client-preview {
+          --preview-bg: #f3f4f6; --preview-card: #fff; --preview-text: #1f2937; --preview-muted: #6b7280; --preview-border: #d1d5db;
+          background: var(--preview-bg); border: 1px solid var(--field-border); border-radius: 1rem; padding: 1rem; position: sticky; top: 0;
+        }
+        .client-preview[data-preview-theme="dark"] { --preview-bg:#0b1220; --preview-card:#151c2c; --preview-text:#f8fafc; --preview-muted:#94a3b8; --preview-border:#475569; }
+        .client-preview[data-preview-theme="warm"] { --preview-bg:#f6efe6; --preview-card:#fffaf4; --preview-text:#3f2a1d; --preview-muted:#8a6d57; --preview-border:#dcc4ab; }
+        .client-preview[data-preview-theme="ocean"] { --preview-bg:#e8f4f4; --preview-card:#f7fcfc; --preview-text:#134e4a; --preview-muted:#5b7c7b; --preview-border:#b6d4d3; }
+        .preview-title { margin: 0 0 0.65rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .preview-phone { background: var(--preview-card); color: var(--preview-text); border-radius: 1rem; padding: 1rem; text-align: center; box-shadow: 0 10px 24px rgba(15,23,42,0.12); }
+        .preview-logo { width: 54px; height: 54px; border-radius: 0.8rem; object-fit: cover; border: 1px solid var(--preview-border); }
+        .preview-business-name { margin: 0.5rem 0 0.2rem; font-size: 1rem; color: var(--preview-text); }
+        .preview-copy { margin: 0; font-size: 0.68rem; color: var(--preview-muted); line-height: 1.45; }
+        .preview-welcome { margin: 0.75rem 0; padding: 0.5rem; border-radius: 0.55rem; background: color-mix(in srgb, var(--preview-brand) 9%, var(--preview-card)); color: var(--preview-muted); font-size: 0.65rem; }
+        .preview-field { height: 28px; margin-top: 0.45rem; border: 1px solid var(--preview-border); border-radius: 0.45rem; background: var(--preview-card); }
+        .preview-button { margin-top: 0.65rem; padding: 0.5rem; border-radius: 0.5rem; color: white; background: var(--preview-brand); font-size: 0.68rem; font-weight: 700; }
+        .preview-success { margin: 0.5rem 0 0; color: #059669; font-size: 0.62rem; }
+        .preview-footer { margin-top: 0.65rem; font-size: 0.58rem; color: var(--preview-muted); }
+        @media (max-width: 760px) {
+          .appearance-layout { grid-template-columns: 1fr; }
+          .client-preview { position: static; }
+          .header { padding: 1rem; align-items: flex-start; gap: 1rem; }
+          .modal { padding: 0; }
+          .modal-content, #settingsModal .modal-content { max-height: 100vh; border-radius: 0; padding: 1.25rem; }
+          .form-grid, .settings-two-columns { grid-template-columns: 1fr !important; }
+        }
 
         /* FullCalendar Customizations for Dark Mode */
         [data-theme="dark"] .fc { color: #f8fafc; }
@@ -158,17 +208,76 @@
           <label>Διεύθυνση</label>
           <input class="field" type="text" id="setAddress">
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group"><label>URL Logo</label><input class="field" type="url" id="setLogo"></div>
-          <div class="form-group"><label>Κύριο Χρώμα Φόρμας (Brand Color)</label><input class="field" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
-        </div>
+        <div class="appearance-layout">
+          <div>
+            <div class="settings-two-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group"><label>URL Logo</label><input class="field appearance-input" type="url" id="setLogo" placeholder="Κενό = demo logo"></div>
+              <div class="form-group"><label>Κύριο Χρώμα Φόρμας</label><input class="field appearance-input" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
+            </div>
 
-        <div class="form-group">
-          <label>Θέμα Σελίδας Πελάτη (Client Theme)</label>
-          <select class="field" id="setClientTheme">
-            <option value="light">Light Theme (Φωτεινό)</option>
-            <option value="dark">Dark Theme (Σκοτεινό)</option>
-          </select>
+            <div class="form-group">
+              <label>Υπότιτλος Σελίδας</label>
+              <input class="field appearance-input" type="text" id="setBookingSubtitle" maxlength="120" placeholder="Κλείστε το ραντεβού σας εύκολα και γρήγορα">
+            </div>
+            <div class="form-group">
+              <label>Μήνυμα Καλωσορίσματος</label>
+              <textarea class="field appearance-input" id="setWelcomeText" rows="2" maxlength="240" placeholder="Προαιρετικό σύντομο μήνυμα"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Μήνυμα Επιτυχούς Κράτησης</label>
+              <input class="field appearance-input" type="text" id="setSuccessMessage" maxlength="160" placeholder="Η κράτησή σας καταχωρήθηκε!">
+            </div>
+
+            <div class="form-group">
+              <label>Θέμα Σελίδας Πελάτη</label>
+              <div class="theme-picker" id="setClientTheme">
+                <label class="theme-option">
+                  <input type="radio" name="clientTheme" value="light" checked>
+                  <span class="theme-card">
+                    <span class="theme-preview theme-preview-light"><span class="theme-preview-card"></span></span>
+                    <span class="theme-label">Φωτεινό</span>
+                  </span>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="clientTheme" value="dark">
+                  <span class="theme-card">
+                    <span class="theme-preview theme-preview-dark"><span class="theme-preview-card"></span></span>
+                    <span class="theme-label">Σκοτεινό</span>
+                  </span>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="clientTheme" value="warm">
+                  <span class="theme-card">
+                    <span class="theme-preview theme-preview-warm"><span class="theme-preview-card"></span></span>
+                    <span class="theme-label">Warm / Spa</span>
+                  </span>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="clientTheme" value="ocean">
+                  <span class="theme-card">
+                    <span class="theme-preview theme-preview-ocean"><span class="theme-preview-card"></span></span>
+                    <span class="theme-label">Ocean</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <aside class="client-preview" id="clientAppearancePreview" data-preview-theme="light" style="--preview-brand:#4f46e5;">
+            <p class="preview-title">Live Preview</p>
+            <div class="preview-phone">
+              <img id="previewLogo" class="preview-logo" src="demo-logo.svg" alt="Προεπισκόπηση logo">
+              <h3 id="previewName" class="preview-business-name">Η επιχείρησή σας</h3>
+              <p id="previewSubtitle" class="preview-copy">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
+              <p id="previewWelcome" class="preview-welcome">Καλώς ήρθατε!</p>
+              <div class="preview-field"></div>
+              <div class="preview-field"></div>
+              <div class="preview-field"></div>
+              <div class="preview-button">Υποβολή Κράτησης</div>
+              <p id="previewSuccess" class="preview-success">Η κράτησή σας καταχωρήθηκε!</p>
+              <div class="preview-footer">Powered by bookings-service.gr</div>
+            </div>
+          </aside>
         </div>
 
         <div class="form-group" style="margin-top: 1rem;">
@@ -359,6 +468,11 @@
   document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('admin_theme') || 'light';
     setAdminTheme(savedTheme);
+
+    document.querySelectorAll('.appearance-input, input[name="clientTheme"], #setName').forEach(control => {
+      control.addEventListener('input', updateAppearancePreview);
+      control.addEventListener('change', updateAppearancePreview);
+    });
 
     if (currentBusinessCode && currentSessionToken) {
       loadDashboard(currentBusinessCode);
@@ -666,7 +780,15 @@
     document.getElementById('setAddress').value = currentTenantData.address || '';
     document.getElementById('setLogo').value = currentTenantData.logo_url || '';
     document.getElementById('setColor').value = currentTenantData.brand_color || '#4f46e5';
-    document.getElementById('setClientTheme').value = currentTenantData.client_theme || 'light';
+    document.getElementById('setBookingSubtitle').value = currentTenantData.booking_subtitle || '';
+    document.getElementById('setWelcomeText').value = currentTenantData.welcome_text || '';
+    document.getElementById('setSuccessMessage').value = currentTenantData.success_message || '';
+    const savedTheme = ['light', 'dark', 'warm', 'ocean'].includes(currentTenantData.client_theme)
+      ? currentTenantData.client_theme
+      : 'light';
+    document.querySelectorAll('input[name="clientTheme"]').forEach(r => {
+      r.checked = r.value === savedTheme;
+    });
     document.getElementById('setTelegram').value = currentTenantData.telegram_chat_id || '';
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
 
@@ -702,8 +824,37 @@
       servicesList.appendChild(row);
     });
 
+    updateAppearancePreview();
     openModal('settingsModal');
     lucide.createIcons();
+  }
+
+  function updateAppearancePreview() {
+    const preview = document.getElementById('clientAppearancePreview');
+    if (!preview) return;
+
+    const theme = (document.querySelector('input[name="clientTheme"]:checked') || {}).value || 'light';
+    const brandColor = document.getElementById('setColor').value || '#4f46e5';
+    const logoUrl = document.getElementById('setLogo').value.trim() || 'demo-logo.svg';
+    const logo = document.getElementById('previewLogo');
+    const welcome = document.getElementById('setWelcomeText').value.trim();
+
+    preview.dataset.previewTheme = theme;
+    preview.style.setProperty('--preview-brand', brandColor);
+    document.getElementById('previewName').textContent =
+      document.getElementById('setName').value.trim() || 'Η επιχείρησή σας';
+    document.getElementById('previewSubtitle').textContent =
+      document.getElementById('setBookingSubtitle').value.trim() || 'Κλείστε το ραντεβού σας εύκολα και γρήγορα';
+    document.getElementById('previewWelcome').textContent = welcome || 'Καλώς ήρθατε!';
+    document.getElementById('previewWelcome').style.display = welcome ? 'block' : 'none';
+    document.getElementById('previewSuccess').textContent =
+      document.getElementById('setSuccessMessage').value.trim() || 'Η κράτησή σας καταχωρήθηκε!';
+
+    logo.onerror = () => {
+      logo.onerror = null;
+      logo.src = 'demo-logo.svg';
+    };
+    logo.src = logoUrl;
   }
 
   function openModal(id) { document.getElementById(id).style.display = 'flex'; lucide.createIcons(); }
@@ -744,7 +895,10 @@
     const address = document.getElementById('setAddress').value.trim();
     const logo_url = document.getElementById('setLogo').value.trim();
     const brand_color = document.getElementById('setColor').value;
-    const client_theme = document.getElementById('setClientTheme').value;
+    const client_theme = (document.querySelector('input[name="clientTheme"]:checked') || {}).value || 'light';
+    const booking_subtitle = document.getElementById('setBookingSubtitle').value.trim();
+    const welcome_text = document.getElementById('setWelcomeText').value.trim();
+    const success_message = document.getElementById('setSuccessMessage').value.trim();
     const telegram_chat_id = document.getElementById('setTelegram').value.trim();
     const buffer_minutes = parseInt(document.getElementById('setBuffer').value) || 0;
 
@@ -777,7 +931,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name, email, phone, address, logo_url, brand_color,
-          client_theme, work_days, working_hours, services,
+          client_theme, booking_subtitle, welcome_text, success_message,
+          work_days, working_hours, services,
           telegram_chat_id, buffer_minutes
         })
       });

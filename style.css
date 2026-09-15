@@ -1,14 +1,14 @@
 /* Εφαρμογή των CSS variables στα βασικά στοιχεία της φόρμας */
+.booking-card,
 .max-w-md {
   background-color: var(--card-bg) !important;
- /* border-color: var(--border-color) !important;*/
 }
 
 h1, h2, h3, label {
   color: var(--text-color) !important;
 }
 
-p, span, .text-gray-500, .text-gray-400 {
+.text-gray-500, .text-gray-400, #businessSubtitle, #slotHint, .powered-by {
   color: var(--text-muted) !important;
 }
 
@@ -18,8 +18,17 @@ input, select, textarea {
   color: var(--text-color) !important;
 }
 
-/* Διόρθωση για τα disabled select fields */
 select:disabled {
   background-color: var(--border-color) !important;
   opacity: 0.7;
+}
+
+#businessMeta {
+  border-color: var(--border-color) !important;
+}
+
+#submitBtn,
+#submitBtn span,
+#gcalBtn {
+  color: #ffffff !important;
 }
