@@ -2,11 +2,18 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Manager">
+    <meta name="theme-color" content="#4f46e5">
     <title>Διαχείριση Επιχείρησης | Manager</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="demo-logo.svg">
     <!-- FullCalendar & Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --bg-color: #f8fafc;
@@ -70,7 +77,20 @@
         #slotChoiceModal .modal-content { max-width: 480px; }
         @media (max-width: 760px) {
           .list-filters { grid-template-columns: 1fr; }
+          .header { flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 1rem; }
+          #loginScreen { margin: 1.5rem auto; }
+          input, select, textarea, .field { font-size: 16px !important; }
         }
+        .rhapsodus-stamp {
+          position: fixed; right: 0.9rem; bottom: 0.75rem; z-index: 30;
+          font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-muted);
+          opacity: 0.75; margin: 0; pointer-events: none;
+        }
+        .rhapsodus-stamp strong { font-weight: 700; }
+        .help-box { background: var(--field-bg); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1rem; margin-top: 1.25rem; }
+        .help-box h3 { margin: 0 0 0.45rem; font-size: 0.95rem; }
+        #managerQr { width: 148px; height: 148px; background: #fff; padding: 6px; border-radius: 0.5rem; border: 1px solid var(--border-color); }
+        .readonly-url { font-family: ui-monospace, Menlo, monospace; font-size: 0.75rem; word-break: break-all; }
 
         /* Modal Styles */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 2rem 0; }
@@ -151,16 +171,22 @@
   <!-- Login Screen -->
   <div id="loginScreen" style="max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
     <h2>🔐 Είσοδος Διαχειριστή</h2>
-    <div class="form-group" style="margin-top: 1rem;">
-      <label>Business Code / Slug</label>
-      <input class="field" type="text" id="loginCode" placeholder="π.χ. maria-massage">
-    </div>
-    <div class="form-group">
-      <label>Κωδικός Πρόσβασης</label>
-      <input class="field" type="password" id="loginPass" placeholder="••••••••">
-    </div>
-    <div id="loginError" style="color:#dc2626; font-size:0.85rem; margin-bottom: 0.5rem; display:none;"></div>
-    <button class="btn" onclick="handleLogin()" style="width:100%; justify-content:center; margin-top: 1rem;">Σύνδεση</button>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group" style="margin-top: 1rem;">
+        <label>Business Code / Slug</label>
+        <input class="field" type="text" id="loginCode" placeholder="π.χ. maria-massage" autocomplete="username" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="form-group">
+        <label>Κωδικός Πρόσβασης</label>
+        <input class="field" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="loginError" style="color:#dc2626; font-size:0.85rem; margin-bottom: 0.5rem; display:none;"></div>
+      <button class="btn" type="submit" style="width:100%; justify-content:center; margin-top: 1rem;">Σύνδεση</button>
+    </form>
+    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 1.1rem 0 0; line-height: 1.45;">
+      Από κινητό: άνοιξε αυτό το link, συνδέσου μία φορά, και μετά
+      <strong>Κοινοποίηση → Προσθήκη στην οθόνη Αφετηρίας</strong>.
+    </p>
   </div>
 
   <!-- Dashboard Screen -->
@@ -321,7 +347,7 @@
               <div class="preview-field"></div>
               <div class="preview-button">Υποβολή Κράτησης</div>
               <p id="previewSuccess" class="preview-success">Η κράτησή σας καταχωρήθηκε!</p>
-              <div class="preview-footer">Powered by bookings-service.gr</div>
+              <div class="preview-footer">Powered by Rhapsodus</div>
             </div>
           </aside>
         </div>
@@ -366,6 +392,51 @@
           <button type="submit" class="btn" style="background: #059669;">Αποθήκευση Αλλαγών</button>
         </div>
       </form>
+
+        <div class="help-box">
+          <h3>Κινητό</h3>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Στείλε αυτό το link στο κινητό ή σκάναρε το QR. Μετά πρόσθεσέ το στην αρχική οθόνη.</p>
+          <input class="field readonly-url" id="managerMobileUrl" readonly>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0.9rem;">
+            <button type="button" class="btn btn-outline" onclick="copyManagerLink()">Αντιγραφή συνδέσμου</button>
+            <button type="button" class="btn btn-outline" onclick="shareManagerLink()">Κοινοποίηση</button>
+          </div>
+          <div id="managerQr"></div>
+        </div>
+
+        <div class="help-box">
+          <h3>Google Calendar</h3>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">
+            Αντιγράψτε το URL και στο Google Calendar (υπολογιστής): Ρυθμίσεις → Προσθήκη ημερολογίου → Από URL.
+            Στο κινητό ανοίγει και μεμονωμένο ραντεβού από τη λίστα.
+          </p>
+          <input class="field readonly-url" id="calendarFeedUrl" readonly placeholder="Πατήστε δημιουργία συνδέσμου">
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top: 0.7rem;">
+            <button type="button" class="btn" onclick="ensureCalendarFeed(false)">Δημιουργία / εμφάνιση</button>
+            <button type="button" class="btn btn-outline" onclick="copyCalendarFeed()">Αντιγραφή URL</button>
+            <button type="button" class="btn btn-outline" onclick="ensureCalendarFeed(true)">Νέο URL (ακυρώνει το παλιό)</button>
+          </div>
+        </div>
+
+        <div class="help-box">
+          <h3>Αλλαγή κωδικού</h3>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Αλλάζεις τον κωδικό σου. Αν τον χάσεις, ο super admin μπορεί ακόμα να κάνει reset.</p>
+          <div class="form-group">
+            <label>Τρέχων κωδικός</label>
+            <input class="field" type="password" id="currentPassword" autocomplete="current-password">
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Νέος κωδικός</label>
+              <input class="field" type="password" id="newPassword" autocomplete="new-password" minlength="8">
+            </div>
+            <div class="form-group">
+              <label>Επιβεβαίωση</label>
+              <input class="field" type="password" id="newPassword2" autocomplete="new-password" minlength="8">
+            </div>
+          </div>
+          <button type="button" class="btn" onclick="changeOwnPassword()">Αποθήκευση κωδικού</button>
+        </div>
     </div>
   </div>
 
@@ -538,6 +609,7 @@
       <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
         <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-outline" id="btnGoogleCal" type="button" onclick="addSelectedToGoogleCalendar()"><i data-lucide="calendar-plus" size="16"></i> Google Calendar</button>
           <button class="btn btn-outline" onclick="closeModal('actionModal')">Κλείσιμο</button>
           <button class="btn btn-danger" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
           <button class="btn" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
@@ -558,6 +630,7 @@
   let currentTenantData = null;
   let calendar = null;
   let selectedEventId = null;
+  let selectedAppointment = null;
   let pendingSlot = null;
   let allAppointments = [];
   let currentListKind = 'all';
@@ -574,6 +647,12 @@
 
     if (currentBusinessCode && currentSessionToken) {
       loadDashboard(currentBusinessCode);
+    } else {
+      const preset = new URLSearchParams(location.search).get('code');
+      if (preset) {
+        document.getElementById('loginCode').value = preset;
+        document.getElementById('loginPass').focus();
+      }
     }
   });
 
@@ -608,13 +687,163 @@
     }
   }
 
+  function managerLoginUrl(code) {
+    const slug = code || currentBusinessCode || '';
+    const page = new URL('manager.html', location.href);
+    if (slug) page.searchParams.set('code', slug);
+    return page.toString();
+  }
+
+  function renderManagerQr() {
+    const box = document.getElementById('managerQr');
+    if (!box) return;
+    box.innerHTML = '';
+    const url = managerLoginUrl();
+    if (typeof QRCode === 'undefined') {
+      box.textContent = 'QR μη διαθέσιμο';
+      return;
+    }
+    new QRCode(box, { text: url, width: 136, height: 136, correctLevel: QRCode.CorrectLevel.M });
+  }
+
+  async function copyManagerLink() {
+    const url = managerLoginUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('Ο σύνδεσμος αντιγράφηκε.');
+    } catch (err) {
+      prompt('Αντιγραφή:', url);
+    }
+  }
+
+  async function shareManagerLink() {
+    const url = managerLoginUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Διαχείριση ραντεβού', url });
+        return;
+      } catch (err) {}
+    }
+    copyManagerLink();
+  }
+
+  async function ensureCalendarFeed(rotate) {
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/calendar-feed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rotate: !!rotate })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα ημερολογίου');
+      document.getElementById('calendarFeedUrl').value = data.url || '';
+      showToast(data.rotated ? 'Δημιουργήθηκε νέο URL. Το παλιό σταμάτησε να ισχύει.' : 'Έτοιμο το URL ημερολογίου.');
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message || 'Σφάλμα ημερολογίου.', true);
+    }
+  }
+
+  async function loadCalendarFeedUrl() {
+    const field = document.getElementById('calendarFeedUrl');
+    if (!field) return;
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/calendar-feed`);
+      const data = await res.json().catch(() => ({}));
+      field.value = data.url || '';
+    } catch (err) {
+      field.value = '';
+    }
+  }
+
+  async function copyCalendarFeed() {
+    const url = document.getElementById('calendarFeedUrl').value.trim();
+    if (!url) {
+      await ensureCalendarFeed(false);
+    }
+    const next = document.getElementById('calendarFeedUrl').value.trim();
+    if (!next) return;
+    try {
+      await navigator.clipboard.writeText(next);
+      showToast('Το URL ημερολογίου αντιγράφηκε.');
+    } catch (err) {
+      prompt('Αντιγραφή:', next);
+    }
+  }
+
+  function googleCalendarUrlFor(item) {
+    if (!item || !item.date || !item.start_time) return '';
+    const duration = Number(item.duration) || 60;
+    const cleanDate = String(item.date).replace(/-/g, '');
+    const startClean = String(item.start_time).replace(/:/g, '') + '00';
+    const startParts = String(item.start_time).split(':');
+    const startMins = (parseInt(startParts[0], 10) || 0) * 60 + (parseInt(startParts[1], 10) || 0);
+    let endMins = startMins + duration;
+    if (item.end_time) {
+      const endParts = String(item.end_time).split(':');
+      endMins = (parseInt(endParts[0], 10) || 0) * 60 + (parseInt(endParts[1], 10) || 0);
+    }
+    const endH = String(Math.floor(endMins / 60)).padStart(2, '0');
+    const endM = String(endMins % 60).padStart(2, '0');
+    const endClean = `${endH}${endM}00`;
+    const title = encodeURIComponent(`${item.service_name || 'Ραντεβού'} — ${item.customer_name || ''}`.trim());
+    const details = encodeURIComponent(
+      [`Τηλ: ${item.customer_phone || '-'}`, item.customer_email ? `Email: ${item.customer_email}` : '', item.notes || '']
+        .filter(Boolean).join('\n')
+    );
+    const location = encodeURIComponent((currentTenantData && currentTenantData.address) || '');
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${cleanDate}T${startClean}/${cleanDate}T${endClean}&details=${details}&location=${location}&ctz=Europe/Athens`;
+  }
+
+  function addSelectedToGoogleCalendar() {
+    const url = googleCalendarUrlFor(selectedAppointment);
+    if (!url) {
+      showToast('Δεν υπάρχουν στοιχεία ώρας για το ημερολόγιο.', true);
+      return;
+    }
+    window.open(url, '_blank', 'noopener');
+  }
+
+  async function changeOwnPassword() {
+    const current_password = document.getElementById('currentPassword').value;
+    const new_password = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('newPassword2').value;
+    if (!current_password || !new_password) {
+      showToast('Συμπληρώστε τον τρέχοντα και τον νέο κωδικό.', true);
+      return;
+    }
+    if (new_password.length < 8) {
+      showToast('Ο νέος κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.', true);
+      return;
+    }
+    if (new_password !== confirm) {
+      showToast('Οι νέοι κωδικοί δεν ταιριάζουν.', true);
+      return;
+    }
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password, new_password })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα αλλαγής κωδικού');
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('newPassword2').value = '';
+      showToast('Ο κωδικός άλλαξε.');
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message || 'Σφάλμα αλλαγής κωδικού.', true);
+    }
+  }
+
   function openPublicPage() {
     if (!currentBusinessCode) return;
     const url = `https://tonisdev.github.io/corps-booking/?business_code=${currentBusinessCode}`;
     window.open(url, '_blank');
   }
 
-  async function handleLogin() {
+  async function handleLogin(event) {
+    if (event) event.preventDefault();
     const code = document.getElementById('loginCode').value.trim();
     const pass = document.getElementById('loginPass').value.trim();
     const errorEl = document.getElementById('loginError');
@@ -1068,6 +1297,7 @@
   function openAppointmentDetails(item) {
     if (!item) return;
     selectedEventId = item.id;
+    selectedAppointment = item;
     const pastNote = isPastAppointment(item)
       ? '<div style="display:flex; justify-content:space-between;"><span>Ετικέτα:</span> <strong>Παρελθόν</strong></div>'
       : '';
@@ -1088,6 +1318,10 @@
     document.getElementById('btnReject').style.display = item.status === 'PENDING' ? 'inline-flex' : 'none';
     document.getElementById('reasonGroup').style.display = (item.status === 'PENDING') ? 'block' : 'none';
     document.getElementById('actReason').value = item.status_reason || '';
+    const gcalBtn = document.getElementById('btnGoogleCal');
+    if (gcalBtn) {
+      gcalBtn.style.display = item.status === 'BLOCKED' ? 'none' : 'inline-flex';
+    }
     openModal('actionModal');
   }
 
@@ -1205,6 +1439,12 @@
       r.checked = r.value === savedTheme;
     });
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
+    document.getElementById('managerMobileUrl').value = managerLoginUrl();
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('newPassword2').value = '';
+    renderManagerQr();
+    loadCalendarFeedUrl();
 
     const workDays = currentTenantData.work_days || [1, 2, 3, 4, 5];
     document.querySelectorAll('input[name="w_day"]').forEach(cb => {
@@ -1453,5 +1693,6 @@
     }
   })();
 </script>
+  <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
 </body>
 </html>
