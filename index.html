@@ -374,22 +374,30 @@
 
         // Μετατρέπει working_hours + work_days του tenant σε λίστα διαστημάτων
         // (σε λεπτά) για τη συγκεκριμένη ημερομηνία, ή [] αν η μέρα είναι κλειστή.
+        function shiftsForWeekday(workingHours, dayOfWeek) {
+            const fallback = [{ start: '09:00', end: '21:00' }];
+            if (Array.isArray(workingHours) && workingHours.length > 0) return workingHours;
+            if (workingHours && typeof workingHours === 'object') {
+                const key = String(dayOfWeek);
+                const list = workingHours[key] || (workingHours.by_day && workingHours.by_day[key]);
+                if (Array.isArray(list) && list.length > 0) return list;
+                if (Array.isArray(workingHours.shared) && workingHours.shared.length > 0) return workingHours.shared;
+                return [];
+            }
+            return fallback;
+        }
+
         function getShiftsForDate(dateStr) {
             const workDays = (businessData && businessData.work_days && businessData.work_days.length > 0)
                 ? businessData.work_days
                 : [1, 2, 3, 4, 5];
-            const workingHours = (businessData && businessData.working_hours && businessData.working_hours.length > 0)
-                ? businessData.working_hours
-                : [{ start: "09:00", end: "21:00" }];
 
-            // dateStr is 'YYYY-MM-DD'; avoid `new Date(dateStr)` timezone issues
-            // by constructing the date from parts explicitly.
             const [y, m, d] = dateStr.split('-').map(Number);
-            const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0=Κυρ ... 6=Σαβ
+            const dayOfWeek = new Date(y, m - 1, d).getDay();
 
-            if (!workDays.includes(dayOfWeek)) return [];
+            if (!workDays.map(Number).includes(dayOfWeek)) return [];
 
-            return workingHours.map(sh => ({
+            return shiftsForWeekday(businessData && businessData.working_hours, dayOfWeek).map(sh => ({
                 start: timeToMinutes(sh.start),
                 end: timeToMinutes(sh.end)
             }));
