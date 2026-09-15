@@ -114,9 +114,8 @@
             box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-color) 30%, transparent) !important;
             outline: none !important;
         }
-        #businessAddress, #businessPhone {
-            color: var(--brand-color) !important;
-        }
+        .time-picker-wrapper { display: flex; gap: 8px; align-items: center; }
+        .time-picker-wrapper select { flex: 1; }
 
         .business-logo {
             width: 84px;
@@ -227,6 +226,12 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input type="email" id="email" required placeholder="π.χ. maria@email.com" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <p class="text-xs text-gray-400 mt-1">Θα ενημερωθείτε εδώ αν το ραντεβού εγκριθεί ή απορριφθεί.</p>
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Instagram Username (προαιρετικό)</label>
                 <input type="text" id="instagram" placeholder="π.χ. maria_massage" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
@@ -245,10 +250,18 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμη Ώρα *</label>
-                <select id="timeSlot" required disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    <option value="">-- Επιλέξτε πρώτα Ημερομηνία & Υπηρεσία --</option>
-                </select>
-                <p id="slotHint" class="text-xs text-gray-400 mt-1">Εμφανίζονται αυτόματα μόνο οι διαθέσιμες ώρες.</p>
+                <div class="time-picker-wrapper">
+                    <select id="timeHour" required disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="">Ώρα</option>
+                    </select>
+                    <span>:</span>
+                    <select id="timeMinute" required disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="">--</option>
+                        <option value="00">00</option>
+                        <option value="30">30</option>
+                    </select>
+                </div>
+                <p id="slotHint" class="text-xs text-gray-400 mt-1">Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.</p>
             </div>
 
             <div>
@@ -296,7 +309,8 @@
         }
 
         const dateInput = document.getElementById('date');
-        const timeSlotSelect = document.getElementById('timeSlot');
+        const timeHourSelect = document.getElementById('timeHour');
+        const timeMinuteSelect = document.getElementById('timeMinute');
         const serviceSelect = document.getElementById('service');
         const bookingForm = document.getElementById('bookingForm');
         const responseContainer = document.getElementById('responseContainer');
@@ -307,6 +321,42 @@
         const businessHeader = document.getElementById('businessHeader');
 
         let businessData = null;
+        let availableSlots = [];
+
+        function selectedTimeValue() {
+            if (!timeHourSelect.value || !timeMinuteSelect.value) return '';
+            return `${timeHourSelect.value}:${timeMinuteSelect.value}`;
+        }
+
+        function resetTimePickers(hourLabel = 'Ώρα') {
+            timeHourSelect.innerHTML = `<option value="">${hourLabel}</option>`;
+            timeHourSelect.disabled = true;
+            timeHourSelect.classList.add('bg-gray-50');
+            timeMinuteSelect.innerHTML = '<option value="">--</option><option value="00">00</option><option value="30">30</option>';
+            timeMinuteSelect.value = '';
+            timeMinuteSelect.disabled = true;
+            timeMinuteSelect.classList.add('bg-gray-50');
+            availableSlots = [];
+        }
+
+        function refreshMinuteOptions() {
+            const hour = timeHourSelect.value;
+            const minutes = availableSlots
+                .filter(slot => slot.startsWith(`${hour}:`))
+                .map(slot => slot.slice(3));
+            timeMinuteSelect.innerHTML = '<option value="">--</option>';
+            ['00', '30'].forEach(min => {
+                if (minutes.includes(min)) {
+                    const opt = document.createElement('option');
+                    opt.value = min;
+                    opt.textContent = min;
+                    timeMinuteSelect.appendChild(opt);
+                }
+            });
+            timeMinuteSelect.disabled = !hour || timeMinuteSelect.options.length < 2;
+            if (timeMinuteSelect.disabled) timeMinuteSelect.classList.add('bg-gray-50');
+            else timeMinuteSelect.classList.remove('bg-gray-50');
+        }
         // Guards against a slow /availability response landing after the user
         // has already changed the date or service (stale-response race condition).
         let availabilityRequestId = 0;
@@ -432,11 +482,12 @@
             }
         });
 
+        timeHourSelect.addEventListener('change', refreshMinuteOptions);
+
         async function fetchAvailableSlots(dateStr) {
             const requestId = ++availabilityRequestId;
 
-            timeSlotSelect.disabled = true;
-            timeSlotSelect.innerHTML = '<option value="">Υπολογισμός διαθεσιμότητας...</option>';
+            resetTimePickers('Υπολογισμός...');
             slotHint.textContent = 'Παρακαλώ περιμένετε...';
             slotHint.className = 'text-xs text-gray-400 mt-1';
 
@@ -444,11 +495,10 @@
             const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
             const bufferMinutes = (businessData && businessData.buffer_minutes) || 0;
 
-            // Η μέρα μπορεί να είναι κλειστή βάσει work_days, ανεξάρτητα από τα ραντεβού.
             const shifts = getShiftsForDate(dateStr);
             if (shifts.length === 0) {
                 if (requestId !== availabilityRequestId) return;
-                timeSlotSelect.innerHTML = '<option value="">Κλειστό αυτή την ημέρα</option>';
+                resetTimePickers('Κλειστό');
                 slotHint.textContent = '⚠️ Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
                 slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
                 return;
@@ -459,15 +509,15 @@
                 if (!response.ok) throw new Error('Availability request failed');
                 const data = await response.json();
 
-                // Αγνόησε την απάντηση αν ο χρήστης άλλαξε ημερομηνία/υπηρεσία στο μεταξύ.
                 if (requestId !== availabilityRequestId) return;
 
                 const occupied = data.occupied || [];
-                const stepMinutes = 15;
+                const stepMinutes = 30;
                 let freeSlots = [];
 
                 shifts.forEach(shift => {
-                    for (let currentMins = shift.start; currentMins + duration <= shift.end; currentMins += stepMinutes) {
+                    const alignedStart = Math.ceil(shift.start / stepMinutes) * stepMinutes;
+                    for (let currentMins = alignedStart; currentMins + duration <= shift.end; currentMins += stepMinutes) {
                         const slotStartMins = currentMins;
                         const slotEndMins = currentMins + duration + bufferMinutes;
 
@@ -483,32 +533,33 @@
                     }
                 });
 
-                // Αφαίρεση τυχόν διπλότυπων ωρών αν επικαλύπτονται βάρδιες.
                 freeSlots = [...new Set(freeSlots)].sort();
-
-                timeSlotSelect.innerHTML = '';
+                availableSlots = freeSlots;
 
                 if (freeSlots.length === 0) {
-                    timeSlotSelect.innerHTML = '<option value="">Δεν υπάρχουν διαθέσιμες ώρες</option>';
+                    resetTimePickers('—');
                     slotHint.textContent = '⚠️ Η ημέρα είναι πλήρης.';
                     slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
-                } else {
-                    timeSlotSelect.innerHTML = '<option value="">-- Επιλέξτε Διαθέσιμη Ώρα --</option>';
-                    freeSlots.forEach(slot => {
-                        const opt = document.createElement('option');
-                        opt.value = slot;
-                        opt.textContent = slot;
-                        timeSlotSelect.appendChild(opt);
-                    });
-                    timeSlotSelect.disabled = false;
-                    timeSlotSelect.classList.remove('bg-gray-50');
-                    slotHint.textContent = `✨ Βρέθηκαν ${freeSlots.length} διαθέσιμες επιλογές.`;
-                    slotHint.className = 'text-xs text-green-600 mt-1 font-medium';
+                    return;
                 }
+
+                const hours = [...new Set(freeSlots.map(slot => slot.slice(0, 2)))];
+                timeHourSelect.innerHTML = '<option value="">Ώρα</option>';
+                hours.forEach(hour => {
+                    const opt = document.createElement('option');
+                    opt.value = hour;
+                    opt.textContent = hour;
+                    timeHourSelect.appendChild(opt);
+                });
+                timeHourSelect.disabled = false;
+                timeHourSelect.classList.remove('bg-gray-50');
+                refreshMinuteOptions();
+                slotHint.textContent = `✨ Βρέθηκαν ${freeSlots.length} διαθέσιμες ώρες (ανά μισάωρο).`;
+                slotHint.className = 'text-xs text-green-600 mt-1 font-medium';
 
             } catch (err) {
                 if (requestId !== availabilityRequestId) return;
-                timeSlotSelect.innerHTML = '<option value="">Σφάλμα φόρτωσης</option>';
+                resetTimePickers('Σφάλμα');
                 slotHint.textContent = '❌ Αποτυχία σύνδεσης με τον διακομιστή.';
                 slotHint.className = 'text-xs text-red-600 mt-1 font-medium';
             }
@@ -538,11 +589,11 @@
             if (document.getElementById('website').value !== '') return;
 
             // Πρόσθετος client-side έλεγχος: αν δεν έχει επιλεγεί έγκυρη ώρα, μην στείλεις.
-            if (!timeSlotSelect.value) {
+            if (!selectedTimeValue() || !availableSlots.includes(selectedTimeValue())) {
                 responseContainer.classList.remove('hidden');
                 gcalBtn.classList.add('hidden');
                 responseMessage.className = 'text-sm font-medium text-red-600 mb-3';
-                responseMessage.textContent = 'Παρακαλώ επιλέξτε μια διαθέσιμη ώρα.';
+                responseMessage.textContent = 'Παρακαλώ επιλέξτε διαθέσιμη ώρα (π.χ. 18:00 ή 18:30).';
                 return;
             }
 
@@ -559,12 +610,13 @@
             const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
             const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
             const dateVal = dateInput.value;
-            const timeVal = timeSlotSelect.value;
+            const timeVal = selectedTimeValue();
             const serviceNameVal = serviceSelect.value;
 
             const payload = {
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
                 instagram: document.getElementById('instagram').value,
                 service_name: serviceNameVal,
                 duration: duration,
@@ -591,9 +643,8 @@
                     gcalBtn.classList.remove('hidden');
 
                     bookingForm.reset();
-                    timeSlotSelect.disabled = true;
-                    timeSlotSelect.innerHTML = '<option value="">-- Επιλέξτε πρώτα Ημερομηνία & Υπηρεσία --</option>';
-                    slotHint.textContent = 'Εμφανίζονται αυτόματα μόνο οι διαθέσιμες ώρες.';
+                    resetTimePickers();
+                    slotHint.textContent = 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
                     slotHint.className = 'text-xs text-gray-400 mt-1';
                     fp.clear();
                 } else {
