@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
         /* Επιφανειακά θέματα φόρμας πελάτη. Το brand_color της επιχείρησης
@@ -28,8 +28,8 @@
             --brand-color: #4f46e5;
             --card-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
             --card-radius: 1.25rem;
-            --body-font: "Inter", sans-serif;
-            --heading-font: "Inter", sans-serif;
+            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
         }
 
         [data-theme="dark"] {
@@ -44,8 +44,8 @@
             --brand-color: #818cf8;
             --card-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
             --card-radius: 1.25rem;
-            --body-font: "Inter", sans-serif;
-            --heading-font: "Inter", sans-serif;
+            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
         }
 
         [data-theme="warm"] {
@@ -60,8 +60,8 @@
             --brand-color: #c2410c;
             --card-shadow: 0 18px 40px rgba(124, 63, 22, 0.12);
             --card-radius: 1.5rem;
-            --body-font: "Inter", sans-serif;
-            --heading-font: "Playfair Display", serif;
+            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --heading-font: "IBM Plex Serif", "Noto Serif", serif;
         }
 
         [data-theme="ocean"] {
@@ -76,8 +76,8 @@
             --brand-color: #0f766e;
             --card-shadow: 0 18px 40px rgba(15, 118, 110, 0.12);
             --card-radius: 1.25rem;
-            --body-font: "Manrope", sans-serif;
-            --heading-font: "Manrope", sans-serif;
+            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
         }
 
         body {
@@ -133,6 +133,12 @@
             border-radius: 0.85rem;
             background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg));
             border: 1px solid color-mix(in srgb, var(--brand-color) 20%, var(--border-color));
+        }
+
+        .meta-label {
+            display: inline-block;
+            min-width: 4.6rem;
+            color: var(--text-muted);
         }
 
         .powered-by {
@@ -199,7 +205,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex items-center justify-center p-4">
 
     <div class="max-w-md w-full booking-card p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
 
@@ -220,8 +226,8 @@
 
             <!-- Διεύθυνση & Τηλέφωνο Επιχείρησης -->
             <div id="businessMeta" class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1 hidden">
-                <p id="businessAddressContainer">📍 <a id="businessAddress" href="#" target="_blank" class="text-indigo-600 hover:underline"></a></p>
-                <p id="businessPhoneContainer">📞 <a id="businessPhone" href="#" class="text-indigo-600 hover:underline"></a></p>
+                <p id="businessAddressContainer"><span class="meta-label">Διεύθυνση</span> <a id="businessAddress" href="#" target="_blank" class="text-indigo-600 hover:underline"></a></p>
+                <p id="businessPhoneContainer"><span class="meta-label">Τηλέφωνο</span> <a id="businessPhone" href="#" class="text-indigo-600 hover:underline"></a></p>
             </div>
         </div>
 
@@ -302,7 +308,7 @@
         <div id="responseContainer" class="mt-4 hidden text-center">
             <div id="responseMessage" class="text-sm font-medium mb-3"></div>
             <a id="gcalBtn" href="#" target="_blank" class="inline-flex items-center justify-center space-x-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition duration-200 shadow-sm hidden">
-                📅 Προσθήκη στο Google Calendar
+                Προσθήκη στο Google Calendar
             </a>
         </div>
 
@@ -531,7 +537,7 @@
             if (shifts.length === 0) {
                 if (requestId !== availabilityRequestId) return;
                 resetTimePickers('Κλειστό');
-                slotHint.textContent = '⚠️ Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
+                slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
                 slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
                 return;
             }
@@ -570,7 +576,7 @@
 
                 if (freeSlots.length === 0) {
                     resetTimePickers('—');
-                    slotHint.textContent = '⚠️ Η ημέρα είναι πλήρης.';
+                    slotHint.textContent = 'Η ημέρα είναι πλήρης.';
                     slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
                     return;
                 }
@@ -586,13 +592,13 @@
                 timeHourSelect.disabled = false;
                 timeHourSelect.classList.remove('bg-gray-50');
                 refreshMinuteOptions();
-                slotHint.textContent = `✨ Βρέθηκαν ${freeSlots.length} διαθέσιμες ώρες (ανά μισάωρο).`;
+                slotHint.textContent = `Διαθέσιμες ώρες: ${freeSlots.length} (ανά μισάωρο).`;
                 slotHint.className = 'text-xs text-green-600 mt-1 font-medium';
 
             } catch (err) {
                 if (requestId !== availabilityRequestId) return;
                 resetTimePickers('Σφάλμα');
-                slotHint.textContent = '❌ Αποτυχία σύνδεσης με τον διακομιστή.';
+                slotHint.textContent = 'Αποτυχία σύνδεσης με τον διακομιστή.';
                 slotHint.className = 'text-xs text-red-600 mt-1 font-medium';
             }
         }
