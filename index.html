@@ -145,6 +145,22 @@
             font-weight: 600;
         }
 
+        .rhapsodus-stamp {
+            position: fixed;
+            right: 0.9rem;
+            bottom: 0.75rem;
+            z-index: 15;
+            margin: 0;
+            text-align: right;
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            pointer-events: none;
+        }
+        .rhapsodus-stamp strong {
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
         @media (max-width: 640px) {
             body {
                 align-items: flex-start !important;
@@ -171,6 +187,10 @@
                 bottom: max(0.75rem, env(safe-area-inset-bottom));
                 z-index: 20;
                 box-shadow: 0 10px 24px color-mix(in srgb, var(--brand-color) 32%, transparent);
+            }
+
+            .rhapsodus-stamp {
+                bottom: calc(4.7rem + env(safe-area-inset-bottom));
             }
 
             input, select, textarea {
@@ -287,11 +307,9 @@
         </div>
 
         <div id="loadingError" class="text-center text-red-600 text-sm font-medium hidden mt-4">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
-
-        <footer class="powered-by text-center text-xs mt-7">
-            Powered by <a href="https://bookings-service.gr" target="_blank" rel="noopener">bookings-service.gr</a>
-        </footer>
     </div>
+
+    <p class="powered-by rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
 
     <!-- Flatpickr JS & Ελληνική γλώσσα -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -413,9 +431,13 @@
 
             try {
                 const res = await fetch(`${API_BASE_URL}/api/${business_code}/info`);
-                if (!res.ok) throw new Error('Business not found');
+                let payload = {};
+                try { payload = await res.json(); } catch (e) {}
+                if (!res.ok) {
+                    throw new Error(payload.error || 'Η επιχείρηση δεν βρέθηκε.');
+                }
 
-                businessData = await res.json();
+                businessData = payload;
 
                 applyClientTheme(businessData.client_theme || 'light');
 
@@ -469,7 +491,9 @@
 
             } catch (err) {
                 initialLoader.classList.add('hidden');
-                document.getElementById('loadingError').classList.remove('hidden');
+                const errorEl = document.getElementById('loadingError');
+                errorEl.textContent = err.message || 'Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.';
+                errorEl.classList.remove('hidden');
             }
         }
 
@@ -588,7 +612,7 @@
             const details = encodeURIComponent(`Κράτηση ραντεβού μέσω ${businessData?.name || 'πλατφόρμας'}.`);
             const location = encodeURIComponent(businessData?.address || '');
 
-            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}`;
+            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}&ctz=Europe/Athens`;
         }
 
         bookingForm.addEventListener('submit', async (e) => {
