@@ -275,7 +275,7 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμη Ώρα *</label>
+                <label id="timeLabel" class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμη Ώρα *</label>
                 <div class="time-picker-wrapper">
                     <select id="timeHour" required disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                         <option value="">Ώρα</option>
@@ -346,6 +346,48 @@
 
         let businessData = null;
         let availableSlots = [];
+        let waitlistMode = false;
+
+        function isRequestMode() {
+            return businessData && businessData.intake_mode === 'request';
+        }
+
+        function waitlistAllowed() {
+            return Boolean(businessData && Number(businessData.waitlist_enabled) === 1);
+        }
+
+        function allPreferredSlots() {
+            const slots = [];
+            for (let hour = 8; hour <= 21; hour += 1) {
+                ['00', '30'].forEach((min) => {
+                    if (hour === 21 && min === '30') return;
+                    slots.push(`${String(hour).padStart(2, '0')}:${min}`);
+                });
+            }
+            return slots;
+        }
+
+        function fillPreferredTimes(hint, asWaitlist) {
+            waitlistMode = !!asWaitlist;
+            availableSlots = allPreferredSlots();
+            const hours = [...new Set(availableSlots.map((slot) => slot.slice(0, 2)))];
+            timeHourSelect.innerHTML = '<option value="">Ώρα</option>';
+            hours.forEach((hour) => {
+                const opt = document.createElement('option');
+                opt.value = hour;
+                opt.textContent = hour;
+                timeHourSelect.appendChild(opt);
+            });
+            timeHourSelect.disabled = false;
+            timeHourSelect.classList.remove('bg-gray-50');
+            timeMinuteSelect.innerHTML = '<option value="">--</option><option value="00">00</option><option value="30">30</option>';
+            timeMinuteSelect.disabled = true;
+            timeMinuteSelect.classList.add('bg-gray-50');
+            slotHint.textContent = hint;
+            slotHint.className = asWaitlist
+                ? 'text-xs text-amber-700 mt-1 font-medium'
+                : 'text-xs text-gray-500 mt-1';
+        }
 
         function selectedTimeValue() {
             if (!timeHourSelect.value || !timeMinuteSelect.value) return '';
@@ -495,6 +537,15 @@
                 initialLoader.classList.add('hidden');
                 bookingForm.classList.remove('hidden');
 
+                if (isRequestMode()) {
+                    document.getElementById('timeLabel').textContent = 'Προτιμώμενη ώρα *';
+                    slotHint.textContent = 'Δεν κλείνει ώρα. Προτείνετε μέρα και ώρα· θα επικοινωνήσουμε για επιβεβαίωση.';
+                    document.getElementById('submitBtnText').textContent = 'Δήλωση ενδιαφέροντος';
+                    if (!businessData.booking_subtitle) {
+                        document.getElementById('businessSubtitle').textContent = 'Δηλώστε ενδιαφέρον για μέρα και ώρα';
+                    }
+                }
+
             } catch (err) {
                 initialLoader.classList.add('hidden');
                 const errorEl = document.getElementById('loadingError');
@@ -524,10 +575,16 @@
 
         async function fetchAvailableSlots(dateStr) {
             const requestId = ++availabilityRequestId;
-
+            waitlistMode = false;
             resetTimePickers('Υπολογισμός...');
             slotHint.textContent = 'Παρακαλώ περιμένετε...';
             slotHint.className = 'text-xs text-gray-400 mt-1';
+
+            if (isRequestMode()) {
+                if (requestId !== availabilityRequestId) return;
+                fillPreferredTimes('Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.');
+                return;
+            }
 
             const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
             const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
@@ -575,6 +632,10 @@
                 availableSlots = freeSlots;
 
                 if (freeSlots.length === 0) {
+                    if (waitlistAllowed()) {
+                        fillPreferredTimes('Δεν υπάρχει διαθέσιμη ώρα. Μπορείτε να δηλώσετε ενδιαφέρον σε περίπτωση ακύρωσης.', true);
+                        return;
+                    }
                     resetTimePickers('—');
                     slotHint.textContent = 'Η ημέρα είναι πλήρης.';
                     slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
@@ -660,7 +721,8 @@
                 duration: duration,
                 date: dateVal,
                 time: timeVal,
-                notes: document.getElementById('notes').value
+                notes: document.getElementById('notes').value,
+                waitlist: waitlistMode
             };
 
             try {
@@ -674,16 +736,24 @@
                 responseContainer.classList.remove('hidden');
                 if (res.ok) {
                     responseMessage.className = "text-sm font-medium text-green-600 mb-3";
-                    responseMessage.textContent = businessData?.success_message || data.message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
+                    responseMessage.textContent = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
 
-                    const gcalUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
-                    gcalBtn.href = gcalUrl;
-                    gcalBtn.classList.remove('hidden');
+                    if (data.status === 'WAITLIST' || isRequestMode()) {
+                        gcalBtn.classList.add('hidden');
+                    } else {
+                        const gcalUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
+                        gcalBtn.href = gcalUrl;
+                        gcalBtn.classList.remove('hidden');
+                    }
 
                     bookingForm.reset();
                     resetTimePickers();
-                    slotHint.textContent = 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
+                    waitlistMode = false;
+                    slotHint.textContent = isRequestMode()
+                        ? 'Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.'
+                        : 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
                     slotHint.className = 'text-xs text-gray-400 mt-1';
+                    document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Δήλωση ενδιαφέροντος' : 'Υποβολή Αιτήματος Κράτησης';
                     fp.clear();
                 } else {
                     responseMessage.className = "text-sm font-medium text-red-600 mb-3";
