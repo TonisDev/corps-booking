@@ -1,0 +1,16 @@
+{
+  "name": "Διαχείριση Ραντεβού",
+  "short_name": "Manager",
+  "start_url": "./manager.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "demo-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
