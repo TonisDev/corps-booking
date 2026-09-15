@@ -79,6 +79,7 @@
         .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.7rem; font-weight: 700; }
         .badge-past { background: #e2e8f0; color: #334155; }
         .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-waitlist { background: #ede9fe; color: #5b21b6; }
         .badge-booked { background: #d1fae5; color: #065f46; }
         .badge-blocked { background: #e2e8f0; color: #475569; }
         .badge-rejected { background: #fee2e2; color: #991b1b; }
@@ -1030,12 +1031,13 @@
       calendar.removeAllEvents();
 
       allAppointments.forEach(item => {
-        if (item.status === 'PENDING') pending++;
+        if (item.status === 'PENDING' || item.status === 'WAITLIST') pending++;
         if (item.status === 'BOOKED' || item.status === 'CONFIRMED') booked++;
         if (isPastAppointment(item) && item.status !== 'BLOCKED') history++;
 
         let color = '#059669';
         if (item.status === 'PENDING') color = '#d97706';
+        if (item.status === 'WAITLIST') color = '#7c3aed';
         if (item.status === 'BLOCKED') color = '#64748b';
         if (item.status === 'REJECTED') color = '#ef4444';
 
@@ -1120,6 +1122,7 @@
     const past = isPastAppointment(item);
     let cls = 'badge-booked';
     if (item.status === 'PENDING') cls = 'badge-pending';
+    if (item.status === 'WAITLIST') cls = 'badge-waitlist';
     if (item.status === 'BLOCKED') cls = 'badge-blocked';
     if (item.status === 'REJECTED') cls = 'badge-rejected';
     const bits = [`<span class="badge ${cls}">${statusLabel(item.status)}</span>`];
@@ -1130,7 +1133,7 @@
   function appointmentsForKind(kind) {
     return allAppointments.filter(item => {
       if (kind === 'all') return item.status !== 'BLOCKED';
-      if (kind === 'pending') return item.status === 'PENDING';
+      if (kind === 'pending') return item.status === 'PENDING' || item.status === 'WAITLIST';
       if (kind === 'booked') return item.status === 'BOOKED' || item.status === 'CONFIRMED';
       if (kind === 'history') return item.status !== 'BLOCKED' && isPastAppointment(item);
       return true;
@@ -1211,7 +1214,7 @@
   }
 
   function statusLabel(status) {
-    const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', BLOCKED: 'Δεσμευμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο' };
+    const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', WAITLIST: 'Ενδιαφέρον', BLOCKED: 'Δεσμευμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο' };
     return labels[status] || status;
   }
 
@@ -1220,6 +1223,13 @@
     selectedEventId = item.id;
     const pastNote = isPastAppointment(item)
       ? '<div style="display:flex; justify-content:space-between;"><span>Ετικέτα:</span> <strong>Παρελθόν</strong></div>'
+      : '';
+
+    const waitlistNote = item.status === 'WAITLIST'
+      ? '<p style="margin:0.75rem 0 0; color:var(--text-muted); font-size:0.85rem;">Δήλωση ενδιαφέροντος — δεν κλείνει ώρα. Επικοινώνησε και όρισε εσύ πότε βολεύει.</p>'
+      : '';
+    const requestNote = item.status === 'PENDING' && currentTenantData && currentTenantData.intake_mode === 'request'
+      ? '<p style="margin:0.75rem 0 0; color:var(--text-muted); font-size:0.85rem;">Προτιμώμενη ώρα. Επικοινώνησε με τον πελάτη πριν την έγκριση.</p>'
       : '';
 
     document.getElementById('actTitle').innerText = item.customer_name || 'Ραντεβού';
@@ -1232,11 +1242,14 @@
         <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${item.start_time || '-'} – ${item.end_time || '-'}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Κατάσταση:</span> <strong>${statusLabel(item.status)}</strong></div>
         ${pastNote}
+        ${waitlistNote}
+        ${requestNote}
       </div>
     `;
+    const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
     document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || item.status === 'BOOKED' || item.status === 'CONFIRMED') ? 'none' : 'inline-flex';
-    document.getElementById('btnReject').style.display = item.status === 'PENDING' ? 'inline-flex' : 'none';
-    document.getElementById('reasonGroup').style.display = (item.status === 'PENDING') ? 'block' : 'none';
+    document.getElementById('btnReject').style.display = actionable ? 'inline-flex' : 'none';
+    document.getElementById('reasonGroup').style.display = actionable ? 'block' : 'none';
     document.getElementById('actReason').value = item.status_reason || '';
     openModal('actionModal');
   }
