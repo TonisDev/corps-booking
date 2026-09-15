@@ -10,6 +10,9 @@
     <title>Διαχείριση Επιχείρησης | Manager</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="demo-logo.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
     <!-- FullCalendar & Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -37,7 +40,17 @@
             --field-border: #475569;
         }
 
-        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; transition: background 0.3s, color 0.3s; }
+        body {
+          font-family: "IBM Plex Sans", "Noto Sans", sans-serif;
+          font-synthesis: none;
+          background: var(--bg-color);
+          color: var(--text-color);
+          margin: 0;
+          line-height: 1.5;
+          transition: background 0.3s, color 0.3s;
+        }
+        h1, h2, h3 { letter-spacing: 0; font-weight: 600; }
+        button, input, select, textarea { font-family: inherit; }
         .header { background: var(--header-bg); padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
         .card { background: var(--card-bg); border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
@@ -170,7 +183,7 @@
 
   <!-- Login Screen -->
   <div id="loginScreen" style="max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-    <h2>🔐 Είσοδος Διαχειριστή</h2>
+    <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="log-in" size="22"></i> Είσοδος διαχειριστή</h2>
     <form onsubmit="handleLogin(event)">
       <div class="form-group" style="margin-top: 1rem;">
         <label>Business Code / Slug</label>
@@ -251,7 +264,7 @@
       <!-- Ημερολόγιο -->
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="margin:0;">📅 Ημερολόγιο Ραντεβού</h3>
+          <h3 style="margin:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="calendar" size="18"></i> Ημερολόγιο ραντεβού</h3>
           <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted);">
             <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#059669; border-radius:50%; display:inline-block;"></span>Booked</span>
             <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#f59e0b; border-radius:50%; display:inline-block;"></span>Pending</span>
@@ -266,7 +279,7 @@
   <!-- Settings Modal -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
-      <h2 style="margin-top:0;">⚙️ Ρυθμίσεις Επιχείρησης & Σελίδας Πελάτη</h2>
+      <h2 style="margin-top:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="settings" size="22"></i> Ρυθμίσεις επιχείρησης</h2>
       <form id="settingsForm" onsubmit="saveSettings(event)">
         <div class="form-group">
           <label>Όνομα Επιχείρησης</label>
