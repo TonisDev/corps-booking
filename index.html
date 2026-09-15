@@ -369,20 +369,28 @@
             return Boolean(businessData && Number(businessData.waitlist_enabled) === 1);
         }
 
-        function allPreferredSlots() {
+        function preferredSlotsForDate(dateStr) {
+            const shifts = getShiftsForDate(dateStr);
             const slots = [];
-            for (let hour = 8; hour <= 21; hour += 1) {
-                ['00', '30'].forEach((min) => {
-                    if (hour === 21 && min === '30') return;
-                    slots.push(`${String(hour).padStart(2, '0')}:${min}`);
-                });
-            }
-            return slots;
+            const step = 30;
+            shifts.forEach((shift) => {
+                const alignedStart = Math.ceil(shift.start / step) * step;
+                for (let mins = alignedStart; mins < shift.end; mins += step) {
+                    slots.push(minutesToTime(mins));
+                }
+            });
+            return [...new Set(slots)].sort();
         }
 
-        function fillPreferredTimes(hint, asWaitlist) {
+        function fillPreferredTimes(hint, asWaitlist, dateStr) {
             waitlistMode = !!asWaitlist;
-            availableSlots = allPreferredSlots();
+            availableSlots = preferredSlotsForDate(dateStr);
+            if (!availableSlots.length) {
+                resetTimePickers('Κλειστό');
+                slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
+                slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
+                return;
+            }
             const hours = [...new Set(availableSlots.map((slot) => slot.slice(0, 2)))];
             timeHourSelect.innerHTML = '<option value="">Ώρα</option>';
             hours.forEach((hour) => {
@@ -537,6 +545,13 @@
                     document.getElementById('businessMeta').classList.remove('hidden');
                 }
 
+                fp.set('disable', [(date) => {
+                    const workDays = (businessData.work_days && businessData.work_days.length > 0)
+                        ? businessData.work_days.map(Number)
+                        : [1, 2, 3, 4, 5];
+                    return !workDays.includes(date.getDay());
+                }]);
+
                 businessHeader.classList.remove('hidden');
 
                 (businessData.services || []).forEach(s => {
@@ -595,7 +610,7 @@
 
             if (isRequestMode()) {
                 if (requestId !== availabilityRequestId) return;
-                fillPreferredTimes('Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.');
+                fillPreferredTimes('Προτιμώμενη ώρα μέσα στο ωράριο — δεν δεσμεύεται αυτόματα.', false, dateStr);
                 return;
             }
 
@@ -646,7 +661,7 @@
 
                 if (freeSlots.length === 0) {
                     if (waitlistAllowed()) {
-                        fillPreferredTimes('Δεν υπάρχει διαθέσιμη ώρα. Μπορείτε να δηλώσετε ενδιαφέρον σε περίπτωση ακύρωσης.', true);
+                        fillPreferredTimes('Δεν υπάρχει διαθέσιμη ώρα. Μπορείτε να δηλώσετε ενδιαφέρον σε περίπτωση ακύρωσης.', true, dateStr);
                         return;
                     }
                     resetTimePickers('—');
