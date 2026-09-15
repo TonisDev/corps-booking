@@ -114,6 +114,9 @@
         [data-theme="dark"] .fc { color: #f8fafc; }
         [data-theme="dark"] .fc-theme-standard td, [data-theme="dark"] .fc-theme-standard th, [data-theme="dark"] .fc-theme-standard .fc-scrollgrid { border-color: #334155; }
         [data-theme="dark"] .fc-button-primary { background-color: #4f46e5; border-color: #4f46e5; }
+        .fc-timegrid-slot, .fc-daygrid-day { cursor: pointer; }
+        .slot-choice-actions { display: flex; flex-direction: column; gap: 0.65rem; margin-top: 1.25rem; }
+        .slot-choice-actions .btn { width: 100%; justify-content: center; }
     </style>
 </head>
 <body data-theme="light">
@@ -142,8 +145,8 @@
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
         <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> Σελίδα Πελάτη</button>
-        <button class="btn btn-outline" onclick="openModal('blockModal')"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
-        <button class="btn" onclick="openModal('bookingModal')"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
+        <button class="btn btn-outline" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
+        <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> Ρυθμίσεις</button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
         <button class="btn btn-danger" onclick="handleLogout()"><i data-lucide="log-out" size="16"></i></button>
@@ -305,9 +308,9 @@
           <button type="button" class="btn" onclick="addModalService()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Υπηρεσίας</button>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-          <div class="form-group"><label>Telegram Chat ID</label><input class="field" type="text" id="setTelegram"></div>
-          <div class="form-group"><label>Buffer Time (λεπτά)</label><input class="field" type="number" id="setBuffer" min="0" step="5"></div>
+        <div class="form-group" style="margin-top: 1rem; max-width: 280px;">
+          <label>Buffer Time (λεπτά)</label>
+          <input class="field" type="number" id="setBuffer" min="0" step="5">
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
@@ -315,6 +318,19 @@
           <button type="submit" class="btn" style="background: #059669;">Αποθήκευση Αλλαγών</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: επιλογή ενέργειας σε κλικ κελιού ημερολογίου -->
+  <div class="modal" id="slotChoiceModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <h3 style="margin-top:0;">Νέα ενέργεια</h3>
+      <p id="slotChoiceHint" style="color: var(--text-muted); font-size: 0.9rem; margin: 0;"></p>
+      <div class="slot-choice-actions">
+        <button type="button" class="btn" onclick="chooseSlotBooking()"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
+        <button type="button" class="btn btn-outline" onclick="chooseSlotBlock()"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('slotChoiceModal')">Ακύρωση</button>
+      </div>
     </div>
   </div>
 
@@ -413,6 +429,7 @@
                 <option value="14">14</option><option value="15">15</option><option value="16">16</option>
                 <option value="17">17</option><option value="18">18</option><option value="19">19</option>
                 <option value="20">20</option><option value="21">21</option>
+                <option value="22">22</option>
               </select>
               <span>:</span>
               <select id="blockEndMin" required>
@@ -463,6 +480,7 @@
   let currentTenantData = null;
   let calendar = null;
   let selectedEventId = null;
+  let pendingSlot = null;
   let toastTimer;
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -605,6 +623,113 @@
     }
   }
 
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function snapMinute(minutes) {
+    if (minutes < 8) return '00';
+    if (minutes < 23) return '15';
+    if (minutes < 38) return '30';
+    if (minutes < 53) return '45';
+    return '00';
+  }
+
+  function addMinutesToClock(hour, minute, extra) {
+    let total = parseInt(hour, 10) * 60 + parseInt(minute, 10) + extra;
+    if (total < 0) total = 0;
+    return { hour: pad2(Math.floor(total / 60) % 24), minute: pad2(total % 60) };
+  }
+
+  function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el || value == null || value === '') return;
+    if (![...el.options].some(opt => opt.value === value)) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value;
+      el.appendChild(opt);
+    }
+    el.value = value;
+  }
+
+  function slotFromDate(date, isTimeView) {
+    const hourRaw = pad2(date.getHours());
+    const minuteRaw = snapMinute(date.getMinutes());
+    const rolled = (date.getMinutes() >= 53);
+    const hour = rolled && isTimeView ? pad2(date.getHours() + 1) : hourRaw;
+    const minute = rolled && isTimeView ? '00' : minuteRaw;
+    return {
+      date: `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`,
+      hour,
+      minute,
+      hasTime: !!isTimeView
+    };
+  }
+
+  function formatSlotHint(slot) {
+    const [y, m, d] = slot.date.split('-');
+    const humanDate = `${d}/${m}/${y}`;
+    return slot.hasTime ? `${humanDate}, ${slot.hour}:${slot.minute}` : humanDate;
+  }
+
+  function openSlotChoice(info) {
+    const isTimeView = info.view.type.indexOf('timeGrid') === 0;
+    pendingSlot = slotFromDate(info.date, isTimeView);
+    document.getElementById('slotChoiceHint').textContent = formatSlotHint(pendingSlot);
+    openModal('slotChoiceModal');
+  }
+
+  function openBookingFromToolbar() {
+    pendingSlot = null;
+    openBookingModal();
+  }
+
+  function openBlockFromToolbar() {
+    pendingSlot = null;
+    openBlockModal();
+  }
+
+  function chooseSlotBooking() {
+    closeModal('slotChoiceModal');
+    openBookingModal(pendingSlot);
+  }
+
+  function chooseSlotBlock() {
+    closeModal('slotChoiceModal');
+    openBlockModal(pendingSlot);
+  }
+
+  function openBookingModal(slot) {
+    const form = document.querySelector('#bookingModal form');
+    if (form) form.reset();
+    populateServicesDropdown();
+    if (slot) {
+      document.getElementById('bookDate').value = slot.date;
+      if (slot.hasTime) {
+        setSelectValue('bookHour', slot.hour);
+        setSelectValue('bookMinute', slot.minute);
+      }
+    }
+    openModal('bookingModal');
+  }
+
+  function openBlockModal(slot) {
+    const form = document.querySelector('#blockModal form');
+    if (form) form.reset();
+    if (slot) {
+      document.getElementById('blockDate').value = slot.date;
+      if (slot.hasTime) {
+        setSelectValue('blockStartHour', slot.hour);
+        setSelectValue('blockStartMin', slot.minute);
+        const end = addMinutesToClock(slot.hour, slot.minute, 30);
+        setSelectValue('blockEndHour', end.hour);
+        setSelectValue('blockEndMin', end.minute);
+      }
+    }
+    openModal('blockModal');
+  }
+
   function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -623,7 +748,8 @@
         right: 'dayGridMonth,timeGridWeek,timeGridDay'
       },
       buttonText: { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' },
-      eventClick: info => openActionModal(info.event)
+      eventClick: info => openActionModal(info.event),
+      dateClick: info => openSlotChoice(info)
     });
     calendar.render();
   }
@@ -789,7 +915,6 @@
     document.querySelectorAll('input[name="clientTheme"]').forEach(r => {
       r.checked = r.value === savedTheme;
     });
-    document.getElementById('setTelegram').value = currentTenantData.telegram_chat_id || '';
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
 
     const workDays = currentTenantData.work_days || [1, 2, 3, 4, 5];
@@ -899,7 +1024,6 @@
     const booking_subtitle = document.getElementById('setBookingSubtitle').value.trim();
     const welcome_text = document.getElementById('setWelcomeText').value.trim();
     const success_message = document.getElementById('setSuccessMessage').value.trim();
-    const telegram_chat_id = document.getElementById('setTelegram').value.trim();
     const buffer_minutes = parseInt(document.getElementById('setBuffer').value) || 0;
 
     let work_days = [];
@@ -933,7 +1057,7 @@
           name, email, phone, address, logo_url, brand_color,
           client_theme, booking_subtitle, welcome_text, success_message,
           work_days, working_hours, services,
-          telegram_chat_id, buffer_minutes
+          buffer_minutes
         })
       });
 
