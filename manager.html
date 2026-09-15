@@ -418,20 +418,6 @@
         </div>
 
         <div class="help-box">
-          <h3>Google Calendar</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">
-            Αντιγράψτε το URL και στο Google Calendar (υπολογιστής): Ρυθμίσεις → Προσθήκη ημερολογίου → Από URL.
-            Στο κινητό ανοίγει και μεμονωμένο ραντεβού από τη λίστα.
-          </p>
-          <input class="field readonly-url" id="calendarFeedUrl" readonly placeholder="Πατήστε δημιουργία συνδέσμου">
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top: 0.7rem;">
-            <button type="button" class="btn" onclick="ensureCalendarFeed(false)">Δημιουργία / εμφάνιση</button>
-            <button type="button" class="btn btn-outline" onclick="copyCalendarFeed()">Αντιγραφή URL</button>
-            <button type="button" class="btn btn-outline" onclick="ensureCalendarFeed(true)">Νέο URL (ακυρώνει το παλιό)</button>
-          </div>
-        </div>
-
-        <div class="help-box">
           <h3>Αλλαγή κωδικού</h3>
           <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Αλλάζεις τον κωδικό σου. Αν τον χάσεις, ο super admin μπορεί ακόμα να κάνει reset.</p>
           <div class="form-group">
@@ -622,7 +608,6 @@
       <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
         <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <button class="btn btn-outline" id="btnGoogleCal" type="button" onclick="addSelectedToGoogleCalendar()"><i data-lucide="calendar-plus" size="16"></i> Google Calendar</button>
           <button class="btn btn-outline" onclick="closeModal('actionModal')">Κλείσιμο</button>
           <button class="btn btn-danger" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
           <button class="btn" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
@@ -643,7 +628,6 @@
   let currentTenantData = null;
   let calendar = null;
   let selectedEventId = null;
-  let selectedAppointment = null;
   let pendingSlot = null;
   let allAppointments = [];
   let currentListKind = 'all';
@@ -738,82 +722,6 @@
       } catch (err) {}
     }
     copyManagerLink();
-  }
-
-  async function ensureCalendarFeed(rotate) {
-    try {
-      const res = await adminFetch(`/api/${currentBusinessCode}/admin/calendar-feed`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rotate: !!rotate })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Σφάλμα ημερολογίου');
-      document.getElementById('calendarFeedUrl').value = data.url || '';
-      showToast(data.rotated ? 'Δημιουργήθηκε νέο URL. Το παλιό σταμάτησε να ισχύει.' : 'Έτοιμο το URL ημερολογίου.');
-    } catch (err) {
-      if (err.message !== 'Unauthorized') showToast(err.message || 'Σφάλμα ημερολογίου.', true);
-    }
-  }
-
-  async function loadCalendarFeedUrl() {
-    const field = document.getElementById('calendarFeedUrl');
-    if (!field) return;
-    try {
-      const res = await adminFetch(`/api/${currentBusinessCode}/admin/calendar-feed`);
-      const data = await res.json().catch(() => ({}));
-      field.value = data.url || '';
-    } catch (err) {
-      field.value = '';
-    }
-  }
-
-  async function copyCalendarFeed() {
-    const url = document.getElementById('calendarFeedUrl').value.trim();
-    if (!url) {
-      await ensureCalendarFeed(false);
-    }
-    const next = document.getElementById('calendarFeedUrl').value.trim();
-    if (!next) return;
-    try {
-      await navigator.clipboard.writeText(next);
-      showToast('Το URL ημερολογίου αντιγράφηκε.');
-    } catch (err) {
-      prompt('Αντιγραφή:', next);
-    }
-  }
-
-  function googleCalendarUrlFor(item) {
-    if (!item || !item.date || !item.start_time) return '';
-    const duration = Number(item.duration) || 60;
-    const cleanDate = String(item.date).replace(/-/g, '');
-    const startClean = String(item.start_time).replace(/:/g, '') + '00';
-    const startParts = String(item.start_time).split(':');
-    const startMins = (parseInt(startParts[0], 10) || 0) * 60 + (parseInt(startParts[1], 10) || 0);
-    let endMins = startMins + duration;
-    if (item.end_time) {
-      const endParts = String(item.end_time).split(':');
-      endMins = (parseInt(endParts[0], 10) || 0) * 60 + (parseInt(endParts[1], 10) || 0);
-    }
-    const endH = String(Math.floor(endMins / 60)).padStart(2, '0');
-    const endM = String(endMins % 60).padStart(2, '0');
-    const endClean = `${endH}${endM}00`;
-    const title = encodeURIComponent(`${item.service_name || 'Ραντεβού'} — ${item.customer_name || ''}`.trim());
-    const details = encodeURIComponent(
-      [`Τηλ: ${item.customer_phone || '-'}`, item.customer_email ? `Email: ${item.customer_email}` : '', item.notes || '']
-        .filter(Boolean).join('\n')
-    );
-    const location = encodeURIComponent((currentTenantData && currentTenantData.address) || '');
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${cleanDate}T${startClean}/${cleanDate}T${endClean}&details=${details}&location=${location}&ctz=Europe/Athens`;
-  }
-
-  function addSelectedToGoogleCalendar() {
-    const url = googleCalendarUrlFor(selectedAppointment);
-    if (!url) {
-      showToast('Δεν υπάρχουν στοιχεία ώρας για το ημερολόγιο.', true);
-      return;
-    }
-    window.open(url, '_blank', 'noopener');
   }
 
   async function changeOwnPassword() {
@@ -1310,7 +1218,6 @@
   function openAppointmentDetails(item) {
     if (!item) return;
     selectedEventId = item.id;
-    selectedAppointment = item;
     const pastNote = isPastAppointment(item)
       ? '<div style="display:flex; justify-content:space-between;"><span>Ετικέτα:</span> <strong>Παρελθόν</strong></div>'
       : '';
@@ -1331,10 +1238,6 @@
     document.getElementById('btnReject').style.display = item.status === 'PENDING' ? 'inline-flex' : 'none';
     document.getElementById('reasonGroup').style.display = (item.status === 'PENDING') ? 'block' : 'none';
     document.getElementById('actReason').value = item.status_reason || '';
-    const gcalBtn = document.getElementById('btnGoogleCal');
-    if (gcalBtn) {
-      gcalBtn.style.display = item.status === 'BLOCKED' ? 'none' : 'inline-flex';
-    }
     openModal('actionModal');
   }
 
@@ -1457,7 +1360,6 @@
     document.getElementById('newPassword').value = '';
     document.getElementById('newPassword2').value = '';
     renderManagerQr();
-    loadCalendarFeedUrl();
 
     const workDays = currentTenantData.work_days || [1, 2, 3, 4, 5];
     document.querySelectorAll('input[name="w_day"]').forEach(cb => {
