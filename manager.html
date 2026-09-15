@@ -64,7 +64,10 @@
         .badge-rejected { background: #fee2e2; color: #991b1b; }
         .list-empty { text-align: center; color: var(--text-muted); padding: 1.5rem 0; }
         .today-list { display: flex; flex-direction: column; gap: 0.5rem; }
-        .today-empty { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+        .day-hours-block { border: 1px solid var(--border-color); border-radius: 0.65rem; padding: 0.75rem; margin-bottom: 0.65rem; }
+        .day-hours-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+        #dayAppointmentsList { display: none; flex-direction: column; gap: 0.45rem; max-height: 42vh; overflow-y: auto; margin: 1rem 0 0; }
+        #slotChoiceModal .modal-content { max-width: 480px; }
         @media (max-width: 760px) {
           .list-filters { grid-template-columns: 1fr; }
         }
@@ -326,21 +329,26 @@
         <div class="form-group" style="margin-top: 1rem;">
           <label>Ημέρες Λειτουργίας</label>
           <div class="checkbox-group" id="setWorkDays">
-            <label><input type="checkbox" name="w_day" value="1"> Δευτ</label>
-            <label><input type="checkbox" name="w_day" value="2"> Τρί</label>
-            <label><input type="checkbox" name="w_day" value="3"> Τετ</label>
-            <label><input type="checkbox" name="w_day" value="4"> Πέμ</label>
-            <label><input type="checkbox" name="w_day" value="5"> Παρ</label>
-            <label><input type="checkbox" name="w_day" value="6"> Σάβ</label>
-            <label><input type="checkbox" name="w_day" value="0"> Κυρ</label>
+            <label><input type="checkbox" name="w_day" value="1" onchange="syncHoursEditors()"> Δευτ</label>
+            <label><input type="checkbox" name="w_day" value="2" onchange="syncHoursEditors()"> Τρί</label>
+            <label><input type="checkbox" name="w_day" value="3" onchange="syncHoursEditors()"> Τετ</label>
+            <label><input type="checkbox" name="w_day" value="4" onchange="syncHoursEditors()"> Πέμ</label>
+            <label><input type="checkbox" name="w_day" value="5" onchange="syncHoursEditors()"> Παρ</label>
+            <label><input type="checkbox" name="w_day" value="6" onchange="syncHoursEditors()"> Σάβ</label>
+            <label><input type="checkbox" name="w_day" value="0" onchange="syncHoursEditors()"> Κυρ</label>
           </div>
+          <label style="margin-top: 0.85rem; display:flex; align-items:center; gap:0.45rem; font-weight:500; color: var(--text-color);">
+            <input type="checkbox" id="perDayHoursToggle" onchange="syncHoursEditors()">
+            Διαφορετικό ωράριο ανά ημέρα
+          </label>
         </div>
 
-        <div class="form-group" style="margin-top: 1rem;">
-          <label>Βάρδιες / Διαστήματα (Shifts & Breaks)</label>
+        <div class="form-group" style="margin-top: 1rem;" id="sharedHoursEditor">
+          <label>Βάρδιες / Διαστήματα (ίδιο για όλες τις εργάσιμες)</label>
           <div id="setShiftsList"></div>
-          <button type="button" class="btn" onclick="addModalShift()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Βάρδιας</button>
+          <button type="button" class="btn" onclick="addShiftRow('setShiftsList')" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Βάρδιας</button>
         </div>
+        <div class="form-group" style="margin-top: 1rem; display:none;" id="perDayHoursEditor"></div>
 
         <div class="form-group" style="margin-top: 1rem;">
           <label>Υπηρεσίες & Τιμές</label>
@@ -363,13 +371,14 @@
 
   <!-- Modal: επιλογή ενέργειας σε κλικ κελιού ημερολογίου -->
   <div class="modal" id="slotChoiceModal">
-    <div class="modal-content" style="max-width: 420px;">
-      <h3 style="margin-top:0;">Νέα ενέργεια</h3>
+    <div class="modal-content">
+      <h3 id="slotChoiceTitle" style="margin-top:0;">Νέα ενέργεια</h3>
       <p id="slotChoiceHint" style="color: var(--text-muted); font-size: 0.9rem; margin: 0;"></p>
+      <div id="dayAppointmentsList"></div>
       <div class="slot-choice-actions">
         <button type="button" class="btn" onclick="chooseSlotBooking()"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
         <button type="button" class="btn btn-outline" onclick="chooseSlotBlock()"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
-        <button type="button" class="btn btn-outline" onclick="closeModal('slotChoiceModal')">Ακύρωση</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('slotChoiceModal')">Κλείσιμο</button>
       </div>
     </div>
   </div>
@@ -746,9 +755,45 @@
 
   function openSlotChoice(info) {
     const isTimeView = info.view.type.indexOf('timeGrid') === 0;
+    const isMonthView = info.view.type === 'dayGridMonth';
     pendingSlot = slotFromDate(info.date, isTimeView);
+    document.getElementById('slotChoiceTitle').textContent = isMonthView ? 'Ημέρα' : 'Νέα ενέργεια';
     document.getElementById('slotChoiceHint').textContent = formatSlotHint(pendingSlot);
+    renderDayClickList(isMonthView ? pendingSlot.date : null);
     openModal('slotChoiceModal');
+  }
+
+  function renderDayClickList(dateStr) {
+    const list = document.getElementById('dayAppointmentsList');
+    if (!dateStr) {
+      list.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+    const rows = allAppointments
+      .filter(item => item.date === dateStr)
+      .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
+    list.style.display = 'flex';
+    if (!rows.length) {
+      list.innerHTML = '<p class="today-empty">Δεν υπάρχουν ραντεβού αυτή την ημέρα.</p>';
+      return;
+    }
+    list.innerHTML = rows.map(item => `
+      <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(item.start_time || '-')} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
+          <div class="apt-row-meta">${escapeHtml(item.service_name || '-')}</div>
+        </div>
+        <div style="display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end;">${statusBadge(item)}</div>
+      </button>
+    `).join('');
+    list.querySelectorAll('.apt-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const found = allAppointments.find(a => a.id === btn.getAttribute('data-id'));
+        closeModal('slotChoiceModal');
+        openAppointmentDetails(found);
+      });
+    });
   }
 
   function openBookingFromToolbar() {
@@ -808,8 +853,8 @@
       height: 'auto',
       expandRows: true,
       nowIndicator: true,
-      navLinks: true,
       locale: 'el',
+      navLinks: false,
       slotMinTime: '08:00:00',
       slotMaxTime: '22:00:00',
       scrollTime: '09:00:00',
@@ -1166,18 +1211,12 @@
       cb.checked = workDays.includes(parseInt(cb.value));
     });
 
-    const shiftsList = document.getElementById('setShiftsList');
-    shiftsList.innerHTML = '';
-    (currentTenantData.working_hours || [{ start: "09:00", end: "21:00" }]).forEach(sh => {
-      const row = document.createElement('div');
-      row.className = 'shift-row';
-      row.innerHTML = `
-        <span style="font-size:0.8rem; color:var(--text-muted);">Από:</span> <input class="field" type="time" value="${sh.start}">
-        <span style="font-size:0.8rem; color:var(--text-muted);">Έως:</span> <input class="field" type="time" value="${sh.end}">
-        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
-      `;
-      shiftsList.appendChild(row);
-    });
+    const hours = currentTenantData.working_hours;
+    const perDay = hours && !Array.isArray(hours);
+    document.getElementById('perDayHoursToggle').checked = !!perDay;
+    fillShiftList('setShiftsList', perDay ? [{ start: '09:00', end: '21:00' }] : (hours || [{ start: '09:00', end: '21:00' }]));
+    window._perDayHoursDraft = perDay ? { ...hours } : {};
+    syncHoursEditors(true);
 
     const servicesList = document.getElementById('setServicesList');
     servicesList.innerHTML = '';
@@ -1229,17 +1268,83 @@
   function openModal(id) { document.getElementById(id).style.display = 'flex'; lucide.createIcons(); }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-  function addModalShift() {
-    const list = document.getElementById('setShiftsList');
-    const row = document.createElement('div');
-    row.className = 'shift-row';
-    row.innerHTML = `
-      <span style="font-size:0.8rem; color:var(--text-muted);">Από:</span> <input class="field" type="time" value="09:00">
-      <span style="font-size:0.8rem; color:var(--text-muted);">Έως:</span> <input class="field" type="time" value="17:00">
-      <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
+  const DAY_LABELS = { 0: 'Κυριακή', 1: 'Δευτέρα', 2: 'Τρίτη', 3: 'Τετάρτη', 4: 'Πέμπτη', 5: 'Παρασκευή', 6: 'Σάββατο' };
+
+  function shiftRowHtml(start, end) {
+    return `
+      <div class="shift-row">
+        <span style="font-size:0.8rem; color:var(--text-muted);">Από:</span> <input class="field" type="time" value="${start}">
+        <span style="font-size:0.8rem; color:var(--text-muted);">Έως:</span> <input class="field" type="time" value="${end}">
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
+      </div>
     `;
-    list.appendChild(row);
+  }
+
+  function fillShiftList(listId, shifts) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    list.innerHTML = '';
+    (shifts && shifts.length ? shifts : [{ start: '09:00', end: '21:00' }]).forEach(sh => {
+      list.insertAdjacentHTML('beforeend', shiftRowHtml(sh.start || '09:00', sh.end || '17:00'));
+    });
+  }
+
+  function collectShifts(listEl) {
+    const hours = [];
+    if (!listEl) return hours;
+    listEl.querySelectorAll('.shift-row').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs[0] && inputs[1] && inputs[0].value && inputs[1].value) {
+        hours.push({ start: inputs[0].value, end: inputs[1].value });
+      }
+    });
+    return hours;
+  }
+
+  function addShiftRow(listId) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    list.insertAdjacentHTML('beforeend', shiftRowHtml('09:00', '17:00'));
     lucide.createIcons();
+  }
+
+  function syncHoursEditors(fromOpen) {
+    const perDay = document.getElementById('perDayHoursToggle').checked;
+    const shared = document.getElementById('sharedHoursEditor');
+    const perDayBox = document.getElementById('perDayHoursEditor');
+    shared.style.display = perDay ? 'none' : 'block';
+    perDayBox.style.display = perDay ? 'block' : 'none';
+    if (!perDay) return;
+
+    const sharedShifts = collectShifts(document.getElementById('setShiftsList'));
+    const fallback = sharedShifts.length ? sharedShifts : [{ start: '09:00', end: '21:00' }];
+    const draft = window._perDayHoursDraft || {};
+    if (!fromOpen) {
+      perDayBox.querySelectorAll('[data-day-shifts]').forEach(list => {
+        draft[list.getAttribute('data-day-shifts')] = collectShifts(list);
+      });
+    }
+
+    const days = [...document.querySelectorAll('input[name="w_day"]:checked')].map(cb => cb.value);
+    perDayBox.innerHTML = '<label>Ωράριο ανά εργάσιμη ημέρα</label>';
+    days.forEach(day => {
+      const listId = `dayShifts-${day}`;
+      const existing = draft[day] || fallback;
+      perDayBox.insertAdjacentHTML('beforeend', `
+        <div class="day-hours-block">
+          <div class="day-hours-title">${DAY_LABELS[day] || day}</div>
+          <div id="${listId}" data-day-shifts="${day}"></div>
+          <button type="button" class="btn" onclick="addShiftRow('${listId}')" style="background:#059669; margin-top: 0.4rem; font-size: 0.75rem;">+ Βάρδια</button>
+        </div>
+      `);
+      fillShiftList(listId, existing);
+    });
+    window._perDayHoursDraft = draft;
+    lucide.createIcons();
+  }
+
+  function addModalShift() {
+    addShiftRow('setShiftsList');
   }
 
   function addModalService() {
@@ -1273,13 +1378,17 @@
     let work_days = [];
     document.querySelectorAll('input[name="w_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
 
-    let working_hours = [];
-    document.querySelectorAll('#setShiftsList .shift-row').forEach(row => {
-      const inputs = row.querySelectorAll('input');
-      if (inputs[0].value && inputs[1].value) {
-        working_hours.push({ start: inputs[0].value, end: inputs[1].value });
-      }
-    });
+    let working_hours;
+    if (document.getElementById('perDayHoursToggle').checked) {
+      working_hours = {};
+      document.querySelectorAll('#perDayHoursEditor [data-day-shifts]').forEach(list => {
+        const shifts = collectShifts(list);
+        working_hours[list.getAttribute('data-day-shifts')] = shifts.length ? shifts : [{ start: '09:00', end: '21:00' }];
+      });
+    } else {
+      working_hours = collectShifts(document.getElementById('setShiftsList'));
+      if (!working_hours.length) working_hours = [{ start: '09:00', end: '21:00' }];
+    }
 
     let services = [];
     document.querySelectorAll('#setServicesList .service-row').forEach(row => {
