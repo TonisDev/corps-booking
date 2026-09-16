@@ -42,7 +42,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260916f">
+    <link rel="stylesheet" href="manager_style.css?v=20260916g">
 </head>
 <body data-theme="light">
 
@@ -921,8 +921,14 @@
     const isTimeView = info.view.type.indexOf('timeGrid') === 0;
     const isMonthView = info.view.type === 'dayGridMonth';
     pendingSlot = slotFromDate(info.date, isTimeView);
-    document.getElementById('slotChoiceTitle').textContent = isMonthView ? 'Ημέρα' : 'Νέα ενέργεια';
-    document.getElementById('slotChoiceHint').textContent = formatSlotHint(pendingSlot);
+    if (isMonthView) {
+      const n = appointmentsOnDate(pendingSlot.date).length;
+      document.getElementById('slotChoiceTitle').textContent = formatLongGreekDate(pendingSlot.date);
+      document.getElementById('slotChoiceHint').textContent = n === 1 ? '1 ραντεβού' : `${n} ραντεβού`;
+    } else {
+      document.getElementById('slotChoiceTitle').textContent = 'Νέα ενέργεια';
+      document.getElementById('slotChoiceHint').textContent = formatSlotHint(pendingSlot);
+    }
     renderDayClickList(isMonthView ? pendingSlot.date : null);
     openModal('slotChoiceModal');
   }
@@ -946,7 +952,10 @@
       <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
         <div>
           <div style="font-weight:600;">${escapeHtml(appointmentTimeLabel(item))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
-          <div class="apt-row-meta">${escapeHtml(item.service_name || '-')}</div>
+          <div class="apt-row-meta">
+            ${escapeHtml(item.service_name || '-')}
+            ${item.customer_phone ? ' · ' + escapeHtml(item.customer_phone) : ''}
+          </div>
         </div>
         <div style="display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end;">${statusBadge(item)}</div>
       </button>
@@ -1031,16 +1040,23 @@
     return Math.round(Math.max(440, Math.min(window.innerHeight * 0.7, 640)));
   }
 
+  function calendarHeight() {
+    if (!managerIsPhone()) return 'auto';
+    if (calendar && calendar.view && calendar.view.type === 'dayGridMonth') return 'auto';
+    return calendarPhoneHeight();
+  }
+
   function applyCalendarLayout() {
     if (!calendar) return;
     const phone = managerIsPhone();
     calendar.setOption('headerToolbar', calendarToolbar());
-    calendar.setOption('height', phone ? calendarPhoneHeight() : 'auto');
+    calendar.setOption('height', calendarHeight());
     calendar.setOption('expandRows', !phone);
     calendar.setOption('displayEventTime', !phone);
     if (phone && calendar.view && calendar.view.type === 'timeGridWeek') {
       calendar.changeView('timeGridDay');
     }
+    paintMonthDayCounts();
   }
 
   function initCalendar() {
@@ -1072,12 +1088,25 @@
         }
       },
       eventClick: info => {
+        if (managerIsPhone() && info.view.type === 'dayGridMonth') {
+          info.jsEvent.preventDefault();
+          openSlotChoice({ date: info.event.start, view: { type: 'dayGridMonth' } });
+          return;
+        }
         const item = Object.assign({}, info.event.extendedProps, {
           id: info.event.id || (info.event.extendedProps && info.event.extendedProps.id)
         });
         openAppointmentDetails(item);
       },
       dateClick: info => openSlotChoice(info),
+      datesSet: () => {
+        if (!calendar) return;
+        const nextHeight = calendarHeight();
+        if (calendar.getOption('height') !== nextHeight) {
+          calendar.setOption('height', nextHeight);
+        }
+        paintMonthDayCounts();
+      },
       windowResize: applyCalendarLayout
     });
     calendar.render();
@@ -1127,6 +1156,7 @@
       document.getElementById('statBooked').innerText = booked;
       document.getElementById('statHistory').innerText = history;
       renderTodayList();
+      paintMonthDayCounts();
       if (document.getElementById('listModal').style.display === 'flex') {
         renderAppointmentList();
       }
@@ -1157,6 +1187,48 @@
     if (!dateStr) return '-';
     const [y, m, d] = dateStr.split('-');
     return `${d}/${m}/${y}`;
+  }
+
+  function formatLongGreekDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(`${dateStr}T12:00:00`);
+    if (!Number.isFinite(d.getTime())) return formatGreekDate(dateStr);
+    return d.toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  function appointmentsOnDate(dateStr) {
+    return allAppointments.filter(item => {
+      if (item.date !== dateStr) return false;
+      return item.status !== 'BLOCKED' && item.status !== 'REJECTED' && item.status !== 'CANCELLED';
+    });
+  }
+
+  function paintMonthDayCounts() {
+    const cells = document.querySelectorAll('#calendar .fc-daygrid-day');
+    const show = managerIsPhone() && calendar && calendar.view && calendar.view.type === 'dayGridMonth';
+    cells.forEach(cell => {
+      const badge = cell.querySelector('.month-day-count');
+      if (!show) {
+        if (badge) badge.remove();
+        cell.classList.remove('has-month-count');
+        return;
+      }
+      const n = appointmentsOnDate(cell.getAttribute('data-date')).length;
+      if (!n) {
+        if (badge) badge.remove();
+        cell.classList.remove('has-month-count');
+        return;
+      }
+      let mark = badge;
+      if (!mark) {
+        mark = document.createElement('span');
+        mark.className = 'month-day-count';
+        const frame = cell.querySelector('.fc-daygrid-day-frame') || cell;
+        frame.appendChild(mark);
+      }
+      mark.textContent = String(n);
+      cell.classList.add('has-month-count');
+    });
   }
 
   function todayISO() {
