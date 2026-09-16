@@ -1,3 +1,8 @@
+/* =============================================================================
+ * STYLE.CSS — θέματα φόρμας πελάτη (χρώματα από CSS variables στο index.html)
+ * ΝΕΟ CHAT: @public/style.css
+ * ============================================================================= */
+
 /* Εφαρμογή των CSS variables στα βασικά στοιχεία της φόρμας */
 html {
   font-synthesis: none;
@@ -56,8 +61,13 @@ label {
 
 #waitlistBox p {
   color: var(--text-color);
-  font-size: 0.875rem;
-  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  margin: 0 0 0.55rem;
+  line-height: 1.45;
+}
+#waitlistAsk {
+  font-weight: 600;
+  margin-bottom: 0 !important;
 }
 
 #waitlistBtn {
