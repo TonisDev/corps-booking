@@ -41,7 +41,7 @@
     <!-- FullCalendar & Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260916">
+    <link rel="stylesheet" href="manager_style.css?v=20260916c">
 </head>
 <body data-theme="light">
 
@@ -326,7 +326,7 @@
   <div class="modal" id="slotChoiceModal">
     <div class="modal-content">
       <h3 id="slotChoiceTitle" style="margin-top:0;">Νέα ενέργεια</h3>
-      <p id="slotChoiceHint" style="color: var(--text-muted); font-size: 0.9rem; margin: 0;"></p>
+      <p id="slotChoiceHint" style="margin: 0;"></p>
       <div id="dayAppointmentsList"></div>
       <div class="slot-choice-actions">
         <button type="button" class="btn" onclick="chooseSlotBooking()"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
@@ -497,18 +497,19 @@
         <button type="button" class="btn btn-outline" onclick="forceApprove()">Έγκριση έτσι κι αλλιώς</button>
       </div>
       <div class="form-grid" id="rescheduleGroup" style="display:none;">
+        <p id="rescheduleHint" class="guide-note">Διάλεξε νέα ημερομηνία και ώρα για αυτό το ραντεβού.</p>
         <div class="form-group">
-          <label>Νέα ημερομηνία</label>
+          <label for="rescheduleDate">Νέα ημερομηνία</label>
           <input class="field" type="date" id="rescheduleDate">
         </div>
         <div class="form-group">
-          <label>Νέα ώρα</label>
+          <label for="rescheduleTime">Νέα ώρα</label>
           <input class="field" type="time" id="rescheduleTime" step="1800">
         </div>
       </div>
       <div class="form-group" id="reasonGroup">
-        <label>Λόγος προς τον πελάτη (προαιρετικός)</label>
-        <textarea class="field" id="actReason" rows="2" maxlength="400" placeholder="Προαιρετικό σχόλιο προς τον πελάτη"></textarea>
+        <label for="actReason">Μήνυμα προς τον πελάτη</label>
+        <textarea class="field" id="actReason" rows="2" maxlength="400" placeholder="Προαιρετικό — φαίνεται στο email του πελάτη"></textarea>
       </div>
       <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
         <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
@@ -1251,30 +1252,36 @@
     selectedEventId = item.id;
     hideOverlapBox();
     const pastNote = isPastAppointment(item)
-      ? '<div style="display:flex; justify-content:space-between;"><span>Ετικέτα:</span> <strong>Παρελθόν</strong></div>'
+      ? '<div class="detail-row"><span class="detail-k">Ετικέτα</span> <strong class="detail-v">Παρελθόν</strong></div>'
       : '';
 
     const waitlistNote = item.status === 'WAITLIST'
-      ? '<p style="margin:0.75rem 0 0; color:var(--text-muted); font-size:0.85rem;">Δήλωση ενδιαφέροντος — δεν κλείνει ώρα. Επικοινώνησε και όρισε εσύ πότε βολεύει.</p>'
+      ? '<p class="guide-note">Ουρά ακύρωσης — δεν κλείνει ώρα. Επικοινώνησε και όρισε εσύ πότε βολεύει.</p>'
       : '';
     const requestNote = item.status === 'PENDING' && currentTenantData && currentTenantData.intake_mode === 'request'
-      ? '<p style="margin:0.75rem 0 0; color:var(--text-muted); font-size:0.85rem;">Προτιμώμενη ώρα. Επικοινώνησε με τον πελάτη πριν την έγκριση.</p>'
+      ? '<p class="guide-note">Προτιμώμενη ώρα. Επικοινώνησε με τον πελάτη πριν την έγκριση.</p>'
       : '';
 
     document.getElementById('actTitle').innerHTML = `<button type="button" class="client-name-btn" onclick="openClientDrawer('${jsString(item.customer_phone || '')}', '${jsString(item.customer_name || '')}')">${escapeHtml(item.customer_name || 'Ραντεβού')}</button>`;
     document.getElementById('actDetails').innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
-        <div style="display:flex; justify-content:space-between;"><span>Ημερομηνία:</span> <strong>${formatGreekDate(item.date)}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Τηλέφωνο:</span> <strong>${escapeHtml(item.customer_phone || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Email:</span> <strong>${escapeHtml(item.customer_email || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${escapeHtml(item.service_name || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Κατάσταση:</span> <strong>${statusLabel(item.status)}</strong></div>
+      <div>
+        <div class="detail-row"><span class="detail-k">Ημερομηνία</span> <strong class="detail-v">${formatGreekDate(item.date)}</strong></div>
+        <div class="detail-row"><span class="detail-k">Τηλέφωνο</span> <strong class="detail-v">${escapeHtml(item.customer_phone || '-')}</strong></div>
+        <div class="detail-row"><span class="detail-k">Email</span> <strong class="detail-v">${escapeHtml(item.customer_email || '-')}</strong></div>
+        <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
+        <div class="detail-row"><span class="detail-k">Ώρα</span> <strong class="detail-v">${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
+        <div class="detail-row"><span class="detail-k">Κατάσταση</span> <strong class="detail-v">${statusLabel(item.status)}</strong></div>
         ${pastNote}
         ${waitlistNote}
         ${requestNote}
       </div>
     `;
+    const rescheduleHint = document.getElementById('rescheduleHint');
+    if (rescheduleHint) {
+      rescheduleHint.textContent = waitlistNeedsTime(item)
+        ? 'Διάλεξε σε ποια μέρα και ώρα θα μπει αυτή η δήλωση.'
+        : 'Διάλεξε νέα ημερομηνία και ώρα για αυτό το ραντεβού.';
+    }
     document.getElementById('rescheduleDate').value = item.date || '';
     document.getElementById('rescheduleTime').value = item.start_time || '';
     const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
