@@ -42,7 +42,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260916e">
+    <link rel="stylesheet" href="manager_style.css?v=20260916f">
 </head>
 <body data-theme="light">
 
@@ -81,8 +81,8 @@
         <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
-        <button class="btn btn-danger" onclick="handleLogout()"><i data-lucide="log-out" size="16"></i></button>
       </div>
+      <button type="button" class="btn btn-danger btn-logout" onclick="handleLogout()" title="Αποσύνδεση" aria-label="Αποσύνδεση"><i data-lucide="log-out" size="16"></i></button>
     </div>
 
     <div class="container">
@@ -127,9 +127,9 @@
       </div>
 
       <!-- Ημερολόγιο -->
-      <div class="card">
+      <div class="card calendar-card">
         <div class="calendar-head">
-          <h3 style="margin:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="calendar" size="18"></i> Ημερολόγιο ραντεβού</h3>
+          <h3><i data-lucide="calendar" size="18"></i> Ημερολόγιο ραντεβού</h3>
           <div class="cal-legend">
             <span><i style="background:#059669;"></i> Εγκεκριμένο</span>
             <span><i style="background:#d97706;"></i> Εκκρεμές</span>
@@ -1021,20 +1021,56 @@
       : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' };
   }
 
+  function calendarScrollTime() {
+    const n = new Date();
+    const hour = Math.min(20, Math.max(8, n.getHours() - 1));
+    return `${String(hour).padStart(2, '0')}:00:00`;
+  }
+
+  function calendarPhoneHeight() {
+    return Math.round(Math.max(440, Math.min(window.innerHeight * 0.7, 640)));
+  }
+
+  function applyCalendarLayout() {
+    if (!calendar) return;
+    const phone = managerIsPhone();
+    calendar.setOption('headerToolbar', calendarToolbar());
+    calendar.setOption('height', phone ? calendarPhoneHeight() : 'auto');
+    calendar.setOption('expandRows', !phone);
+    calendar.setOption('displayEventTime', !phone);
+    if (phone && calendar.view && calendar.view.type === 'timeGridWeek') {
+      calendar.changeView('timeGridDay');
+    }
+  }
+
   function initCalendar() {
     const calendarEl = document.getElementById('calendar');
+    const phone = managerIsPhone();
     calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: managerIsPhone() ? 'timeGridDay' : 'timeGridWeek',
-      height: 'auto',
-      expandRows: true,
+      initialView: phone ? 'timeGridDay' : 'timeGridWeek',
+      height: phone ? calendarPhoneHeight() : 'auto',
+      expandRows: !phone,
       nowIndicator: true,
       locale: 'el',
       navLinks: false,
+      allDayText: 'Ουρά',
+      displayEventTime: !phone,
+      eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+      slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
       slotMinTime: '08:00:00',
       slotMaxTime: '22:00:00',
-      scrollTime: '09:00:00',
+      scrollTime: calendarScrollTime(),
+      stickyHeaderDates: true,
       headerToolbar: calendarToolbar(),
       buttonText: { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' },
+      views: {
+        timeGridDay: {
+          titleFormat: { weekday: 'short', day: 'numeric', month: 'short' }
+        },
+        dayGridMonth: {
+          titleFormat: { month: 'short', year: 'numeric' }
+        }
+      },
       eventClick: info => {
         const item = Object.assign({}, info.event.extendedProps, {
           id: info.event.id || (info.event.extendedProps && info.event.extendedProps.id)
@@ -1042,12 +1078,7 @@
         openAppointmentDetails(item);
       },
       dateClick: info => openSlotChoice(info),
-      windowResize: () => {
-        calendar.setOption('headerToolbar', calendarToolbar());
-        if (managerIsPhone() && calendar.view && calendar.view.type === 'timeGridWeek') {
-          calendar.changeView('timeGridDay');
-        }
-      }
+      windowResize: applyCalendarLayout
     });
     calendar.render();
   }
