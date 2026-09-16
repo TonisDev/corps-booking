@@ -41,7 +41,7 @@
     <!-- FullCalendar & Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="manager_style.css">
+    <link rel="stylesheet" href="manager_style.css?v=20260916">
 </head>
 <body data-theme="light">
 
@@ -523,11 +523,7 @@
     </div>
   </div>
 
-  <!-- [SECTION: HTML-CLIENT] toast με αναίρεση + πλευρικό ιστορικό πελάτη -->
-  <div id="toast">
-    <i data-lucide="check-circle-2" size="17"></i><span id="toastText"></span>
-    <button type="button" id="toastUndo" class="toast-undo" style="display:none;">Αναίρεση</button>
-  </div>
+  <!-- [SECTION: HTML-CLIENT] πλευρικό ιστορικό πελάτη -->
 
   <aside id="clientDrawer" class="client-drawer">
     <div class="client-drawer-head">
@@ -1780,17 +1776,30 @@
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
     const undoBtn = document.getElementById('toastUndo');
-    toastText.innerText = text;
-    toast.style.background = isError ? '#ef4444' : '#1e293b';
+    if (!toast || !toastText) return;
+    document.body.appendChild(toast);
+    toastText.textContent = text;
     toast.style.display = 'flex';
+    toast.style.position = 'fixed';
+    toast.style.right = '1.25rem';
+    toast.style.bottom = '1.25rem';
+    toast.style.left = 'auto';
+    toast.style.transform = 'none';
+    toast.style.zIndex = '99999';
+    toast.style.background = isError ? '#ef4444' : '#0f172a';
+    toast.style.color = '#fff';
+    toast.classList.add('show');
+    const canUndo = Boolean(undoable && lastUndo && lastUndo.id);
     if (undoBtn) {
-      undoBtn.style.display = undoable && lastUndo ? 'inline-flex' : 'none';
+      undoBtn.style.display = canUndo ? 'inline-flex' : 'none';
       undoBtn.onclick = () => {
         if (!lastUndo) return;
         selectedEventId = lastUndo.id;
         const prev = lastUndo.status;
         lastUndo = null;
         undoBtn.style.display = 'none';
+        toast.style.display = 'none';
+        toast.classList.remove('show');
         updateStatus(prev);
       };
     }
@@ -1798,8 +1807,9 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       toast.style.display = 'none';
+      toast.classList.remove('show');
       if (undoBtn) undoBtn.style.display = 'none';
-    }, undoable ? 8000 : 3000);
+    }, canUndo ? 12000 : 3000);
   }
 
   // Εμφάνιση μηνύματος logout (π.χ. λήξη συνεδρίας) μετά από reload, αν υπάρχει.
@@ -1818,5 +1828,9 @@
   })();
 </script>
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
+  <div id="toast" role="status" aria-live="polite" style="position:fixed;right:1.25rem;bottom:1.25rem;left:auto;transform:none;z-index:99999;display:none;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-radius:0.85rem;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,0.28);max-width:min(22rem,calc(100vw - 1.5rem));">
+    <span id="toastText"></span>
+    <button type="button" id="toastUndo" class="toast-undo">Αναίρεση</button>
+  </div>
 </body>
 </html>
