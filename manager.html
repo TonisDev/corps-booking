@@ -42,7 +42,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260916g">
+    <link rel="stylesheet" href="manager_style.css?v=20260916i">
 </head>
 <body data-theme="light">
 
@@ -404,7 +404,7 @@
           <label>Διάρκεια (λεπτά)</label>
           <input class="field" type="number" id="bookDuration" value="60" required readonly>
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+        <div class="modal-form-actions">
           <button type="button" class="btn btn-outline" onclick="closeModal('bookingModal')">Ακύρωση</button>
           <button type="submit" class="btn">Αποθήκευση</button>
         </div>
@@ -468,7 +468,7 @@
           <label>Αιτιολογία</label>
           <input class="field" type="text" id="blockReason" placeholder="π.χ. Διάλειμμα">
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+        <div class="modal-form-actions">
           <button type="button" class="btn btn-outline" onclick="closeModal('blockModal')">Ακύρωση</button>
           <button type="submit" class="btn btn-danger">Δέσμευση</button>
         </div>
@@ -484,7 +484,7 @@
           <h3 id="listTitle" style="margin:0;">Ραντεβού</h3>
           <p id="listSubtitle" style="margin:0.35rem 0 0; color: var(--text-muted); font-size: 0.85rem;"></p>
         </div>
-        <button type="button" class="btn btn-outline" onclick="closeModal('listModal')">Κλείσιμο</button>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('listModal')">Κλείσιμο</button>
       </div>
       <div class="list-filters">
         <input class="field" type="search" id="listSearch" placeholder="Αναζήτηση ονόματος, τηλεφώνου, υπηρεσίας..." oninput="renderAppointmentList()">
@@ -504,6 +504,7 @@
         <button type="button" class="btn btn-danger" onclick="bulkCancelSelected()">Ακύρωση επιλεγμένων</button>
       </div>
       <div id="aptList" class="apt-list"></div>
+      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('listModal')">Κλείσιμο</button>
     </div>
   </div>
 
@@ -532,15 +533,15 @@
         <label for="actReason">Μήνυμα προς τον πελάτη</label>
         <textarea class="field" id="actReason" rows="2" maxlength="400" placeholder="Προαιρετικό — φαίνεται στο email του πελάτη"></textarea>
       </div>
-      <div class="action-bar">
-        <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
+      <div class="sheet-actions">
         <div class="action-bar-main">
-          <button class="btn btn-outline" onclick="closeModal('actionModal')">Κλείσιμο</button>
-          <button class="btn btn-outline" id="btnReschedule" onclick="toggleRescheduleEditor()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
-          <button class="btn btn-danger" id="btnCancelAppt" onclick="updateStatus('CANCELLED')" style="display:none;">Ακύρωση ραντεβού</button>
-          <button class="btn btn-danger" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
-          <button class="btn" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
+          <button type="button" class="btn" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
+          <button type="button" class="btn btn-outline" id="btnReschedule" onclick="toggleRescheduleEditor()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
+          <button type="button" class="btn btn-outline" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
+          <button type="button" class="btn btn-warning" id="btnCancelAppt" onclick="updateStatus('CANCELLED')" style="display:none;">Ακύρωση ραντεβού</button>
         </div>
+        <button type="button" class="btn btn-quiet-danger" id="btnDeleteAppt" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή οριστικά</button>
+        <button type="button" class="btn btn-outline btn-sheet-close" onclick="closeModal('actionModal')">Κλείσιμο</button>
       </div>
     </div>
   </div>
@@ -550,9 +551,10 @@
   <aside id="clientDrawer" class="client-drawer">
     <div class="client-drawer-head">
       <h3 id="clientDrawerTitle" style="margin:0;">Πελάτης</h3>
-      <button type="button" class="btn btn-outline" onclick="closeClientDrawer()">Κλείσιμο</button>
+      <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeClientDrawer()">Κλείσιμο</button>
     </div>
     <div id="clientDrawerBody"></div>
+    <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
 <script>
@@ -590,6 +592,8 @@
   let searchRelaxed = true;
   let actionLock = false;
   let lastUndo = null;
+  let overlayStack = [];
+  let silentPop = 0;
 
   document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('admin_theme') || 'light';
@@ -612,12 +616,7 @@
     });
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
-      closeClientDrawer();
-      ['actionModal', 'listModal', 'settingsModal', 'bookingModal', 'blockModal', 'slotChoiceModal']
-        .forEach((id) => {
-          const el = document.getElementById(id);
-          if (el && el.style.display === 'flex') closeModal(id);
-        });
+      if (dismissTopOverlay()) e.preventDefault();
     });
 
     if (currentBusinessCode && currentSessionToken) {
@@ -629,6 +628,15 @@
         document.getElementById('loginPass').focus();
       }
     }
+  });
+
+  window.addEventListener('popstate', () => {
+    if (silentPop > 0) {
+      silentPop -= 1;
+      return;
+    }
+    const top = overlayStack.pop();
+    if (top) hideOverlay(top.kind, top.id);
   });
 
   // Κεντρικό wrapper για admin fetch calls: προσθέτει πάντα το session token
@@ -919,9 +927,9 @@
 
   function openSlotChoice(info) {
     const isTimeView = info.view.type.indexOf('timeGrid') === 0;
-    const isMonthView = info.view.type === 'dayGridMonth';
+    const isDayGrid = info.view.type.indexOf('dayGrid') === 0;
     pendingSlot = slotFromDate(info.date, isTimeView);
-    if (isMonthView) {
+    if (isDayGrid) {
       const n = appointmentsOnDate(pendingSlot.date).length;
       document.getElementById('slotChoiceTitle').textContent = formatLongGreekDate(pendingSlot.date);
       document.getElementById('slotChoiceHint').textContent = n === 1 ? '1 ραντεβού' : `${n} ραντεβού`;
@@ -929,7 +937,7 @@
       document.getElementById('slotChoiceTitle').textContent = 'Νέα ενέργεια';
       document.getElementById('slotChoiceHint').textContent = formatSlotHint(pendingSlot);
     }
-    renderDayClickList(isMonthView ? pendingSlot.date : null);
+    renderDayClickList(isDayGrid ? pendingSlot.date : null);
     openModal('slotChoiceModal');
   }
 
@@ -963,7 +971,6 @@
     list.querySelectorAll('.apt-row').forEach(btn => {
       btn.addEventListener('click', () => {
         const found = allAppointments.find(a => a.id === btn.getAttribute('data-id'));
-        closeModal('slotChoiceModal');
         openAppointmentDetails(found);
       });
     });
@@ -980,12 +987,10 @@
   }
 
   function chooseSlotBooking() {
-    closeModal('slotChoiceModal');
     openBookingModal(pendingSlot);
   }
 
   function chooseSlotBlock() {
-    closeModal('slotChoiceModal');
     openBlockModal(pendingSlot);
   }
 
@@ -1024,10 +1029,20 @@
     return window.matchMedia('(max-width: 760px)').matches;
   }
 
+  function isPhoneDayGrid(viewType) {
+    return managerIsPhone() && (viewType === 'dayGridMonth' || viewType === 'dayGridWeek');
+  }
+
   function calendarToolbar() {
     return managerIsPhone()
-      ? { left: 'prev,next', center: 'title', right: 'timeGridDay,dayGridMonth' }
+      ? { left: 'prev,next', center: 'title', right: 'timeGridDay,dayGridWeek,dayGridMonth' }
       : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' };
+  }
+
+  function calendarButtonText() {
+    return managerIsPhone()
+      ? { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδ.', day: 'Ημέρα' }
+      : { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' };
   }
 
   function calendarScrollTime() {
@@ -1042,7 +1057,9 @@
 
   function calendarHeight() {
     if (!managerIsPhone()) return 'auto';
-    if (calendar && calendar.view && calendar.view.type === 'dayGridMonth') return 'auto';
+    if (calendar && calendar.view && (calendar.view.type === 'dayGridMonth' || calendar.view.type === 'dayGridWeek')) {
+      return 'auto';
+    }
     return calendarPhoneHeight();
   }
 
@@ -1050,12 +1067,10 @@
     if (!calendar) return;
     const phone = managerIsPhone();
     calendar.setOption('headerToolbar', calendarToolbar());
+    calendar.setOption('buttonText', calendarButtonText());
     calendar.setOption('height', calendarHeight());
     calendar.setOption('expandRows', !phone);
     calendar.setOption('displayEventTime', !phone);
-    if (phone && calendar.view && calendar.view.type === 'timeGridWeek') {
-      calendar.changeView('timeGridDay');
-    }
     paintMonthDayCounts();
   }
 
@@ -1078,19 +1093,23 @@
       scrollTime: calendarScrollTime(),
       stickyHeaderDates: true,
       headerToolbar: calendarToolbar(),
-      buttonText: { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' },
+      buttonText: calendarButtonText(),
       views: {
         timeGridDay: {
           titleFormat: { weekday: 'short', day: 'numeric', month: 'short' }
+        },
+        dayGridWeek: {
+          titleFormat: { month: 'short', year: 'numeric' },
+          dayHeaderFormat: { weekday: 'short', day: 'numeric' }
         },
         dayGridMonth: {
           titleFormat: { month: 'short', year: 'numeric' }
         }
       },
       eventClick: info => {
-        if (managerIsPhone() && info.view.type === 'dayGridMonth') {
+        if (isPhoneDayGrid(info.view.type)) {
           info.jsEvent.preventDefault();
-          openSlotChoice({ date: info.event.start, view: { type: 'dayGridMonth' } });
+          openSlotChoice({ date: info.event.start, view: { type: info.view.type } });
           return;
         }
         const item = Object.assign({}, info.event.extendedProps, {
@@ -1205,7 +1224,7 @@
 
   function paintMonthDayCounts() {
     const cells = document.querySelectorAll('#calendar .fc-daygrid-day');
-    const show = managerIsPhone() && calendar && calendar.view && calendar.view.type === 'dayGridMonth';
+    const show = calendar && isPhoneDayGrid(calendar.view.type);
     cells.forEach(cell => {
       const badge = cell.querySelector('.month-day-count');
       if (!show) {
@@ -1466,6 +1485,7 @@
     document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || item.status === 'CANCELLED' || item.status === 'REJECTED') ? 'none' : 'inline-flex';
     document.getElementById('btnReject').style.display = actionable ? 'inline-flex' : 'none';
     document.getElementById('btnCancelAppt').style.display = approved && !isPastAppointment(item) ? 'inline-flex' : 'none';
+    document.getElementById('btnDeleteAppt').style.display = (approved && !isPastAppointment(item)) ? 'none' : 'inline-flex';
     const canReschedule = item.status !== 'BLOCKED' && !isPastAppointment(item);
     document.getElementById('rescheduleGroup').style.display = 'none';
     const rescheduleBtn = document.getElementById('btnReschedule');
@@ -1647,6 +1667,7 @@
       });
       if (!res.ok) throw new Error('Αποτυχία κράτησης');
       closeModal('bookingModal');
+      closeModal('slotChoiceModal');
       e.target.reset();
       showToast('Το νέο ραντεβού προστέθηκε.');
       fetchAppointments();
@@ -1673,6 +1694,7 @@
       });
       if (!res.ok) throw new Error('Αποτυχία κλεισίματος slot');
       closeModal('blockModal');
+      closeModal('slotChoiceModal');
       e.target.reset();
       showToast('Το slot δεσμεύτηκε.');
       fetchAppointments();
@@ -1780,8 +1802,70 @@
     logo.src = logoUrl;
   }
 
-  function openModal(id) { document.getElementById(id).style.display = 'flex'; lucide.createIcons(); }
-  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  function lastOverlayIndex(kind, id) {
+    for (let i = overlayStack.length - 1; i >= 0; i--) {
+      if (overlayStack[i].kind === kind && overlayStack[i].id === id) return i;
+    }
+    return -1;
+  }
+
+  function hideOverlay(kind, id) {
+    if (kind === 'drawer') {
+      const drawer = document.getElementById('clientDrawer');
+      if (drawer) drawer.classList.remove('open');
+      return;
+    }
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+
+  function isOverlayVisible(kind, id) {
+    if (kind === 'drawer') {
+      const drawer = document.getElementById('clientDrawer');
+      return !!(drawer && drawer.classList.contains('open'));
+    }
+    const el = document.getElementById(id);
+    return !!(el && el.style.display === 'flex');
+  }
+
+  function pushOverlay(kind, id) {
+    if (overlayStack.some(item => item.kind === kind && item.id === id)) return;
+    overlayStack.push({ kind, id });
+    history.pushState({ rhapsodusOverlay: true, kind, id, n: overlayStack.length }, '', location.href);
+  }
+
+  function closeOverlay(kind, id) {
+    if (!isOverlayVisible(kind, id)) return;
+    hideOverlay(kind, id);
+    const idx = lastOverlayIndex(kind, id);
+    if (idx === -1) return;
+    const isTop = idx === overlayStack.length - 1;
+    overlayStack.splice(idx, 1);
+    if (isTop) {
+      silentPop += 1;
+      history.back();
+    }
+  }
+
+  function dismissTopOverlay() {
+    const top = overlayStack[overlayStack.length - 1];
+    if (!top) return false;
+    closeOverlay(top.kind, top.id);
+    return true;
+  }
+
+  function openModal(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const already = el.style.display === 'flex';
+    el.style.display = 'flex';
+    lucide.createIcons();
+    if (!already) pushOverlay('modal', id);
+  }
+
+  function closeModal(id) {
+    closeOverlay('modal', id);
+  }
 
   const DAY_LABELS = { 0: 'Κυριακή', 1: 'Δευτέρα', 2: 'Τρίτη', 3: 'Τετάρτη', 4: 'Πέμπτη', 5: 'Παρασκευή', 6: 'Σάββατο' };
 
@@ -2010,10 +2094,11 @@
       ${notes.length ? notes.slice(0, 8).map((n) => `<p style="color:var(--text-muted); font-size:0.85rem;">${escapeHtml(n)}</p>`).join('') : '<p style="color:var(--text-muted);">Δεν υπάρχουν σημειώσεις.</p>'}
     `;
     document.getElementById('clientDrawer').classList.add('open');
+    pushOverlay('drawer', 'clientDrawer');
   }
 
   function closeClientDrawer() {
-    document.getElementById('clientDrawer').classList.remove('open');
+    closeOverlay('drawer', 'clientDrawer');
   }
 
   // [SECTION: JS-TOAST] — αναίρεση επαναφέρει previous_status
