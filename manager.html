@@ -496,7 +496,7 @@
         <div id="overlapSuggestions" class="overlap-suggestions"></div>
         <button type="button" class="btn btn-outline" onclick="forceApprove()">Έγκριση έτσι κι αλλιώς</button>
       </div>
-      <div class="form-grid" id="rescheduleGroup">
+      <div class="form-grid" id="rescheduleGroup" style="display:none;">
         <div class="form-group">
           <label>Νέα ημερομηνία</label>
           <input class="field" type="date" id="rescheduleDate">
@@ -514,7 +514,7 @@
         <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
           <button class="btn btn-outline" onclick="closeModal('actionModal')">Κλείσιμο</button>
-          <button class="btn btn-outline" id="btnReschedule" onclick="rescheduleAppointment()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
+          <button class="btn btn-outline" id="btnReschedule" onclick="toggleRescheduleEditor()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
           <button class="btn btn-danger" id="btnCancelAppt" onclick="updateStatus('CANCELLED')" style="display:none;">Ακύρωση ραντεβού</button>
           <button class="btn btn-danger" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
           <button class="btn" id="btnApprove" onclick="updateStatus('BOOKED')"><i data-lucide="badge-check" size="16"></i> Έγκριση</button>
@@ -1272,8 +1272,11 @@
     document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || item.status === 'CANCELLED' || item.status === 'REJECTED') ? 'none' : 'inline-flex';
     document.getElementById('btnReject').style.display = actionable ? 'inline-flex' : 'none';
     document.getElementById('btnCancelAppt').style.display = approved && !isPastAppointment(item) ? 'inline-flex' : 'none';
-    document.getElementById('btnReschedule').style.display = item.status === 'BLOCKED' ? 'none' : 'inline-flex';
-    document.getElementById('rescheduleGroup').style.display = item.status === 'BLOCKED' ? 'none' : 'grid';
+    const canReschedule = item.status !== 'BLOCKED' && !isPastAppointment(item);
+    document.getElementById('rescheduleGroup').style.display = 'none';
+    const rescheduleBtn = document.getElementById('btnReschedule');
+    rescheduleBtn.style.display = canReschedule ? 'inline-flex' : 'none';
+    rescheduleBtn.innerHTML = '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
     document.getElementById('reasonGroup').style.display = (actionable || approved) ? 'block' : 'none';
     document.getElementById('actReason').value = item.status_reason || '';
     openModal('actionModal');
@@ -1328,6 +1331,17 @@
     updateStatus('BOOKED', { force: true });
   }
 
+  function toggleRescheduleEditor() {
+    const group = document.getElementById('rescheduleGroup');
+    if (group.style.display === 'grid') {
+      rescheduleAppointment();
+      return;
+    }
+    group.style.display = 'grid';
+    document.getElementById('btnReschedule').innerHTML = '<i data-lucide="check" size="16"></i> Αποθήκευση ώρας';
+    lucide.createIcons();
+  }
+
   async function rescheduleAppointment(forcedTime) {
     await withLock(async () => {
       const date = document.getElementById('rescheduleDate').value;
@@ -1353,6 +1367,9 @@
         if (!res.ok) throw new Error(data.error || 'Σφάλμα αλλαγής ώρας');
         hideOverlapBox();
         showToast('Η ώρα ενημερώθηκε.');
+        document.getElementById('rescheduleGroup').style.display = 'none';
+        document.getElementById('btnReschedule').innerHTML = '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
+        lucide.createIcons();
         fetchAppointments();
         const found = (allAppointments || []).find((a) => a.id === selectedEventId);
         if (found) {
