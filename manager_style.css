@@ -424,4 +424,45 @@ button, input, select, textarea { font-family: inherit; }
   }
   .fc .fc-daygrid-event { font-size: 0.7rem; }
   .fc .fc-scrollgrid { border-left: 0; border-right: 0; }
+  .fc-dayGridMonth-view .fc-daygrid-day-frame {
+    position: relative;
+    min-height: 3.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.15rem 0 1.85rem;
+  }
+  .fc-dayGridMonth-view .fc-daygrid-day-top { justify-content: center; width: 100%; }
+  .fc-dayGridMonth-view .fc-daygrid-day-number {
+    float: none;
+    padding: 0.1rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .fc-dayGridMonth-view .fc-daygrid-day-events,
+  .fc-dayGridMonth-view .fc-daygrid-day-bottom,
+  .fc-dayGridMonth-view .fc-event,
+  .fc-dayGridMonth-view .fc-daygrid-more-link {
+    display: none !important;
+  }
+  .month-day-count {
+    position: absolute;
+    left: 50%;
+    bottom: 0.28rem;
+    transform: translateX(-50%);
+    margin-top: 0;
+    min-width: 1.55rem;
+    height: 1.55rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: #4f46e5;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .fc-daygrid-day.has-month-count { cursor: pointer; }
 }
