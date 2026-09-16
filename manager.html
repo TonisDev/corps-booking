@@ -267,6 +267,18 @@
         </div>
 
         <div class="help-box">
+          <h3>Telegram</h3>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">
+            Άνοιξε το bot της πλατφόρμας, πάτα Έναρξη, και βάλε εδώ το Chat ID που σου στέλνει.
+            Οι νέες κρατήσεις θα έρχονται σε εσένα. Κενό = χωρίς ειδοποιήσεις.
+          </p>
+          <div class="form-group" style="margin:0; max-width: 280px;">
+            <label>Chat ID</label>
+            <input class="field" type="text" id="setTelegramChatId" inputmode="numeric" placeholder="123456789" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="help-box">
           <h3>Κινητό</h3>
           <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Στείλε αυτό το link στο κινητό. Μετά πρόσθεσέ το στην αρχική οθόνη.</p>
           <input class="field readonly-url" id="managerMobileUrl" readonly>
@@ -756,8 +768,7 @@
     document.getElementById('storeCodeSpan').innerText = `Code: ${code}`;
 
     try {
-      // Το /info είναι δημόσιο endpoint, δεν χρειάζεται token.
-      const res = await fetch(`${WORKER_URL}/api/${code}/info`);
+      const res = await adminFetch(`/api/${code}/admin/settings`);
       currentTenantData = await res.json();
       document.getElementById('storeTitle').innerText = currentTenantData.name;
 
@@ -1440,6 +1451,7 @@
       r.checked = r.value === savedTheme;
     });
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
+    document.getElementById('setTelegramChatId').value = currentTenantData.telegram_chat_id || '';
     document.getElementById('managerMobileUrl').value = managerLoginUrl();
     document.getElementById('currentPassword').value = '';
     document.getElementById('newPassword').value = '';
@@ -1614,6 +1626,7 @@
     const welcome_text = document.getElementById('setWelcomeText').value.trim();
     const success_message = document.getElementById('setSuccessMessage').value.trim();
     const buffer_minutes = parseInt(document.getElementById('setBuffer').value) || 0;
+    const telegram_chat_id = document.getElementById('setTelegramChatId').value.trim();
 
     let work_days = [];
     document.querySelectorAll('input[name="w_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
@@ -1651,7 +1664,7 @@
           name, email, phone, address, logo_url, brand_color,
           client_theme, booking_subtitle, welcome_text, success_message,
           work_days, working_hours, services,
-          buffer_minutes
+          buffer_minutes, telegram_chat_id
         })
       });
 
