@@ -1,6 +1,24 @@
 
 <!DOCTYPE html>
 <html lang="el">
+<!--
+  =============================================================================
+  INDEX.HTML — δημόσια φόρμα κράτησης (GitHub Pages)
+  URL: https://tonisdev.github.io/corps-booking/?business_code=SLUG
+
+  ΝΕΟ CHAT: @public/index.html  +  όνομα ενότητας.
+  Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
+
+    THEME-CSS       θέματα light/dark/warm/ocean
+    FORM-HTML       φόρμα πελάτη
+    JS-SETUP        API URL, τιμή υπηρεσίας, θέμα
+    JS-REQUEST      δήλωση ενδιαφέροντος + blocked slots
+    JS-WAITLIST     CTA όταν η μέρα είναι γεμάτη
+    JS-INIT         φόρτωση επιχείρησης + flatpickr
+    JS-SLOTS        διαθεσιμότητα ωρών (classic slots)
+    JS-SUBMIT       αποστολή κράτησης
+  =============================================================================
+-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,8 +32,7 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Επιφανειακά θέματα φόρμας πελάτη. Το brand_color της επιχείρησης
-           συνεχίζει να βάφει κουμπί/focus από πάνω. */
+        /* [SECTION: THEME-CSS] — επιφανειακά θέματα φόρμας. Το brand_color βάφει κουμπί/focus από πάνω. */
         :root, [data-theme="light"] {
             --bg-color: #f3f4f6;
             --bg-accent: #e5e7eb;
@@ -207,6 +224,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex items-center justify-center p-4">
 
+    <!-- [SECTION: FORM-HTML] -->
     <div class="max-w-md w-full booking-card p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
 
         <!-- Loading State Αρχικής Φόρτωσης Επιχείρησης -->
@@ -332,6 +350,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script>
+        // [SECTION: JS-SETUP]
         const API_BASE_URL = "https://corporate-bookings.tonisdevv.workers.dev";
         const CLIENT_THEMES = ['light', 'dark', 'warm', 'ocean'];
         const urlParams = new URLSearchParams(window.location.search);
@@ -375,6 +394,7 @@
             return businessData && businessData.intake_mode === 'request';
         }
 
+        // [SECTION: JS-WAITLIST]
         function waitlistAllowed() {
             return Boolean(businessData && Number(businessData.waitlist_enabled) === 1);
         }
@@ -426,6 +446,7 @@
             box.dataset.ready = '1';
         }
 
+        // [SECTION: JS-REQUEST] — προτιμώμενες ώρες χωρίς BLOCKED / BOOKED / CONFIRMED
         function preferredSlotsForDate(dateStr, blocked, duration) {
             const shifts = getShiftsForDate(dateStr);
             const slots = [];
@@ -558,6 +579,7 @@
             }));
         }
 
+        // [SECTION: JS-INIT] — GET /info, εμφάνιση επιχείρησης, ημερολόγιο
         async function initPage() {
             if (!business_code) {
                 initialLoader.classList.add('hidden');
@@ -669,6 +691,7 @@
 
         timeHourSelect.addEventListener('change', refreshMinuteOptions);
 
+        // [SECTION: JS-SLOTS] — GET /availability, κλασικά slots (όχι request mode)
         async function fetchAvailableSlots(dateStr) {
             const requestId = ++availabilityRequestId;
             waitlistMode = false;
@@ -805,6 +828,7 @@
             return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}&ctz=Europe/Athens`;
         }
 
+        // [SECTION: JS-SUBMIT] — POST /bookings (slots | request | waitlist)
         bookingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
