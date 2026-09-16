@@ -55,10 +55,33 @@ body {
 /* [SECTION: CSS-LAYOUT] */
 h1, h2, h3 { letter-spacing: 0; font-weight: 600; }
 button, input, select, textarea { font-family: inherit; }
-.header { background: var(--header-bg); padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 40; }
+.header {
+  background: var(--header-bg);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "brand actions logout";
+  align-items: center;
+  gap: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.header-brand { grid-area: brand; min-width: 0; }
 .header-brand h2 { margin: 0; font-size: 1.25rem; }
 .header-brand span { font-size: 0.75rem; color: var(--text-muted); }
-.header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.header-actions { grid-area: actions; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.btn-logout {
+  grid-area: logout;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0;
+  justify-content: center;
+  border-radius: 0.5rem;
+  flex: none;
+}
 .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 .card { background: var(--card-bg); border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
 .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background: #4f46e5; color: white; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; }
@@ -248,6 +271,7 @@ button, input, select, textarea { font-family: inherit; }
 .preview-footer { margin-top: 0.65rem; font-size: 0.58rem; color: var(--preview-muted); }
 
 .calendar-head { display: flex; flex-direction: column; align-items: flex-start; gap: 0.65rem; margin-bottom: 1rem; }
+.calendar-head h3 { margin: 0; display: flex; align-items: center; gap: 0.45rem; }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 0.45rem 0.85rem; font-size: 0.75rem; color: var(--text-muted); }
 .cal-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
 .cal-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -282,19 +306,36 @@ button, input, select, textarea { font-family: inherit; }
     max-width: none;
   }
   .header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-    padding: max(0.75rem, env(safe-area-inset-top)) 0.85rem 0.85rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand logout"
+      "actions actions";
+    align-items: center;
+    gap: 0.65rem 0.75rem;
+    padding: max(0.65rem, env(safe-area-inset-top)) 0.75rem 0.75rem;
   }
-  .header-actions { width: 100%; }
-  .header .btn {
+  .header-brand h2 { font-size: 1.05rem; }
+  .header-actions { width: 100%; justify-content: stretch; }
+  .header .btn:not(.btn-logout) {
     min-height: 44px;
     flex: 1 1 calc(50% - 0.5rem);
     justify-content: center;
     padding: 0.55rem 0.65rem;
   }
-  .container { margin: 0.85rem auto 1.5rem; padding: 0 0.75rem; }
+  .btn-logout {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    align-self: start;
+  }
+  .container {
+    margin: 0.85rem auto 1.5rem;
+    padding: 0 0.75rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .calendar-card { order: -1; }
   .card { padding: 1rem; margin-bottom: 0.9rem; border-radius: 0.85rem; }
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-bottom: 0.9rem; }
   .stat-card { padding: 0.85rem; }
@@ -339,7 +380,48 @@ button, input, select, textarea { font-family: inherit; }
   }
   .rhapsodus-stamp { display: none; }
   input, select, textarea, .field { font-size: 16px !important; }
-  .fc .fc-toolbar { flex-wrap: wrap; gap: 0.4rem; }
-  .fc .fc-toolbar-title { font-size: 1rem; }
-  .fc .fc-button { min-height: 36px; }
+  .calendar-card { padding: 0.7rem 0.45rem 0.85rem; }
+  .calendar-head { margin-bottom: 0.45rem; gap: 0.35rem; }
+  .calendar-head h3 { display: none; }
+  .cal-legend { font-size: 0.68rem; gap: 0.28rem 0.55rem; }
+  .cal-legend i { width: 8px; height: 8px; }
+  .calendar-layout, #calendar { height: auto; min-height: 0; }
+  .fc .fc-timegrid-axis { width: 2.6rem; }
+  .fc .fc-toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.45rem;
+  }
+  .fc .fc-toolbar-chunk { display: flex; justify-content: center; }
+  .fc .fc-toolbar-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fc .fc-button {
+    min-height: 32px;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.72rem;
+  }
+  .fc .fc-col-header-cell-cushion { font-size: 0.75rem; padding: 4px 2px; }
+  .fc .fc-timegrid-axis-cushion,
+  .fc .fc-timegrid-slot-label-cushion {
+    font-size: 0.68rem;
+    padding: 0 3px 0 0;
+  }
+  .fc .fc-timegrid-slot { height: 1.7rem; }
+  .fc .fc-timegrid-event { font-size: 0.72rem; line-height: 1.2; border-radius: 4px; }
+  .fc .fc-event-main { padding: 1px 3px; }
+  .fc .fc-event-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fc .fc-daygrid-event { font-size: 0.7rem; }
+  .fc .fc-scrollgrid { border-left: 0; border-right: 0; }
 }
