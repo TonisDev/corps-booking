@@ -30,7 +30,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260916">
+    <link rel="stylesheet" href="style.css?v=20260916b">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα φόρμας. Το brand_color βάφει κουμπί/focus από πάνω. */
         :root, [data-theme="light"] {
@@ -241,17 +241,7 @@
             <img id="businessLogo" class="business-logo" src="demo-logo.svg" alt="Λογότυπο επιχείρησης">
             <h1 id="businessName" class="text-2xl font-bold text-gray-900"></h1>
             <p id="businessSubtitle" class="text-sm text-gray-500 mt-1">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
-
-            <!-- Διεύθυνση & Τηλέφωνο Επιχείρησης -->
-            <div id="businessMeta" class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1 hidden">
-                <p id="businessAddressContainer"><span class="meta-label">Διεύθυνση</span> <a id="businessAddress" href="#" target="_blank" class="text-indigo-600 hover:underline"></a></p>
-                <p id="businessPhoneContainer"><span class="meta-label">Τηλέφωνο</span> <a id="businessPhone" href="#"></a></p>
-            </div>
-            <button type="button" id="clientQrBtn" onclick="toggleClientQr()">QR φόρμας</button>
-            <div id="clientQrPanel">
-                <div id="clientQr"></div>
-                <p>Σκανάρισμα για άνοιγμα στο κινητό</p>
-            </div>
+            <button type="button" id="shopInfoBtn" onclick="openShopInfo()">Πληροφορίες</button>
         </div>
 
         <p id="welcomeText" class="welcome-text text-sm text-center mb-5 hidden"></p>
@@ -426,14 +416,27 @@
             document.getElementById('submitBtnText').textContent = 'Ναι, ενημερώστε με';
         }
 
-        function toggleClientQr() {
-            const panel = document.getElementById('clientQrPanel');
+        function isoDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function isShopClosedOn(dateOrStr) {
+            const dateStr = typeof dateOrStr === 'string' ? dateOrStr : isoDate(dateOrStr);
+            return getShiftsForDate(dateStr).length === 0;
+        }
+
+        function openShopInfo() {
+            const modal = document.getElementById('shopInfoModal');
             const box = document.getElementById('clientQr');
-            const open = panel.classList.toggle('open');
-            if (!open) return;
+            modal.classList.remove('hidden');
+            document.body.classList.add('shop-info-open');
             if (box.dataset.ready === '1') return;
             if (typeof QRCode === 'undefined') {
                 box.textContent = 'QR μη διαθέσιμο';
+                box.dataset.ready = '1';
                 return;
             }
             box.innerHTML = '';
@@ -445,6 +448,15 @@
             });
             box.dataset.ready = '1';
         }
+
+        function closeShopInfo() {
+            document.getElementById('shopInfoModal').classList.add('hidden');
+            document.body.classList.remove('shop-info-open');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeShopInfo();
+        });
 
         // [SECTION: JS-REQUEST] — προτιμώμενες ώρες χωρίς BLOCKED / BOOKED / CONFIRMED
         function preferredSlotsForDate(dateStr, blocked, duration) {
@@ -622,25 +634,22 @@
                     welcomeText.classList.add('hidden');
                 }
 
+                document.getElementById('shopInfoTitle').textContent = businessData.name || 'Πληροφορίες';
                 if (businessData.address) {
                     const addrLink = document.getElementById('businessAddress');
                     addrLink.textContent = businessData.address;
                     addrLink.href = `https://maps.google.com/?q=${encodeURIComponent(businessData.address)}`;
-                    document.getElementById('businessMeta').classList.remove('hidden');
+                    document.getElementById('shopInfoAddressRow').classList.remove('hidden');
                 }
                 if (businessData.phone) {
                     const phoneLink = document.getElementById('businessPhone');
                     phoneLink.textContent = businessData.phone;
                     phoneLink.href = `tel:${businessData.phone}`;
-                    document.getElementById('businessMeta').classList.remove('hidden');
+                    document.getElementById('shopInfoPhoneRow').classList.remove('hidden');
                 }
 
-                fp.set('disable', [(date) => {
-                    const workDays = (businessData.work_days && businessData.work_days.length > 0)
-                        ? businessData.work_days.map(Number)
-                        : [1, 2, 3, 4, 5];
-                    return !workDays.includes(date.getDay());
-                }]);
+                fp.set('disableMobile', true);
+                fp.set('disable', [(date) => isShopClosedOn(date)]);
 
                 businessHeader.classList.remove('hidden');
 
@@ -676,8 +685,19 @@
             locale: 'gr',
             dateFormat: 'Y-m-d',
             minDate: 'today',
+            disableMobile: true,
+            disable: [(date) => businessData ? isShopClosedOn(date) : false],
             onChange: function (selectedDates, dateStr) {
-                if (dateStr && serviceSelect.value) {
+                if (!dateStr) return;
+                if (isShopClosedOn(dateStr)) {
+                    dateInput.value = '';
+                    fp.clear();
+                    resetTimePickers('Κλειστό');
+                    slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
+                    slotHint.className = 'text-xs text-amber-700 mt-1 font-medium';
+                    return;
+                }
+                if (serviceSelect.value) {
                     fetchAvailableSlots(dateStr);
                 }
             }
@@ -928,5 +948,14 @@
 
         initPage();
     </script>
+    <div id="shopInfoModal" class="shop-info-modal hidden" onclick="if (event.target === this) closeShopInfo()">
+        <div class="shop-info-card" role="dialog" aria-modal="true" aria-labelledby="shopInfoTitle">
+            <h2 id="shopInfoTitle">Πληροφορίες</h2>
+            <p id="shopInfoAddressRow" class="hidden"><span class="meta-label">Διεύθυνση</span> <a id="businessAddress" href="#" target="_blank"></a></p>
+            <p id="shopInfoPhoneRow" class="hidden"><span class="meta-label">Τηλέφωνο</span> <a id="businessPhone" href="#"></a></p>
+            <div id="clientQr"></div>
+            <button type="button" class="shop-info-close" onclick="closeShopInfo()">Κλείσιμο</button>
+        </div>
+    </div>
 </body>
 </html>
