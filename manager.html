@@ -269,8 +269,13 @@
         <div class="help-box">
           <h3>Telegram</h3>
           <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">
-            Άνοιξε το bot της πλατφόρμας, πάτα Έναρξη, και βάλε εδώ το Chat ID που σου στέλνει.
-            Οι νέες κρατήσεις θα έρχονται σε εσένα. Κενό = χωρίς ειδοποιήσεις.
+            1) Άνοιξε το bot (δεν χρειάζεσαι token).<br>
+            2) Πάτα <strong>Έναρξη / Start</strong>.<br>
+            3) Αντιγράψε το Chat ID που σου στέλνει και αποθήκευσε το εδώ.
+            Κενό = χωρίς ειδοποιήσεις.
+          </p>
+          <p id="telegramBotLinkWrap" style="margin:0 0 0.7rem; display:none;">
+            <a id="telegramBotLink" href="#" target="_blank" rel="noopener">Άνοιξε το bot στο Telegram</a>
           </p>
           <div class="form-group" style="margin:0; max-width: 280px;">
             <label>Chat ID</label>
@@ -1452,6 +1457,16 @@
     });
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
     document.getElementById('setTelegramChatId').value = currentTenantData.telegram_chat_id || '';
+    const botUser = String(currentTenantData.telegram_bot_username || '').replace(/^@/, '');
+    const botWrap = document.getElementById('telegramBotLinkWrap');
+    const botLink = document.getElementById('telegramBotLink');
+    if (botWrap && botLink && /^[A-Za-z0-9_]{5,32}$/.test(botUser)) {
+      botLink.href = `https://t.me/${botUser}`;
+      botLink.textContent = `Άνοιξε @${botUser}`;
+      botWrap.style.display = 'block';
+    } else if (botWrap) {
+      botWrap.style.display = 'none';
+    }
     document.getElementById('managerMobileUrl').value = managerLoginUrl();
     document.getElementById('currentPassword').value = '';
     document.getElementById('newPassword').value = '';
