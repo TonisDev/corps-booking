@@ -882,7 +882,7 @@
     list.innerHTML = rows.map(item => `
       <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
         <div>
-          <div style="font-weight:600;">${escapeHtml(item.start_time || '-')} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
+          <div style="font-weight:600;">${escapeHtml(appointmentTimeLabel(item))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
           <div class="apt-row-meta">${escapeHtml(item.service_name || '-')}</div>
         </div>
         <div style="display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end;">${statusBadge(item)}</div>
@@ -1000,11 +1000,15 @@
         if (item.status === 'REJECTED') color = '#ef4444';
         if (item.status === 'CANCELLED') color = '#ea580c';
 
+        const floating = waitlistNeedsTime(item);
         calendar.addEvent({
           id: item.id,
-          title: `${item.customer_name} · ${item.service_name}`,
-          start: `${item.date}T${item.start_time}`,
-          end: `${item.date}T${item.end_time}`,
+          title: floating
+            ? `Ουρά · ${item.customer_name}`
+            : `${item.customer_name} · ${item.service_name}`,
+          allDay: floating,
+          start: floating ? item.date : `${item.date}T${item.start_time}`,
+          end: floating ? undefined : `${item.date}T${item.end_time}`,
           backgroundColor: color,
           borderColor: color,
           extendedProps: item
@@ -1026,8 +1030,18 @@
   }
 
   // [SECTION: JS-LISTS] — εγκεκριμένα = μέλλον · ιστορικό = παρελθόν + REJECTED + CANCELLED
+  function waitlistNeedsTime(item) {
+    return item && item.status === 'WAITLIST'
+      && /χωρίς συγκεκριμένη ώρα/i.test(String(item.notes || ''));
+  }
+
+  function appointmentTimeLabel(item) {
+    return waitlistNeedsTime(item) ? 'Ουρά' : (item.start_time || '-');
+  }
+
   function isPastAppointment(item) {
     if (!item || !item.date) return false;
+    if (waitlistNeedsTime(item)) return item.date < todayISO();
     const end = item.end_time || item.start_time || '00:00';
     const stamp = new Date(`${item.date}T${end}`).getTime();
     return Number.isFinite(stamp) && stamp < Date.now();
@@ -1060,7 +1074,7 @@
     list.innerHTML = rows.map(item => `
       <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
         <div>
-          <div style="font-weight:600;">${escapeHtml(item.start_time || '-')} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
+          <div style="font-weight:600;">${escapeHtml(appointmentTimeLabel(item))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
           <div class="apt-row-meta">
             ${escapeHtml(item.service_name || '-')}
             ${item.customer_phone ? ' · <a href="tel:' + escapeHtml(item.customer_phone) + '" onclick="event.stopPropagation()">' + escapeHtml(item.customer_phone) + '</a>' : ''}
@@ -1254,7 +1268,7 @@
         <div style="display:flex; justify-content:space-between;"><span>Τηλέφωνο:</span> <strong>${escapeHtml(item.customer_phone || '-')}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Email:</span> <strong>${escapeHtml(item.customer_email || '-')}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Υπηρεσία:</span> <strong>${escapeHtml(item.service_name || '-')}</strong></div>
-        <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${item.start_time || '-'} – ${item.end_time || '-'}</strong></div>
+        <div style="display:flex; justify-content:space-between;"><span>Ώρα:</span> <strong>${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
         <div style="display:flex; justify-content:space-between;"><span>Κατάσταση:</span> <strong>${statusLabel(item.status)}</strong></div>
         ${pastNote}
         ${waitlistNote}
@@ -1296,6 +1310,14 @@
     await withLock(async () => {
       const reason = (document.getElementById('actReason').value || '').trim();
       const current = allAppointments.find((a) => a.id === selectedEventId);
+      if (status === 'BOOKED' && waitlistNeedsTime(current)) {
+        showToast('Πρώτα όρισε ώρα και μετά έγκρινε.', true);
+        document.getElementById('rescheduleGroup').style.display = 'grid';
+        const rescheduleBtn = document.getElementById('btnReschedule');
+        rescheduleBtn.innerHTML = '<i data-lucide="check" size="16"></i> Αποθήκευση ώρας';
+        lucide.createIcons();
+        return;
+      }
       try {
         const res = await adminFetch(`/api/${currentBusinessCode}/admin/update-status`, {
           method: 'POST',
@@ -1313,7 +1335,7 @@
         }
         if (!res.ok) throw new Error(data.error || 'Σφάλμα ενημέρωσης');
         closeModal('actionModal');
-        lastUndo = current ? { id: current.id, status: current.status } : null;
+        lastUndo = current ? { type: 'status', id: current.id, status: current.status } : null;
         showToast(status === 'CANCELLED' ? 'Το ραντεβού ακυρώθηκε.' : 'Η κατάσταση ενημερώθηκε.', false, true);
         fetchAppointments();
       } catch (e) {
@@ -1379,19 +1401,43 @@
   }
 
   async function deleteAppointment() {
-    if (!confirm('Είστε σίγουρος για τη διαγραφή;')) return;
+    if (!confirm('Διαγραφή ραντεβού; Μπορείτε να αναιρέσετε αμέσως μετά.')) return;
     await withLock(async () => {
+      const current = allAppointments.find((a) => a.id === selectedEventId);
       try {
-        await adminFetch(`/api/${currentBusinessCode}/admin/delete`, {
+        const res = await adminFetch(`/api/${currentBusinessCode}/admin/delete`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: selectedEventId })
         });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Σφάλμα διαγραφής');
         closeModal('actionModal');
-        showToast('Το ραντεβού διαγράφηκε.');
+        lastUndo = current ? { type: 'delete', id: current.id, snapshot: current } : null;
+        showToast('Το ραντεβού διαγράφηκε.', false, true);
         fetchAppointments();
       } catch (e) {
-        if (e.message !== 'Unauthorized') showToast('Σφάλμα διαγραφής.', true);
+        if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα διαγραφής.', true);
+      }
+    });
+  }
+
+  async function restoreAppointment(snapshot) {
+    if (!snapshot || !snapshot.id) return;
+    await withLock(async () => {
+      try {
+        const res = await adminFetch(`/api/${currentBusinessCode}/admin/restore`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(snapshot)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Σφάλμα αναίρεσης');
+        selectedEventId = snapshot.id;
+        showToast('Η διαγραφή αναιρέθηκε.');
+        fetchAppointments();
+      } catch (e) {
+        if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα αναίρεσης.', true);
       }
     });
   }
@@ -1794,13 +1840,17 @@
       undoBtn.style.display = canUndo ? 'inline-flex' : 'none';
       undoBtn.onclick = () => {
         if (!lastUndo) return;
-        selectedEventId = lastUndo.id;
-        const prev = lastUndo.status;
+        const undo = lastUndo;
         lastUndo = null;
         undoBtn.style.display = 'none';
         toast.style.display = 'none';
         toast.classList.remove('show');
-        updateStatus(prev);
+        if (undo.type === 'delete') {
+          restoreAppointment(undo.snapshot);
+          return;
+        }
+        selectedEventId = undo.id;
+        updateStatus(undo.status);
       };
     }
 
