@@ -90,8 +90,30 @@ button, input, select, textarea { font-family: inherit; }
 .btn-danger:hover { background: #dc2626; }
 .btn-outline { background: var(--card-bg); border: 1px solid var(--field-border); color: var(--text-color); }
 .btn-outline:hover { background: var(--border-color); }
+.btn-warning { background: #ea580c; color: #fff; }
+.btn-warning:hover { background: #c2410c; }
+.btn-quiet-danger {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  box-shadow: none;
+  font-weight: 600;
+}
+.btn-quiet-danger:hover { color: #dc2626; background: color-mix(in srgb, #ef4444 8%, var(--card-bg)); }
 .action-bar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
 .action-bar-main { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+.sheet-actions .btn-quiet-danger { margin-right: auto; }
+.modal-content { display: flex; flex-direction: column; }
+.modal-form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+.sheet-close-mobile { display: none; }
 #loginScreen {
   max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color);
   padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -129,8 +151,9 @@ button, input, select, textarea { font-family: inherit; }
 .support-strip { margin: 1.25rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .support-strip a { color: inherit; font-weight: 600; }
 .client-drawer { display:none; position:fixed; top:0; right:0; width:min(380px,100%); height:100%; background: var(--card-bg); color: var(--text-color); border-left: 1px solid var(--border-color); z-index: 150; padding: 1.25rem; overflow-y: auto; box-shadow: -12px 0 30px rgba(0,0,0,0.12); }
-.client-drawer.open { display:block; }
+.client-drawer.open { display:flex; flex-direction: column; }
 .client-drawer-head { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom: 1rem; }
+#clientDrawerBody { flex: 1; overflow-y: auto; }
 .client-name-btn { background:none; border:none; padding:0; font: inherit; font-weight:700; color: inherit; cursor:pointer; text-align:left; text-decoration: underline; text-underline-offset: 3px; }
 #toast {
   position: fixed !important;
@@ -356,7 +379,38 @@ button, input, select, textarea { font-family: inherit; }
     border-radius: 0;
     padding: 1.15rem 1rem calc(1.15rem + env(safe-area-inset-bottom));
     max-width: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
+  .sheet-close-desktop { display: none !important; }
+  .sheet-close-mobile {
+    display: flex !important;
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    margin-top: auto;
+  }
+  .slot-choice-actions,
+  .sheet-actions,
+  .modal-form-actions,
+  .settings-save-bar {
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+  .sheet-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .sheet-actions .action-bar-main { order: 1; width: 100%; }
+  .sheet-actions .btn-quiet-danger { order: 2; margin-right: 0; width: 100%; justify-content: center; }
+  .sheet-actions .btn-sheet-close { order: 3; }
+  .modal-form-actions {
+    flex-direction: column-reverse;
+    justify-content: stretch;
+  }
+  .modal-form-actions .btn { width: 100%; justify-content: center; min-height: 44px; }
+  .settings-save-bar { flex-direction: column-reverse; }
   .form-grid, .settings-two-columns, #rescheduleGroup { grid-template-columns: 1fr !important; }
   .calendar-layout { grid-template-columns: 1fr; }
   .admin-qr-card { display: none; }
@@ -364,14 +418,21 @@ button, input, select, textarea { font-family: inherit; }
   .shift-row .field, .service-row .field { min-width: 0; flex: 1 1 120px; }
   .action-bar, .action-bar-main { flex-direction: column; }
   .action-bar .btn, .action-bar-main .btn { width: 100%; justify-content: center; min-height: 44px; }
+  .client-drawer { width: 100%; padding-bottom: calc(1.15rem + env(safe-area-inset-bottom)); }
   .settings-save-bar {
     position: sticky;
     bottom: 0;
     padding-bottom: env(safe-area-inset-bottom);
     justify-content: stretch;
+    flex-direction: column-reverse;
   }
+  #settingsModal .modal-content { overflow-y: auto; }
   .settings-save-bar .btn { flex: 1; justify-content: center; min-height: 44px; }
-  .client-drawer { width: 100%; }
+  #dayAppointmentsList, #aptList {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
   #toast {
     left: 0.75rem !important;
     right: 0.75rem !important;
@@ -424,7 +485,8 @@ button, input, select, textarea { font-family: inherit; }
   }
   .fc .fc-daygrid-event { font-size: 0.7rem; }
   .fc .fc-scrollgrid { border-left: 0; border-right: 0; }
-  .fc-dayGridMonth-view .fc-daygrid-day-frame {
+  .fc-dayGridMonth-view .fc-daygrid-day-frame,
+  .fc-dayGridWeek-view .fc-daygrid-day-frame {
     position: relative;
     min-height: 3.75rem;
     display: flex;
@@ -432,8 +494,14 @@ button, input, select, textarea { font-family: inherit; }
     align-items: center;
     padding: 0.15rem 0 1.85rem;
   }
-  .fc-dayGridMonth-view .fc-daygrid-day-top { justify-content: center; width: 100%; }
-  .fc-dayGridMonth-view .fc-daygrid-day-number {
+  .fc-dayGridWeek-view .fc-daygrid-day-frame {
+    min-height: 7.25rem;
+    padding-bottom: 2.5rem;
+  }
+  .fc-dayGridMonth-view .fc-daygrid-day-top,
+  .fc-dayGridWeek-view .fc-daygrid-day-top { justify-content: center; width: 100%; }
+  .fc-dayGridMonth-view .fc-daygrid-day-number,
+  .fc-dayGridWeek-view .fc-daygrid-day-number {
     float: none;
     padding: 0.1rem;
     font-size: 0.78rem;
@@ -442,7 +510,11 @@ button, input, select, textarea { font-family: inherit; }
   .fc-dayGridMonth-view .fc-daygrid-day-events,
   .fc-dayGridMonth-view .fc-daygrid-day-bottom,
   .fc-dayGridMonth-view .fc-event,
-  .fc-dayGridMonth-view .fc-daygrid-more-link {
+  .fc-dayGridMonth-view .fc-daygrid-more-link,
+  .fc-dayGridWeek-view .fc-daygrid-day-events,
+  .fc-dayGridWeek-view .fc-daygrid-day-bottom,
+  .fc-dayGridWeek-view .fc-event,
+  .fc-dayGridWeek-view .fc-daygrid-more-link {
     display: none !important;
   }
   .month-day-count {
