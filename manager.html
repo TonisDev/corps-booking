@@ -42,12 +42,12 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260916d">
+    <link rel="stylesheet" href="manager_style.css?v=20260916e">
 </head>
 <body data-theme="light">
 
   <!-- [SECTION: HTML-LOGIN] -->
-  <div id="loginScreen" style="max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+  <div id="loginScreen">
     <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="log-in" size="22"></i> Είσοδος διαχειριστή</h2>
     <form onsubmit="handleLogin(event)">
       <div class="form-group" style="margin-top: 1rem;">
@@ -70,16 +70,16 @@
   <!-- [SECTION: HTML-DASH] στατιστικά: εκκρεμή / μελλοντικά εγκεκριμένα / ιστορικό -->
   <div id="dashboardScreen" style="display: none;">
     <div class="header">
-      <div>
-        <h2 id="storeTitle" style="margin:0; font-size: 1.25rem;">Διαχείριση Καταστήματος</h2>
-        <span id="storeCodeSpan" style="font-size: 0.75rem; color: var(--text-muted);"></span>
+      <div class="header-brand">
+        <h2 id="storeTitle">Διαχείριση Καταστήματος</h2>
+        <span id="storeCodeSpan"></span>
       </div>
-      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-        <button class="btn btn-outline" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> Ιστορικό</button>
-        <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> Σελίδα Πελάτη</button>
-        <button class="btn btn-outline" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
-        <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
-        <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> Ρυθμίσεις</button>
+      <div class="header-actions">
+        <button class="btn btn-outline" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> <span class="btn-label">Ιστορικό</span></button>
+        <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> <span class="btn-label">Σελίδα Πελάτη</span></button>
+        <button class="btn btn-outline" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> <span class="btn-label">Κλείσιμο Slot</span></button>
+        <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
+        <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
         <button class="btn btn-danger" onclick="handleLogout()"><i data-lucide="log-out" size="16"></i></button>
       </div>
@@ -161,7 +161,7 @@
           <label>Όνομα Επιχείρησης</label>
           <input class="field" type="text" id="setName" required>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-grid">
           <div class="form-group"><label>Email</label><input class="field" type="email" id="setEmail"></div>
           <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
         </div>
@@ -532,9 +532,9 @@
         <label for="actReason">Μήνυμα προς τον πελάτη</label>
         <textarea class="field" id="actReason" rows="2" maxlength="400" placeholder="Προαιρετικό — φαίνεται στο email του πελάτη"></textarea>
       </div>
-      <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+      <div class="action-bar">
         <button class="btn btn-danger" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή</button>
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <div class="action-bar-main">
           <button class="btn btn-outline" onclick="closeModal('actionModal')">Κλείσιμο</button>
           <button class="btn btn-outline" id="btnReschedule" onclick="toggleRescheduleEditor()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
           <button class="btn btn-danger" id="btnCancelAppt" onclick="updateStatus('CANCELLED')" style="display:none;">Ακύρωση ραντεβού</button>
@@ -1011,10 +1011,20 @@
   }
 
   // [SECTION: JS-CALENDAR]
+  function managerIsPhone() {
+    return window.matchMedia('(max-width: 760px)').matches;
+  }
+
+  function calendarToolbar() {
+    return managerIsPhone()
+      ? { left: 'prev,next', center: 'title', right: 'timeGridDay,dayGridMonth' }
+      : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' };
+  }
+
   function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'timeGridWeek',
+      initialView: managerIsPhone() ? 'timeGridDay' : 'timeGridWeek',
       height: 'auto',
       expandRows: true,
       nowIndicator: true,
@@ -1023,11 +1033,7 @@
       slotMinTime: '08:00:00',
       slotMaxTime: '22:00:00',
       scrollTime: '09:00:00',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-      },
+      headerToolbar: calendarToolbar(),
       buttonText: { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' },
       eventClick: info => {
         const item = Object.assign({}, info.event.extendedProps, {
@@ -1035,7 +1041,13 @@
         });
         openAppointmentDetails(item);
       },
-      dateClick: info => openSlotChoice(info)
+      dateClick: info => openSlotChoice(info),
+      windowResize: () => {
+        calendar.setOption('headerToolbar', calendarToolbar());
+        if (managerIsPhone() && calendar.view && calendar.view.type === 'timeGridWeek') {
+          calendar.changeView('timeGridDay');
+        }
+      }
     });
     calendar.render();
   }
