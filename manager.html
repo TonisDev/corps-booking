@@ -1,5 +1,30 @@
 <!DOCTYPE html>
 <html lang="el">
+<!--
+  =============================================================================
+  MANAGER.HTML — πίνακας διαχειριστή (GitHub Pages)
+  URL: https://tonisdev.github.io/corps-booking/manager.html
+
+  ΝΕΟ CHAT: @public/manager.html  +  όνομα ενότητας.
+  Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
+
+    CSS-THEME       dark/light + mobile
+    HTML-LOGIN      οθόνη σύνδεσης
+    HTML-DASH       στατιστικά, σήμερα, ημερολόγιο, support
+    HTML-SETTINGS   ρυθμίσεις (το Αποθήκευση είναι στο τέλος της φόρμας)
+    HTML-MODALS     νέα κράτηση / block / λίστα / ενέργειες ραντεβού
+    HTML-CLIENT     πλευρικό ιστορικό πελάτη + toast undo
+    JS-SETUP        Worker URL, τιμή υπηρεσίας, adminFetch
+    JS-AUTH         login / logout / session
+    JS-CALENDAR     FullCalendar + κλικ σε slot
+    JS-LISTS        εγκεκριμένα (μέλλον) / ιστορικό / fuzzy search
+    JS-ACTIONS      έγκριση, overlap, reschedule, ακύρωση ≠ απόρριψη
+    JS-SETTINGS     αποθήκευση ρυθμίσεων
+    JS-BULK         μαζική ακύρωση
+    JS-CLIENT       drawer πελάτη
+    JS-TOAST        αναίρεση τελευταίας κατάστασης
+  =============================================================================
+-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -17,7 +42,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
+        /* [SECTION: CSS-THEME] */
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-color: #1e293b;
@@ -194,7 +219,7 @@
 </head>
 <body data-theme="light">
 
-  <!-- Login Screen -->
+  <!-- [SECTION: HTML-LOGIN] -->
   <div id="loginScreen" style="max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
     <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="log-in" size="22"></i> Είσοδος διαχειριστή</h2>
     <form onsubmit="handleLogin(event)">
@@ -215,7 +240,7 @@
     </p>
   </div>
 
-  <!-- Dashboard Screen -->
+  <!-- [SECTION: HTML-DASH] στατιστικά: εκκρεμή / μελλοντικά εγκεκριμένα / ιστορικό -->
   <div id="dashboardScreen" style="display: none;">
     <div class="header">
       <div>
@@ -291,6 +316,7 @@
   </div>
 
   <!-- Settings Modal -->
+  <!-- [SECTION: HTML-SETTINGS] — το κουμπί Αποθήκευση είναι στο τέλος της φόρμας -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
       <h2 style="margin-top:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="settings" size="22"></i> Ρυθμίσεις επιχείρησης</h2>
@@ -453,6 +479,7 @@
   </div>
 
   <!-- Modal: επιλογή ενέργειας σε κλικ κελιού ημερολογίου -->
+  <!-- [SECTION: HTML-MODALS] επιλογή slot / νέα κράτηση / block / λίστα / ενέργεια -->
   <div class="modal" id="slotChoiceModal">
     <div class="modal-content">
       <h3 id="slotChoiceTitle" style="margin-top:0;">Νέα ενέργεια</h3>
@@ -653,7 +680,7 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
+  <!-- [SECTION: HTML-CLIENT] toast με αναίρεση + πλευρικό ιστορικό πελάτη -->
   <div id="toast">
     <i data-lucide="check-circle-2" size="17"></i><span id="toastText"></span>
     <button type="button" id="toastUndo" class="toast-undo" style="display:none;">Αναίρεση</button>
@@ -668,6 +695,7 @@
   </aside>
 
 <script>
+  // [SECTION: JS-SETUP]
   const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
   const SUPER_ADMIN_EMAIL = "hello@rhapsodus.dev";
 
@@ -840,6 +868,7 @@
     window.open(url, '_blank');
   }
 
+  // [SECTION: JS-AUTH]
   async function handleLogin(event) {
     if (event) event.preventDefault();
     if (actionLock) return;
@@ -1078,6 +1107,7 @@
     openModal('blockModal');
   }
 
+  // [SECTION: JS-CALENDAR]
   function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -1155,6 +1185,7 @@
     }
   }
 
+  // [SECTION: JS-LISTS] — εγκεκριμένα = μέλλον · ιστορικό = παρελθόν + REJECTED + CANCELLED
   function isPastAppointment(item) {
     if (!item || !item.date) return false;
     const end = item.end_time || item.start_time || '00:00';
@@ -1342,6 +1373,7 @@
     return labels[status] || status;
   }
 
+  // [SECTION: JS-ACTIONS] — overlap προτάσεις, reschedule, CANCELLED ≠ REJECTED
   function hideOverlapBox() {
     const box = document.getElementById('overlapBox');
     if (box) box.style.display = 'none';
@@ -1561,6 +1593,7 @@
     }
   }
 
+  // [SECTION: JS-SETTINGS]
   function openSettingsModal() {
     if (!currentTenantData) return;
     document.getElementById('setName').value = currentTenantData.name || '';
@@ -1806,6 +1839,7 @@
     });
   }
 
+  // [SECTION: JS-BULK]
   function syncBulkBar() {
     const ids = selectedBulkIds();
     const bar = document.getElementById('bulkBar');
@@ -1839,6 +1873,7 @@
     });
   }
 
+  // [SECTION: JS-CLIENT] — κλικ στο όνομα ανοίγει ιστορικό επισκέψεων
   function clientMatches(item, phone, name) {
     const p = String(phone || '').replace(/\D/g, '');
     if (p && String(item.customer_phone || '').replace(/\D/g, '') === p) return true;
@@ -1866,6 +1901,7 @@
     document.getElementById('clientDrawer').classList.remove('open');
   }
 
+  // [SECTION: JS-TOAST] — αναίρεση επαναφέρει previous_status
   function showToast(text, isError = false, undoable = false) {
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
