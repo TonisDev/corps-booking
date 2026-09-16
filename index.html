@@ -30,7 +30,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260916">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα φόρμας. Το brand_color βάφει κουμπί/focus από πάνω. */
         :root, [data-theme="light"] {
@@ -299,7 +299,7 @@
 
             <div>
                 <label id="timeLabel" class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμη Ώρα *</label>
-                <div class="time-picker-wrapper">
+                <div id="timePickerWrap" class="time-picker-wrapper">
                     <select id="timeHour" disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                         <option value="">Ώρα</option>
                     </select>
@@ -312,8 +312,9 @@
                 </div>
                 <p id="slotHint" class="text-xs text-gray-400 mt-1">Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.</p>
                 <div id="waitlistBox" class="hidden">
-                    <p id="waitlistCopy">Η ημέρα έχει ήδη τα ραντεβού που δέχεται.</p>
-                    <button type="button" id="waitlistBtn">Δήλωση ενδιαφέροντος σε περίπτωση ακύρωσης</button>
+                    <p id="waitlistCopy">Ουπς, φαίνεται ότι όλες οι ώρες είναι κατειλημμένες.</p>
+                    <p id="waitlistAsk" class="waitlist-ask">Θέλεις να είσαι ο πρώτος που θα ενημερωθεί εάν υπάρξει ακύρωση;</p>
+                    <button type="button" id="waitlistBtn" class="hidden">Ναι, ενημερώστε με</button>
                 </div>
             </div>
 
@@ -400,30 +401,29 @@
         }
 
         function hideWaitlistBox() {
+            waitlistMode = false;
             const box = document.getElementById('waitlistBox');
+            const wrap = document.getElementById('timePickerWrap');
             if (box) box.classList.add('hidden');
+            if (wrap) wrap.style.display = '';
+            document.getElementById('timeLabel').style.display = '';
         }
 
         function showWaitlistCta(dateStr) {
-            waitlistMode = false;
+            waitlistMode = true;
             resetTimePickers('—');
-            hideWaitlistBox();
+            const wrap = document.getElementById('timePickerWrap');
+            if (wrap) wrap.style.display = 'none';
+            document.getElementById('timeLabel').style.display = 'none';
             const box = document.getElementById('waitlistBox');
-            const btn = document.getElementById('waitlistBtn');
-            document.getElementById('waitlistCopy').textContent = 'Η ημέρα έχει ήδη τα ραντεβού που δέχεται.';
+            document.getElementById('waitlistCopy').textContent =
+                'Ουπς, φαίνεται ότι όλες οι ώρες είναι κατειλημμένες.';
+            document.getElementById('waitlistAsk').textContent =
+                'Θέλεις να είσαι ο πρώτος που θα ενημερωθεί εάν υπάρξει ακύρωση;';
             box.classList.remove('hidden');
-            btn.onclick = () => {
-                box.classList.add('hidden');
-                const blocked = (window._lastOccupied || []).filter((occ) =>
-                  occ.status === 'BLOCKED' || occ.status === 'BOOKED' || occ.status === 'CONFIRMED'
-                );
-                const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-                const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
-                fillPreferredTimes('Προτιμώμενη ώρα για λίστα αναμονής — σε περίπτωση ακύρωσης.', true, dateStr, blocked, duration);
-                document.getElementById('timeLabel').textContent = 'Προτιμώμενη ώρα *';
-                document.getElementById('submitBtnText').textContent = 'Δήλωση ενδιαφέροντος';
-            };
-            slotHint.textContent = '';
+            slotHint.textContent = 'Δεν χρειάζεται να επιλέξεις ώρα. Πάτα το κουμπί από κάτω.';
+            slotHint.className = 'text-xs text-amber-700 mt-1 font-medium';
+            document.getElementById('submitBtnText').textContent = 'Ναι, ενημερώστε με';
         }
 
         function toggleClientQr() {
@@ -747,6 +747,10 @@
                       blocked,
                       duration
                     );
+                    if (!availableSlots.length && waitlistAllowed()) {
+                        showWaitlistCta(dateStr);
+                        return;
+                    }
                     document.getElementById('timeLabel').textContent = 'Προτιμώμενη ώρα *';
                     document.getElementById('submitBtnText').textContent = 'Δήλωση ενδιαφέροντος';
                     return;
@@ -834,16 +838,7 @@
 
             if (document.getElementById('website').value !== '') return;
 
-            const waitlistVisible = !document.getElementById('waitlistBox').classList.contains('hidden');
-            if (waitlistVisible) {
-                responseContainer.classList.remove('hidden');
-                gcalBtn.classList.add('hidden');
-                responseMessage.className = 'text-sm font-medium text-red-600 mb-3';
-                responseMessage.textContent = 'Πατήστε «Δήλωση ενδιαφέροντος σε περίπτωση ακύρωσης».';
-                return;
-            }
-
-            if (!selectedTimeValue() || !availableSlots.includes(selectedTimeValue())) {
+            if (!waitlistMode && (!selectedTimeValue() || !availableSlots.includes(selectedTimeValue()))) {
                 responseContainer.classList.remove('hidden');
                 gcalBtn.classList.add('hidden');
                 responseMessage.className = 'text-sm font-medium text-red-600 mb-3';
@@ -866,6 +861,8 @@
             const dateVal = dateInput.value;
             const timeVal = selectedTimeValue();
             const serviceNameVal = serviceSelect.value;
+            const notesVal = (document.getElementById('notes').value || '').trim();
+            const waitlistNote = 'Λίστα αναμονής — χωρίς συγκεκριμένη ώρα';
 
             const payload = {
                 name: document.getElementById('name').value,
@@ -875,8 +872,10 @@
                 service_name: serviceNameVal,
                 duration: duration,
                 date: dateVal,
-                time: timeVal,
-                notes: document.getElementById('notes').value,
+                time: waitlistMode ? '' : timeVal,
+                notes: waitlistMode
+                    ? (notesVal && !notesVal.includes(waitlistNote) ? `${notesVal}\n${waitlistNote}` : (notesVal || waitlistNote))
+                    : notesVal,
                 waitlist: waitlistMode
             };
 
@@ -903,7 +902,7 @@
 
                     bookingForm.reset();
                     resetTimePickers();
-                    waitlistMode = false;
+                    hideWaitlistBox();
                     slotHint.textContent = isRequestMode()
                         ? 'Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.'
                         : 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
@@ -920,8 +919,10 @@
                 responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
             } finally {
                 submitBtn.disabled = false;
-                submitBtnText.textContent = 'Υποβολή Αιτήματος Κράτησης';
                 submitSpinner.classList.add('hidden');
+                submitBtnText.textContent = waitlistMode
+                    ? 'Ναι, ενημερώστε με'
+                    : (isRequestMode() ? 'Δήλωση ενδιαφέροντος' : 'Υποβολή Αιτήματος Κράτησης');
             }
         });
 
