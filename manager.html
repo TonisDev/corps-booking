@@ -492,7 +492,7 @@
         <select class="field" id="listStatusFilter" onchange="renderAppointmentList()">
           <option value="">Όλες οι καταστάσεις</option>
           <option value="PENDING">Εκκρεμή</option>
-          <option value="WAITLIST">Ενδιαφέρον</option>
+          <option value="WAITLIST">Ουρά</option>
           <option value="BOOKED">Εγκεκριμένα</option>
           <option value="REJECTED">Απορριφθέντα</option>
           <option value="CANCELLED">Ακυρωμένα</option>
@@ -1298,7 +1298,7 @@
   }
 
   function statusLabel(status) {
-    const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', WAITLIST: 'Ενδιαφέρον', BLOCKED: 'Δεσμευμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο', CANCELLED: 'Ακυρώθηκε' };
+    const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', WAITLIST: 'Ουρά', BLOCKED: 'Δεσμευμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο', CANCELLED: 'Ακυρώθηκε' };
     return labels[status] || status;
   }
 
