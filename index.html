@@ -394,7 +394,12 @@
             box.classList.remove('hidden');
             btn.onclick = () => {
                 box.classList.add('hidden');
-                fillPreferredTimes('Προτιμώμενη ώρα για λίστα αναμονής — σε περίπτωση ακύρωσης.', true, dateStr);
+                const blocked = (window._lastOccupied || []).filter((occ) =>
+                  occ.status === 'BLOCKED' || occ.status === 'BOOKED' || occ.status === 'CONFIRMED'
+                );
+                const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+                const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
+                fillPreferredTimes('Προτιμώμενη ώρα για λίστα αναμονής — σε περίπτωση ακύρωσης.', true, dateStr, blocked, duration);
                 document.getElementById('timeLabel').textContent = 'Προτιμώμενη ώρα *';
                 document.getElementById('submitBtnText').textContent = 'Δήλωση ενδιαφέροντος';
             };
@@ -421,26 +426,36 @@
             box.dataset.ready = '1';
         }
 
-        function preferredSlotsForDate(dateStr) {
+        function preferredSlotsForDate(dateStr, blocked, duration) {
             const shifts = getShiftsForDate(dateStr);
             const slots = [];
             const step = 30;
+            const dur = duration || 60;
+            const blockedRanges = (blocked || []).map((occ) => ({
+                start: timeToMinutes(occ.start_time),
+                end: timeToMinutes(occ.end_time)
+            }));
             shifts.forEach((shift) => {
                 const alignedStart = Math.ceil(shift.start / step) * step;
                 for (let mins = alignedStart; mins < shift.end; mins += step) {
-                    slots.push(minutesToTime(mins));
+                    const slotEnd = mins + dur;
+                    const hit = blockedRanges.some((r) => mins < r.end && slotEnd > r.start);
+                    if (!hit) slots.push(minutesToTime(mins));
                 }
             });
             return [...new Set(slots)].sort();
         }
 
-        function fillPreferredTimes(hint, asWaitlist, dateStr) {
+        function fillPreferredTimes(hint, asWaitlist, dateStr, blocked, duration) {
             hideWaitlistBox();
             waitlistMode = !!asWaitlist;
-            availableSlots = preferredSlotsForDate(dateStr);
+            availableSlots = preferredSlotsForDate(dateStr, blocked, duration);
             if (!availableSlots.length) {
-                resetTimePickers('Κλειστό');
-                slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
+                const closed = getShiftsForDate(dateStr).length === 0;
+                resetTimePickers(closed ? 'Κλειστό' : '—');
+                slotHint.textContent = closed
+                    ? 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.'
+                    : 'Οι ώρες είναι κλειστές ή ήδη κατειλημμένες.';
                 slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
                 return;
             }
@@ -685,6 +700,7 @@
                 const data = await response.json();
 
                 if (requestId !== availabilityRequestId) return;
+                window._lastOccupied = data.occupied || [];
 
                 if (data.day_full) {
                     if (waitlistAllowed()) {
@@ -698,7 +714,16 @@
                 }
 
                 if (isRequestMode()) {
-                    fillPreferredTimes('Προτιμώμενη ώρα μέσα στο ωράριο — δεν δεσμεύεται αυτόματα.', false, dateStr);
+                    const blocked = (data.occupied || []).filter((occ) =>
+                      occ.status === 'BLOCKED' || occ.status === 'BOOKED' || occ.status === 'CONFIRMED'
+                    );
+                    fillPreferredTimes(
+                      'Προτιμώμενη ώρα μέσα στο ωράριο — δεν δεσμεύεται αυτόματα.',
+                      false,
+                      dateStr,
+                      blocked,
+                      duration
+                    );
                     document.getElementById('timeLabel').textContent = 'Προτιμώμενη ώρα *';
                     document.getElementById('submitBtnText').textContent = 'Δήλωση ενδιαφέροντος';
                     return;
