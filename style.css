@@ -51,6 +51,82 @@ label {
   color: var(--brand-color) !important;
 }
 
+#shopInfoBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.85rem;
+  background: transparent;
+  color: var(--brand-color);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shop-info-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.55);
+}
+.shop-info-modal.hidden {
+  display: none !important;
+}
+.shop-info-card {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 1.25rem 1.3rem 1.1rem;
+  width: min(22rem, 100%);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+}
+.shop-info-card h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.85rem;
+}
+.shop-info-card p {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.shop-info-card .meta-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 0.15rem;
+}
+#clientQr {
+  margin: 0.9rem auto 1rem;
+  width: 148px;
+  background: #fff;
+  border-radius: 0.65rem;
+  padding: 0.35rem;
+}
+.shop-info-close {
+  width: 100%;
+  background: var(--brand-color);
+  color: #fff !important;
+  border: none;
+  border-radius: 0.65rem;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+body.shop-info-open {
+  overflow: hidden;
+}
+
 #waitlistBox {
   margin-top: 0.65rem;
   padding: 0.85rem 1rem;
@@ -81,39 +157,6 @@ label {
   cursor: pointer;
 }
 
-#clientQrBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.75rem;
-  background: transparent;
-  color: var(--brand-color);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-#clientQrPanel {
-  display: none;
-  margin: 0.75rem auto 0;
-  padding: 0.85rem;
-  max-width: 180px;
-  background: #fff;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
-}
-
-#clientQrPanel.open { display: block; }
-
-#clientQrPanel p {
-  margin: 0.5rem 0 0;
-  font-size: 0.72rem;
-  color: #64748b;
-}
-
 input, select, textarea {
   background-color: var(--field-bg) !important;
   border-color: var(--field-border) !important;
@@ -123,10 +166,6 @@ input, select, textarea {
 select:disabled {
   background-color: var(--border-color) !important;
   opacity: 0.7;
-}
-
-#businessMeta {
-  border-color: var(--border-color) !important;
 }
 
 #submitBtn,
