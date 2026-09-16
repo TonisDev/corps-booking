@@ -41,7 +41,8 @@
     <!-- FullCalendar & Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260916c">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="manager_style.css?v=20260916d">
 </head>
 <body data-theme="light">
 
@@ -127,17 +128,26 @@
 
       <!-- Ημερολόγιο -->
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div class="calendar-head">
           <h3 style="margin:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="calendar" size="18"></i> Ημερολόγιο ραντεβού</h3>
-          <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted);">
-            <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#059669; border-radius:50%; display:inline-block;"></span>Booked</span>
-            <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#f59e0b; border-radius:50%; display:inline-block;"></span>Pending</span>
-            <span style="display:flex; align-items:center; gap:0.25rem;"><span style="width:10px; height:10px; background:#64748b; border-radius:50%; display:inline-block;"></span>Blocked</span>
+          <div class="cal-legend">
+            <span><i style="background:#059669;"></i> Εγκεκριμένο</span>
+            <span><i style="background:#d97706;"></i> Εκκρεμές</span>
+            <span><i style="background:#7c3aed;"></i> Ουρά</span>
+            <span><i style="background:#64748b;"></i> Κλειστό</span>
+            <span><i style="background:#ef4444;"></i> Απορρίφθηκε</span>
+            <span><i style="background:#ea580c;"></i> Ακυρώθηκε</span>
           </div>
         </div>
-        <div id="calendar"></div>
+        <div class="calendar-layout">
+          <div id="calendar"></div>
+          <aside class="admin-qr-card">
+            <p>Manager στο κινητό</p>
+            <div id="adminQr"></div>
+          </aside>
+        </div>
       </div>
-      <p class="support-strip">Υποστήριξη πλατφόρμας (super admin): <a id="supportLink" href="mailto:hello@rhapsodus.dev">hello@rhapsodus.dev</a></p>
+      <p class="support-strip">Υποστήριξη πλατφόρμας (super admin): <a id="supportLink" href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
     </div>
   </div>
 
@@ -264,6 +274,17 @@
         <div class="form-group" style="margin-top: 1rem; max-width: 280px;">
           <label>Buffer Time (λεπτά)</label>
           <input class="field" type="number" id="setBuffer" min="0" step="5">
+        </div>
+
+        <div class="help-box">
+          <h3>Πεδία φόρμας πελάτη</h3>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Ξετσεκάρισε ό,τι δεν θέλεις να εμφανίζεται. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong> (το Instagram δεν μετράει).</p>
+          <div class="form-field-toggles">
+            <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone')"> Τηλέφωνο</label>
+            <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email')"> Email</label>
+            <label><input type="checkbox" id="formFieldInstagram" checked> Instagram</label>
+            <label><input type="checkbox" id="formFieldNotes" checked> Σημειώσεις</label>
+          </div>
         </div>
 
         <div class="help-box">
@@ -537,7 +558,7 @@
 <script>
   // [SECTION: JS-SETUP]
   const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
-  const SUPER_ADMIN_EMAIL = "hello@rhapsodus.dev";
+  const SUPER_ADMIN_EMAIL = "tonisdevv@gmail.com";
 
   function parseOptionalPrice(raw) {
     if (raw === null || raw === undefined || raw === '') return null;
@@ -781,7 +802,48 @@
 
     if (!calendar) initCalendar();
     fetchAppointments();
+    renderAdminQr();
     lucide.createIcons();
+  }
+
+  function renderAdminQr() {
+    const box = document.getElementById('adminQr');
+    if (!box) return;
+    const url = managerLoginUrl();
+    if (box.dataset.url === url) return;
+    box.innerHTML = '';
+    box.dataset.url = url;
+    if (typeof QRCode === 'undefined') {
+      box.textContent = url;
+      return;
+    }
+    new QRCode(box, {
+      text: url,
+      width: 120,
+      height: 120,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  function formFieldsFromTenant(tenant) {
+    const d = { phone: true, email: true, instagram: true, notes: true };
+    const raw = tenant && tenant.form_fields;
+    if (!raw || typeof raw !== 'object') return d;
+    return {
+      phone: raw.phone !== false && raw.phone !== 0 && raw.phone !== '0',
+      email: raw.email !== false && raw.email !== 0 && raw.email !== '0',
+      instagram: raw.instagram !== false && raw.instagram !== 0 && raw.instagram !== '0',
+      notes: raw.notes !== false && raw.notes !== 0 && raw.notes !== '0'
+    };
+  }
+
+  function guardContactFields(changed) {
+    const phone = document.getElementById('formFieldPhone');
+    const email = document.getElementById('formFieldEmail');
+    if (phone.checked || email.checked) return;
+    if (changed === 'phone') email.checked = true;
+    else phone.checked = true;
+    showToast('Πρέπει να μείνει τηλέφωνο ή email.', true);
   }
 
   function populateServicesDropdown() {
@@ -1523,6 +1585,11 @@
       r.checked = r.value === savedTheme;
     });
     document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
+    const fields = formFieldsFromTenant(currentTenantData);
+    document.getElementById('formFieldPhone').checked = fields.phone;
+    document.getElementById('formFieldEmail').checked = fields.email;
+    document.getElementById('formFieldInstagram').checked = fields.instagram;
+    document.getElementById('formFieldNotes').checked = fields.notes;
     document.getElementById('setTelegramChatId').value = currentTenantData.telegram_chat_id || '';
     const botUser = String(currentTenantData.telegram_bot_username || '').replace(/^@/, '');
     const botWrap = document.getElementById('telegramBotLinkWrap');
@@ -1709,6 +1776,16 @@
     const success_message = document.getElementById('setSuccessMessage').value.trim();
     const buffer_minutes = parseInt(document.getElementById('setBuffer').value) || 0;
     const telegram_chat_id = document.getElementById('setTelegramChatId').value.trim();
+    const form_fields = {
+      phone: document.getElementById('formFieldPhone').checked,
+      email: document.getElementById('formFieldEmail').checked,
+      instagram: document.getElementById('formFieldInstagram').checked,
+      notes: document.getElementById('formFieldNotes').checked
+    };
+    if (!form_fields.phone && !form_fields.email) {
+      showToast('Πρέπει να μείνει τηλέφωνο ή email στη φόρμα.', true);
+      return;
+    }
 
     let work_days = [];
     document.querySelectorAll('input[name="w_day"]:checked').forEach(cb => work_days.push(parseInt(cb.value)));
@@ -1746,7 +1823,7 @@
           name, email, phone, address, logo_url, brand_color,
           client_theme, booking_subtitle, welcome_text, success_message,
           work_days, working_hours, services,
-          buffer_minutes, telegram_chat_id
+          buffer_minutes, telegram_chat_id, form_fields
         })
       });
 
