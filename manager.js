@@ -641,7 +641,7 @@ async function fetchAppointments() {
       if (item.status === 'WAITLIST') color = '#7c3aed';
       if (item.status === 'BLOCKED') color = '#64748b';
       if (item.status === 'REJECTED') color = '#ef4444';
-      if (item.status === 'CANCELLED') color = '#2563eb';
+      if (item.status === 'CANCELLED') color = '#ca8a04';
 
       const floating = waitlistNeedsTime(item);
       calendar.addEvent({
