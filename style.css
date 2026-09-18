@@ -1,8 +1,20 @@
 /* =============================================================================
  * STYLE.CSS — δημόσια φόρμα κράτησης
  * ΝΕΟ CHAT: @public/style.css
+ * Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
+ *
+ *   CSS-PAGE      φόντο + κάρτα (glow μόνο στο hover)
+ *   CSS-BRAND     λογότυπο, τίτλος, Πληροφορίες
+ *   CSS-FIELDS    labels + inputs
+ *   CSS-TIME      ένα dropdown, δύο ρολάκια
+ *   CSS-SUBMIT    κουμπί αποστολής
+ *   CSS-WAITLIST  CTA όταν η μέρα είναι γεμάτη
+ *   CSS-INFO      modal καταστήματος
+ *   CSS-CAL       flatpickr
+ *   CSS-MOBILE    < 640px
  * ============================================================================= */
 
+/* [SECTION: CSS-PAGE] — χωρίς μόνιμο halo· ανάβει στο hover της κάρτας */
 html { color-scheme: light; }
 .hidden { display: none !important; }
 body {
@@ -99,6 +111,7 @@ h1, h2, h3 {
   50% { opacity: 1; }
 }
 
+/* [SECTION: CSS-BRAND] */
 .brand-block {
   text-align: center;
   margin-bottom: 1.7rem;
@@ -166,6 +179,7 @@ h1, h2, h3 {
   border: 1px solid color-mix(in srgb, var(--brand-color) 16%, var(--border-color));
 }
 
+/* [SECTION: CSS-FIELDS] */
 .booking-fields {
   display: flex;
   flex-direction: column;
@@ -265,6 +279,8 @@ select:disabled, .time-dropdown-btn:disabled {
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* [SECTION: CSS-TIME] — κρυφά native select, ορατό ένα πεδίο με δύο στήλες */
 .time-native {
   position: absolute;
   width: 1px;
@@ -314,6 +330,7 @@ select:disabled, .time-dropdown-btn:disabled {
   color: var(--brand-color);
 }
 
+/* [SECTION: CSS-SUBMIT] */
 #submitBtn {
   display: inline-flex;
   align-items: center;
@@ -339,6 +356,7 @@ select:disabled, .time-dropdown-btn:disabled {
 #submitBtn:disabled { opacity: 0.6; transform: none; cursor: wait; }
 #submitBtn span { color: #fff !important; }
 
+/* [SECTION: CSS-WAITLIST] */
 #waitlistBox {
   margin-top: 0.75rem;
   padding: 1rem 1.05rem;
@@ -421,6 +439,7 @@ select:disabled, .time-dropdown-btn:disabled {
   color: var(--text-color);
 }
 
+/* [SECTION: CSS-INFO] */
 .shop-info-modal {
   position: fixed;
   inset: 0;
@@ -479,6 +498,7 @@ select:disabled, .time-dropdown-btn:disabled {
 }
 body.shop-info-open { overflow: hidden; }
 
+/* [SECTION: CSS-CAL] */
 .flatpickr-calendar {
   font-family: var(--body-font) !important;
   background: var(--card-bg) !important;
@@ -505,6 +525,7 @@ body.shop-info-open { overflow: hidden; }
 }
 .flatpickr-day.flatpickr-disabled { color: var(--text-muted) !important; opacity: 0.4; }
 
+/* [SECTION: CSS-MOBILE] */
 @media (max-width: 640px) {
   .booking-shell { align-items: stretch; padding: 0; }
   .booking-card {
