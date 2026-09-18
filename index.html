@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="el">
 <!--
@@ -12,8 +11,9 @@
     THEME-CSS       θέματα light/dark/warm/ocean
     FORM-HTML       φόρμα πελάτη
     JS-SETUP        API URL, τιμή υπηρεσίας, θέμα
-    JS-REQUEST      αίτημα ραντεβού + blocked slots
     JS-WAITLIST     CTA όταν η μέρα είναι γεμάτη
+    JS-REQUEST      αίτημα ραντεβού + blocked slots
+    JS-TIME         ένα dropdown, δύο ρολάκια ώρας/λεπτών
     JS-INIT         φόρτωση επιχείρησης + flatpickr
     JS-SLOTS        διαθεσιμότητα ωρών (classic slots)
     JS-SUBMIT       αποστολή κράτησης
@@ -32,7 +32,12 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=20260918g">
     <style>
-        /* [SECTION: THEME-CSS] — επιφανειακά θέματα φόρμας. Το brand_color βάφει κουμπί/focus από πάνω. */
+        /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
+        :root {
+            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --card-radius: 1.35rem;
+        }
         :root, [data-theme="light"] {
             color-scheme: light;
             --bg-color: #eef1f6;
@@ -45,9 +50,6 @@
             --field-border: #cbd5e1;
             --brand-color: #4f46e5;
             --card-shadow: 0 0 0 1px rgba(79, 70, 229, 0.08), 0 0 72px rgba(79, 70, 229, 0.18), 0 24px 48px rgba(15, 23, 42, 0.08);
-            --card-radius: 1.35rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --glow: rgba(79, 70, 229, 0.28);
         }
 
@@ -63,9 +65,6 @@
             --field-border: #475569;
             --brand-color: #818cf8;
             --card-shadow: 0 0 0 1px rgba(129, 140, 248, 0.18), 0 0 88px rgba(129, 140, 248, 0.22), 0 24px 48px rgba(0, 0, 0, 0.4);
-            --card-radius: 1.35rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --glow: rgba(129, 140, 248, 0.32);
         }
 
@@ -82,8 +81,6 @@
             --brand-color: #c2410c;
             --card-shadow: 0 0 0 1px rgba(194, 65, 12, 0.1), 0 0 72px rgba(194, 65, 12, 0.16), 0 24px 48px rgba(124, 63, 22, 0.08);
             --card-radius: 1.45rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --glow: rgba(194, 65, 12, 0.26);
         }
 
@@ -99,9 +96,6 @@
             --field-border: #b6d4d3;
             --brand-color: #0f766e;
             --card-shadow: 0 0 0 1px rgba(15, 118, 110, 0.1), 0 0 72px rgba(15, 118, 110, 0.16), 0 24px 48px rgba(15, 118, 110, 0.08);
-            --card-radius: 1.35rem;
-            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --glow: rgba(15, 118, 110, 0.26);
         }
 
@@ -190,6 +184,7 @@
             </div>
 
             <div class="field-block">
+                <!-- Ώρα: ένα dropdown · δύο ρολάκια (ώρα | λεπτά 00/30) -->
                 <label class="field-label" id="timeLabel" for="timeDropdownBtn">Ώρα</label>
                 <div id="timePickerWrap" class="time-picker-wrap">
                     <button type="button" id="timeDropdownBtn" class="time-dropdown-btn" disabled>Επιλέξτε ώρα</button>
@@ -424,19 +419,18 @@
                 slotHint.className = 'field-help field-help-wait';
                 return;
             }
-            const hours = [...new Set(availableSlots.map((slot) => slot.slice(0, 2)))];
+            fillHourOptions(availableSlots);
+            slotHint.textContent = hint;
+            slotHint.className = asWaitlist ? 'field-help field-help-wait' : 'field-help';
+        }
+
+        function fillHourOptions(slots) {
+            const hours = [...new Set(slots.map((slot) => slot.slice(0, 2)))];
             timeHourSelect.innerHTML = '<option value="">Ώρα</option>';
-            hours.forEach((hour) => {
-                const opt = document.createElement('option');
-                opt.value = hour;
-                opt.textContent = hour;
-                timeHourSelect.appendChild(opt);
-            });
+            hours.forEach((hour) => timeHourSelect.appendChild(new Option(hour, hour)));
             timeHourSelect.disabled = false;
             timeHourSelect.classList.remove('bg-gray-50');
             refreshMinuteOptions();
-            slotHint.textContent = hint;
-            slotHint.className = asWaitlist ? 'field-help field-help-wait' : 'field-help';
         }
 
         function selectedTimeValue() {
@@ -457,6 +451,7 @@
             paintTime();
         }
 
+        // [SECTION: JS-TIME] — ένα ορατό πεδίο· τα #timeHour/#timeMinute μένουν κρυφά για την τιμή
         const timeBtn = document.getElementById('timeDropdownBtn');
         const timePanel = document.getElementById('timeRollers');
 
@@ -494,9 +489,7 @@
             timeMinuteSelect.disabled = !hour || timeMinuteSelect.options.length < 2;
             paintTime();
         }
-        // Guards against a slow /availability response landing after the user
-        // has already changed the date or service (stale-response race condition).
-        let availabilityRequestId = 0;
+        let availabilityRequestId = 0; // αγνοεί αργοπορημένη /availability αν άλλαξε μέρα/υπηρεσία
 
         const timeToMinutes = (timeStr) => {
             const [h, m] = timeStr.split(':').map(Number);
@@ -509,8 +502,7 @@
             return `${h}:${m}`;
         };
 
-        // Μετατρέπει working_hours + work_days του tenant σε λίστα διαστημάτων
-        // (σε λεπτά) για τη συγκεκριμένη ημερομηνία, ή [] αν η μέρα είναι κλειστή.
+        // Ωράριο ημέρας σε λεπτά, ή [] αν η μέρα είναι κλειστή.
         function shiftsForWeekday(workingHours, dayOfWeek) {
             const fallback = [{ start: '09:00', end: '21:00' }];
             if (Array.isArray(workingHours) && workingHours.length > 0) return workingHours;
@@ -790,17 +782,7 @@
                     return;
                 }
 
-                const hours = [...new Set(freeSlots.map(slot => slot.slice(0, 2)))];
-                timeHourSelect.innerHTML = '<option value="">Ώρα</option>';
-                hours.forEach(hour => {
-                    const opt = document.createElement('option');
-                    opt.value = hour;
-                    opt.textContent = hour;
-                    timeHourSelect.appendChild(opt);
-                });
-                timeHourSelect.disabled = false;
-                timeHourSelect.classList.remove('bg-gray-50');
-                refreshMinuteOptions();
+                fillHourOptions(freeSlots);
                 slotHint.textContent = `Διαθέσιμες ώρες: ${freeSlots.length} (ανά μισάωρο).`;
                 slotHint.className = 'field-help field-help-ok';
 
