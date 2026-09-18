@@ -3,14 +3,13 @@
  * ΝΕΟ CHAT: @public/style.css
  * ============================================================================= */
 
-html { font-synthesis: none; }
+html { color-scheme: light; }
 .hidden { display: none !important; }
 body {
   margin: 0;
   min-height: 100vh;
   color: var(--text-color) !important;
   font-family: var(--body-font) !important;
-  letter-spacing: -0.01em;
 }
 
 body,
@@ -19,15 +18,16 @@ button,
 input,
 select,
 textarea,
-label {
+label,
+option {
   font-family: var(--body-font) !important;
 }
 
 h1, h2, h3 {
   font-family: var(--heading-font) !important;
   color: var(--text-color) !important;
-  letter-spacing: -0.045em;
-  font-weight: 600;
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 
 .page-bg {
@@ -36,17 +36,9 @@ h1, h2, h3 {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 90% 55% at 50% -15%, color-mix(in srgb, var(--brand-color) 22%, transparent), transparent 58%),
-    radial-gradient(ellipse 70% 45% at 110% 115%, color-mix(in srgb, var(--brand-color) 12%, transparent), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% 0%, var(--glow), transparent 62%),
+    radial-gradient(ellipse 45% 40% at 85% 95%, color-mix(in srgb, var(--brand-color) 18%, transparent), transparent 55%),
     var(--bg-color);
-}
-.page-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.22;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
 }
 
 .booking-shell {
@@ -56,25 +48,25 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.25rem 4.5rem;
+  padding: 2.75rem 1.5rem 4.75rem;
 }
 
 .booking-card {
   width: 100%;
-  max-width: 28.5rem;
-  padding: 2.35rem 2.15rem 2.1rem;
+  max-width: 30rem;
+  padding: 2.6rem 2.4rem 2.2rem;
   background: var(--card-bg) !important;
-  border: 1px solid var(--border-color);
+  border: 1px solid color-mix(in srgb, var(--brand-color) 14%, var(--border-color));
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
-  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: box-shadow 0.28s ease, border-color 0.28s ease, transform 0.28s ease;
 }
-
-@keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
+.booking-card:hover {
+  border-color: color-mix(in srgb, var(--brand-color) 32%, var(--border-color));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--brand-color) 22%, transparent),
+    0 0 90px color-mix(in srgb, var(--brand-color) 28%, transparent),
+    0 28px 56px rgba(15, 23, 42, 0.12);
 }
 
 .form-loader {
@@ -82,84 +74,83 @@ h1, h2, h3 {
   padding: 3.5rem 0;
   color: var(--text-muted);
 }
-.form-loader p {
-  margin: 0.85rem 0 0;
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
+.form-loader p { margin: 0.85rem 0 0; font-size: 0.9rem; }
 .form-loader-dot {
   display: inline-block;
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.7rem;
+  height: 0.7rem;
   border-radius: 50%;
   background: var(--brand-color);
+  box-shadow: 0 0 18px var(--brand-color);
   animation: pulse 1.2s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 0.25; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1); }
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
 }
 
 .brand-block {
   text-align: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.7rem;
 }
 .business-logo {
-  width: 88px;
-  height: 88px;
-  margin: 0 auto 1.15rem;
-  border-radius: 1.35rem;
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 1.05rem;
+  border-radius: 1.2rem;
   object-fit: cover;
   background: var(--field-bg);
   border: 1px solid var(--border-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 10%, transparent);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.business-logo:hover {
+  transform: translateY(-2px);
   box-shadow:
-    0 0 0 6px color-mix(in srgb, var(--brand-color) 8%, transparent),
-    0 18px 36px rgba(15, 23, 42, 0.1);
+    0 0 0 5px color-mix(in srgb, var(--brand-color) 16%, transparent),
+    0 0 28px color-mix(in srgb, var(--brand-color) 35%, transparent);
 }
 #businessName {
   margin: 0;
-  font-size: 1.7rem;
-  line-height: 1.15;
+  font-size: 1.65rem;
+  line-height: 1.2;
 }
 #businessSubtitle {
-  margin: 0.55rem 0 0;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
   color: var(--text-muted) !important;
-  letter-spacing: 0.01em;
 }
 
 #shopInfoBtn {
   display: inline-flex;
-  margin-top: 1rem;
-  padding: 0;
-  background: none;
-  border: 0;
-  color: var(--text-color);
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  margin-top: 0.95rem;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  color: var(--brand-color);
+  font-size: 0.82rem;
+  font-weight: 600;
   cursor: pointer;
-  text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--text-color) 28%, transparent);
-  border-radius: 0;
-  padding-bottom: 0.08rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 #shopInfoBtn:hover {
-  color: var(--brand-color);
-  border-bottom-color: var(--brand-color);
+  border-color: var(--brand-color);
+  background: color-mix(in srgb, var(--brand-color) 8%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--brand-color) 28%, transparent);
 }
 
 .welcome-text {
-  margin: 0 0 1.5rem;
-  padding: 0;
-  background: none;
-  border: 0;
+  margin: 0 0 1.4rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
   text-align: center;
   font-size: 0.92rem;
-  line-height: 1.55;
-  color: var(--text-muted);
+  line-height: 1.5;
+  color: var(--text-color);
+  background: color-mix(in srgb, var(--brand-color) 7%, var(--field-bg));
+  border: 1px solid color-mix(in srgb, var(--brand-color) 16%, var(--border-color));
 }
 
 .booking-fields {
@@ -171,21 +162,20 @@ h1, h2, h3 {
 .field-label {
   display: block;
   margin: 0 0 0.4rem;
-  font-size: 0.7rem;
+  padding-left: 0.15rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted) !important;
+  color: var(--text-color) !important;
 }
 .field-label span {
-  letter-spacing: 0.04em;
-  text-transform: none;
   font-weight: 500;
-  opacity: 0.75;
+  color: var(--text-muted);
+  font-size: 0.78rem;
 }
 .field-help {
   margin: 0.4rem 0 0;
-  font-size: 0.75rem;
+  padding-left: 0.15rem;
+  font-size: 0.78rem;
   line-height: 1.4;
   color: var(--text-muted) !important;
 }
@@ -199,19 +189,55 @@ h1, h2, h3 {
 input, select, textarea {
   width: 100%;
   box-sizing: border-box;
-  min-height: 3rem;
-  padding: 0.8rem 0.95rem;
+  min-height: 3.05rem;
+  padding: 0.85rem 1.05rem;
   border: 1px solid var(--field-border) !important;
-  background: var(--field-bg) !important;
+  background-color: var(--field-bg) !important;
   color: var(--text-color) !important;
-  border-radius: 0.9rem;
-  font-size: 0.95rem;
-  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  border-radius: 0.8rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
 }
-textarea { min-height: 4.6rem; resize: vertical; }
-input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--text-muted) 75%, transparent); }
+textarea { min-height: 4.8rem; resize: vertical; }
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.95rem center;
+  background-size: 1rem;
+  padding-right: 2.6rem !important;
+}
+select option,
+select optgroup {
+  background-color: #ffffff;
+  color: #1e293b;
+}
+[data-theme="dark"] select option,
+[data-theme="dark"] select optgroup {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+input:hover, select:hover, textarea:hover {
+  border-color: color-mix(in srgb, var(--brand-color) 45%, var(--field-border)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color) 10%, transparent), 0 0 22px color-mix(in srgb, var(--brand-color) 12%, transparent);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--brand-color) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 0 28px color-mix(in srgb, var(--brand-color) 18%, transparent) !important;
+}
+
 select:disabled {
-  opacity: 0.55;
+  opacity: 0.62;
+  box-shadow: none;
 }
 .time-picker-wrapper span {
   color: var(--text-muted);
@@ -224,32 +250,31 @@ select:disabled {
   justify-content: center;
   gap: 0.55rem;
   width: 100%;
-  min-height: 3.15rem;
-  margin-top: 0.45rem;
+  min-height: 3.2rem;
+  margin-top: 0.55rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0.85rem;
   color: #fff !important;
-  font-size: 0.92rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  font-weight: 650;
   cursor: pointer;
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--brand-color) 32%, transparent);
-  transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-color) 20%, transparent), 0 10px 28px color-mix(in srgb, var(--brand-color) 34%, transparent);
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
 }
 #submitBtn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 36px color-mix(in srgb, var(--brand-color) 42%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-color) 30%, transparent), 0 0 36px color-mix(in srgb, var(--brand-color) 48%, transparent), 0 14px 32px color-mix(in srgb, var(--brand-color) 30%, transparent);
 }
 #submitBtn:active { transform: translateY(0); }
 #submitBtn:disabled { opacity: 0.6; transform: none; cursor: wait; }
-#submitBtn span, #gcalBtn { color: #fff !important; }
+#submitBtn span { color: #fff !important; }
 
 #waitlistBox {
   margin-top: 0.75rem;
   padding: 1rem 1.05rem;
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--brand-color) 7%, var(--field-bg));
-  border: 1px solid color-mix(in srgb, var(--brand-color) 16%, var(--border-color));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg));
+  border: 1px solid color-mix(in srgb, var(--brand-color) 18%, var(--border-color));
 }
 #waitlistBox p {
   color: var(--text-color);
@@ -264,15 +289,20 @@ select:disabled {
   background: var(--brand-color);
   color: #fff !important;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0.8rem;
   padding: 0.75rem 1rem;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+#waitlistBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--brand-color) 42%, transparent);
 }
 
 .response-box { margin-top: 1.15rem; text-align: center; }
 #responseMessage {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.45;
   margin-bottom: 0.85rem;
@@ -281,26 +311,30 @@ select:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.6rem;
-  padding: 0.55rem 1.1rem;
-  border-radius: 999px;
-  background: var(--text-color);
-  font-size: 0.82rem;
-  font-weight: 600;
+  min-height: 2.65rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 0.8rem;
+  background: var(--brand-color);
+  color: #fff !important;
+  font-size: 0.85rem;
+  font-weight: 650;
   text-decoration: none;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--brand-color) 28%, transparent);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+#gcalBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--brand-color) 40%, transparent);
 }
 .form-error {
   margin-top: 1rem;
   text-align: center;
   color: #b91c1c;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
-.powered-by {
-  color: var(--text-muted);
-  opacity: 0.72;
-}
+.powered-by { color: var(--text-muted); opacity: 0.75; }
 .rhapsodus-stamp {
   position: fixed;
   right: 1rem;
@@ -308,12 +342,12 @@ select:disabled {
   z-index: 15;
   margin: 0;
   text-align: right;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
   pointer-events: none;
 }
 .rhapsodus-stamp strong {
-  font-weight: 650;
+  font-weight: 700;
   color: var(--text-color);
 }
 
@@ -325,21 +359,19 @@ select:disabled {
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background: rgba(10, 10, 12, 0.48);
-  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.55);
 }
 .shop-info-modal.hidden { display: none !important; }
 .shop-info-card {
   background: var(--card-bg);
   color: var(--text-color);
   border: 1px solid var(--border-color);
-  border-radius: 1.35rem;
-  padding: 1.45rem 1.4rem 1.2rem;
+  border-radius: 1.15rem;
+  padding: 1.4rem 1.35rem 1.2rem;
   width: min(22rem, 100%);
-  box-shadow: var(--card-shadow);
-  backdrop-filter: blur(20px);
+  box-shadow: 0 0 60px color-mix(in srgb, var(--brand-color) 22%, transparent), 0 24px 48px rgba(0,0,0,0.2);
 }
-.shop-info-card h2 { font-size: 1.2rem; margin: 0 0 1rem; }
+.shop-info-card h2 { font-size: 1.15rem; margin: 0 0 1rem; }
 .shop-info-card p {
   margin: 0 0 0.7rem;
   font-size: 0.9rem;
@@ -348,18 +380,17 @@ select:disabled {
 }
 .shop-info-card .meta-label {
   display: block;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 700;
   margin-bottom: 0.2rem;
+  color: var(--text-muted);
 }
-#businessAddress, #businessPhone { color: var(--text-color) !important; }
+#businessAddress, #businessPhone { color: var(--brand-color) !important; }
 #clientQr {
   margin: 1rem auto 1.1rem;
   width: 148px;
   background: #fff;
-  border-radius: 0.85rem;
+  border-radius: 0.75rem;
   padding: 0.4rem;
 }
 .shop-info-close {
@@ -367,30 +398,31 @@ select:disabled {
   background: var(--brand-color);
   color: #fff !important;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0.8rem;
   padding: 0.75rem 1rem;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.shop-info-close:hover {
+  box-shadow: 0 0 26px color-mix(in srgb, var(--brand-color) 40%, transparent);
 }
 body.shop-info-open { overflow: hidden; }
 
 .flatpickr-calendar {
   font-family: var(--body-font) !important;
   background: var(--card-bg) !important;
+  color: var(--text-color) !important;
   border: 1px solid var(--border-color) !important;
-  box-shadow: var(--card-shadow) !important;
+  box-shadow: 0 0 40px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 18px 40px rgba(0,0,0,0.16) !important;
   border-radius: 1rem !important;
-  overflow: hidden;
 }
 .flatpickr-months, .flatpickr-weekdays, .flatpickr-days { background: transparent !important; }
 .flatpickr-current-month, .flatpickr-weekday, .flatpickr-monthDropdown-months {
   color: var(--text-color) !important;
   fill: var(--text-color) !important;
 }
-.flatpickr-day {
-  color: var(--text-color) !important;
-  border-radius: 0.55rem !important;
-}
+.flatpickr-day { color: var(--text-color) !important; border-radius: 0.5rem !important; }
 .flatpickr-day.selected,
 .flatpickr-day.startRange,
 .flatpickr-day.endRange {
@@ -398,25 +430,23 @@ body.shop-info-open { overflow: hidden; }
   border-color: var(--brand-color) !important;
   color: #fff !important;
 }
-.flatpickr-day:hover { background: color-mix(in srgb, var(--brand-color) 14%, transparent) !important; }
-.flatpickr-day.flatpickr-disabled { color: var(--text-muted) !important; opacity: 0.35; }
+.flatpickr-day:hover {
+  background: color-mix(in srgb, var(--brand-color) 16%, transparent) !important;
+}
+.flatpickr-day.flatpickr-disabled { color: var(--text-muted) !important; opacity: 0.4; }
 
 @media (max-width: 640px) {
-  .booking-shell {
-    align-items: stretch;
-    padding: 0;
-  }
+  .booking-shell { align-items: stretch; padding: 0; }
   .booking-card {
     max-width: none;
     min-height: 100vh;
     margin: 0;
-    padding: 1.5rem 1.2rem calc(1.4rem + env(safe-area-inset-bottom));
+    padding: 1.65rem 1.35rem calc(1.5rem + env(safe-area-inset-bottom));
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    backdrop-filter: none;
-    background: color-mix(in srgb, var(--card-bg) 88%, var(--bg-color)) !important;
   }
+  .booking-card:hover { box-shadow: none; }
   .business-logo { width: 76px; height: 76px; }
   #submitBtn {
     position: sticky;
@@ -428,6 +458,5 @@ body.shop-info-open { overflow: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .booking-card, .form-loader-dot { animation: none; }
-  #submitBtn { transition: none; }
+  .form-loader-dot, .booking-card, input, select, textarea, #submitBtn { animation: none; transition: none; }
 }
