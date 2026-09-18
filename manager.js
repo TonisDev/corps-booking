@@ -528,7 +528,34 @@ function applyCalendarLayout() {
   calendar.setOption('height', calendarHeight());
   calendar.setOption('expandRows', !phone);
   calendar.setOption('displayEventTime', !phone);
+  applyCalendarEventTitles();
   paintMonthDayCounts();
+}
+
+function customerFirstName(name) {
+  const raw = String(name || '').trim();
+  if (!raw) return 'Χωρίς όνομα';
+  return raw.split(/\s+/)[0];
+}
+
+function isCompactCalView(viewType) {
+  return viewType === 'timeGridWeek' || viewType === 'dayGridWeek' || viewType === 'dayGridMonth';
+}
+
+function calendarEventTitle(item, compact) {
+  const name = compact ? customerFirstName(item && item.customer_name) : (item && item.customer_name || 'Χωρίς όνομα');
+  if (waitlistNeedsTime(item)) return `Ουρά · ${name}`;
+  const service = (item && item.service_name) || '';
+  return service ? `${name} · ${service}` : name;
+}
+
+function applyCalendarEventTitles() {
+  if (!calendar) return;
+  const compact = isCompactCalView(calendar.view && calendar.view.type);
+  calendar.getEvents().forEach(ev => {
+    const item = ev.extendedProps || {};
+    ev.setProp('title', calendarEventTitle(item, compact));
+  });
 }
 
 function initCalendar() {
@@ -586,6 +613,7 @@ function initCalendar() {
         calendar.setOption('height', nextHeight);
       }
       paintMonthDayCounts();
+      applyCalendarEventTitles();
     },
     windowResize: applyCalendarLayout
   });
@@ -618,9 +646,7 @@ async function fetchAppointments() {
       const floating = waitlistNeedsTime(item);
       calendar.addEvent({
         id: item.id,
-        title: floating
-          ? `Ουρά · ${item.customer_name}`
-          : `${item.customer_name} · ${item.service_name}`,
+        title: calendarEventTitle(item, false),
         allDay: floating,
         start: floating ? item.date : `${item.date}T${item.start_time}`,
         end: floating ? undefined : `${item.date}T${item.end_time}`,
@@ -637,6 +663,7 @@ async function fetchAppointments() {
     document.getElementById('statHistory').innerText = history;
     renderTodayList();
     paintMonthDayCounts();
+    applyCalendarEventTitles();
     if (document.getElementById('listModal').style.display === 'flex') {
       renderAppointmentList();
     }
