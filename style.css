@@ -1,20 +1,20 @@
 /* =============================================================================
- * STYLE.CSS — θέματα φόρμας πελάτη (χρώματα από CSS variables στο index.html)
+ * STYLE.CSS — δημόσια φόρμα κράτησης
  * ΝΕΟ CHAT: @public/style.css
  * ============================================================================= */
 
-/* Εφαρμογή των CSS variables στα βασικά στοιχεία της φόρμας */
-html {
-  font-synthesis: none;
-}
-
+html { font-synthesis: none; }
+.hidden { display: none !important; }
 body {
+  margin: 0;
+  min-height: 100vh;
   color: var(--text-color) !important;
+  font-family: var(--body-font) !important;
+  letter-spacing: -0.01em;
 }
 
 body,
 .booking-card,
-.max-w-md,
 button,
 input,
 select,
@@ -26,44 +26,295 @@ label {
 h1, h2, h3 {
   font-family: var(--heading-font) !important;
   color: var(--text-color) !important;
-  letter-spacing: 0;
+  letter-spacing: -0.045em;
+  font-weight: 600;
 }
 
-.booking-card,
-.max-w-md {
-  background-color: var(--card-bg) !important;
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -15%, color-mix(in srgb, var(--brand-color) 22%, transparent), transparent 58%),
+    radial-gradient(ellipse 70% 45% at 110% 115%, color-mix(in srgb, var(--brand-color) 12%, transparent), transparent 50%),
+    var(--bg-color);
+}
+.page-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
 }
 
-label {
-  color: var(--text-color) !important;
+.booking-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.25rem 4.5rem;
 }
 
-.text-gray-500, .text-gray-400, #businessSubtitle, #slotHint, .powered-by {
+.booking-card {
+  width: 100%;
+  max-width: 28.5rem;
+  padding: 2.35rem 2.15rem 2.1rem;
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.form-loader {
+  text-align: center;
+  padding: 3.5rem 0;
+  color: var(--text-muted);
+}
+.form-loader p {
+  margin: 0.85rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.form-loader-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--brand-color);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.brand-block {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+.business-logo {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 1.15rem;
+  border-radius: 1.35rem;
+  object-fit: cover;
+  background: var(--field-bg);
+  border: 1px solid var(--border-color);
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--brand-color) 8%, transparent),
+    0 18px 36px rgba(15, 23, 42, 0.1);
+}
+#businessName {
+  margin: 0;
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+#businessSubtitle {
+  margin: 0.55rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
   color: var(--text-muted) !important;
-}
-
-.text-gray-700, .text-gray-800, .text-gray-900,
-.booking-card h1 {
-  color: var(--text-color) !important;
-}
-
-.text-indigo-600, #businessAddress, #businessPhone {
-  color: var(--brand-color) !important;
+  letter-spacing: 0.01em;
 }
 
 #shopInfoBtn {
   display: inline-flex;
+  margin-top: 1rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-color);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-color) 28%, transparent);
+  border-radius: 0;
+  padding-bottom: 0.08rem;
+}
+#shopInfoBtn:hover {
+  color: var(--brand-color);
+  border-bottom-color: var(--brand-color);
+}
+
+.welcome-text {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.booking-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
+}
+.field-block { min-width: 0; }
+.field-label {
+  display: block;
+  margin: 0 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted) !important;
+}
+.field-label span {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-weight: 500;
+  opacity: 0.75;
+}
+.field-help {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-muted) !important;
+}
+.field-help-ok { color: #047857 !important; }
+.field-help-err { color: #b91c1c !important; }
+.field-help-wait { color: var(--text-color) !important; }
+.text-green-600 { color: #047857 !important; }
+.text-red-600 { color: #b91c1c !important; }
+.text-amber-700, .text-amber-600 { color: var(--text-color) !important; }
+
+input, select, textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 3rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--field-border) !important;
+  background: var(--field-bg) !important;
+  color: var(--text-color) !important;
+  border-radius: 0.9rem;
+  font-size: 0.95rem;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+textarea { min-height: 4.6rem; resize: vertical; }
+input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--text-muted) 75%, transparent); }
+select:disabled {
+  opacity: 0.55;
+}
+.time-picker-wrapper span {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+#submitBtn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 0.85rem;
-  background: transparent;
-  color: var(--brand-color);
-  border: 1px solid var(--border-color);
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 3.15rem;
+  margin-top: 0.45rem;
+  border: 0;
   border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  font-size: 0.8rem;
+  color: #fff !important;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--brand-color) 32%, transparent);
+  transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+}
+#submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 36px color-mix(in srgb, var(--brand-color) 42%, transparent);
+}
+#submitBtn:active { transform: translateY(0); }
+#submitBtn:disabled { opacity: 0.6; transform: none; cursor: wait; }
+#submitBtn span, #gcalBtn { color: #fff !important; }
+
+#waitlistBox {
+  margin-top: 0.75rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--brand-color) 7%, var(--field-bg));
+  border: 1px solid color-mix(in srgb, var(--brand-color) 16%, var(--border-color));
+}
+#waitlistBox p {
+  color: var(--text-color);
+  font-size: 0.92rem;
+  margin: 0 0 0.45rem;
+  line-height: 1.45;
+}
+#waitlistAsk { font-weight: 600; margin-bottom: 0 !important; }
+#waitlistBtn {
+  width: 100%;
+  margin-top: 0.75rem;
+  background: var(--brand-color);
+  color: #fff !important;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.response-box { margin-top: 1.15rem; text-align: center; }
+#responseMessage {
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.45;
+  margin-bottom: 0.85rem;
+}
+#gcalBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.6rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  background: var(--text-color);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.form-error {
+  margin-top: 1rem;
+  text-align: center;
+  color: #b91c1c;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.powered-by {
+  color: var(--text-muted);
+  opacity: 0.72;
+}
+.rhapsodus-stamp {
+  position: fixed;
+  right: 1rem;
+  bottom: 0.85rem;
+  z-index: 15;
+  margin: 0;
+  text-align: right;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+.rhapsodus-stamp strong {
+  font-weight: 650;
+  color: var(--text-color);
 }
 
 .shop-info-modal {
@@ -74,102 +325,109 @@ label {
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(10, 10, 12, 0.48);
+  backdrop-filter: blur(10px);
 }
-.shop-info-modal.hidden {
-  display: none !important;
-}
+.shop-info-modal.hidden { display: none !important; }
 .shop-info-card {
   background: var(--card-bg);
   color: var(--text-color);
   border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  padding: 1.25rem 1.3rem 1.1rem;
+  border-radius: 1.35rem;
+  padding: 1.45rem 1.4rem 1.2rem;
   width: min(22rem, 100%);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(20px);
 }
-.shop-info-card h2 {
-  font-size: 1.05rem;
-  margin: 0 0 0.85rem;
-}
+.shop-info-card h2 { font-size: 1.2rem; margin: 0 0 1rem; }
 .shop-info-card p {
-  margin: 0 0 0.5rem;
-  font-size: 0.875rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
   line-height: 1.45;
 }
 .shop-info-card .meta-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.2rem;
 }
+#businessAddress, #businessPhone { color: var(--text-color) !important; }
 #clientQr {
-  margin: 0.9rem auto 1rem;
+  margin: 1rem auto 1.1rem;
   width: 148px;
   background: #fff;
-  border-radius: 0.65rem;
-  padding: 0.35rem;
+  border-radius: 0.85rem;
+  padding: 0.4rem;
 }
 .shop-info-close {
   width: 100%;
   background: var(--brand-color);
   color: #fff !important;
-  border: none;
-  border-radius: 0.65rem;
-  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
   font-weight: 600;
   cursor: pointer;
 }
-body.shop-info-open {
+body.shop-info-open { overflow: hidden; }
+
+.flatpickr-calendar {
+  font-family: var(--body-font) !important;
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--card-shadow) !important;
+  border-radius: 1rem !important;
   overflow: hidden;
 }
-
-#waitlistBox {
-  margin-top: 0.65rem;
-  padding: 0.85rem 1rem;
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg));
-  border: 1px solid color-mix(in srgb, var(--brand-color) 22%, var(--border-color));
-}
-
-#waitlistBox p {
-  color: var(--text-color);
-  font-size: 0.95rem;
-  margin: 0 0 0.55rem;
-  line-height: 1.45;
-}
-#waitlistAsk {
-  font-weight: 600;
-  margin-bottom: 0 !important;
-}
-
-#waitlistBtn {
-  width: 100%;
-  background: var(--brand-color);
-  color: #fff !important;
-  border: none;
-  border-radius: 0.6rem;
-  padding: 0.7rem 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-input, select, textarea {
-  background-color: var(--field-bg) !important;
-  border-color: var(--field-border) !important;
+.flatpickr-months, .flatpickr-weekdays, .flatpickr-days { background: transparent !important; }
+.flatpickr-current-month, .flatpickr-weekday, .flatpickr-monthDropdown-months {
   color: var(--text-color) !important;
+  fill: var(--text-color) !important;
+}
+.flatpickr-day {
+  color: var(--text-color) !important;
+  border-radius: 0.55rem !important;
+}
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+  background: var(--brand-color) !important;
+  border-color: var(--brand-color) !important;
+  color: #fff !important;
+}
+.flatpickr-day:hover { background: color-mix(in srgb, var(--brand-color) 14%, transparent) !important; }
+.flatpickr-day.flatpickr-disabled { color: var(--text-muted) !important; opacity: 0.35; }
+
+@media (max-width: 640px) {
+  .booking-shell {
+    align-items: stretch;
+    padding: 0;
+  }
+  .booking-card {
+    max-width: none;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1.5rem 1.2rem calc(1.4rem + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    background: color-mix(in srgb, var(--card-bg) 88%, var(--bg-color)) !important;
+  }
+  .business-logo { width: 76px; height: 76px; }
+  #submitBtn {
+    position: sticky;
+    bottom: max(0.65rem, env(safe-area-inset-bottom));
+    z-index: 20;
+  }
+  .rhapsodus-stamp { bottom: calc(4.6rem + env(safe-area-inset-bottom)); }
+  input, select, textarea { font-size: 16px !important; }
 }
 
-select:disabled {
-  background-color: var(--border-color) !important;
-  opacity: 0.7;
-}
-
-#submitBtn,
-#submitBtn span,
-#gcalBtn {
-  color: #ffffff !important;
+@media (prefers-reduced-motion: reduce) {
+  .booking-card, .form-loader-dot { animation: none; }
+  #submitBtn { transition: none; }
 }
