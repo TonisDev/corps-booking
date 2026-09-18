@@ -543,6 +543,8 @@ function initCalendar() {
     navLinks: false,
     allDayText: 'Ουρά',
     displayEventTime: !phone,
+    eventShortHeight: 22,
+    eventMinHeight: 28,
     eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
     slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
     slotMinTime: '08:00:00',
@@ -553,7 +555,9 @@ function initCalendar() {
     buttonText: calendarButtonText(),
     views: {
       timeGridDay: {
-        titleFormat: { weekday: 'short', day: 'numeric', month: 'short' }
+        titleFormat: { weekday: 'short', day: 'numeric', month: 'short' },
+        eventMinHeight: 52,
+        eventShortHeight: 20
       },
       dayGridWeek: {
         titleFormat: { month: 'short', year: 'numeric' },
@@ -609,7 +613,7 @@ async function fetchAppointments() {
       if (item.status === 'WAITLIST') color = '#7c3aed';
       if (item.status === 'BLOCKED') color = '#64748b';
       if (item.status === 'REJECTED') color = '#ef4444';
-      if (item.status === 'CANCELLED') color = '#ea580c';
+      if (item.status === 'CANCELLED') color = '#2563eb';
 
       const floating = waitlistNeedsTime(item);
       calendar.addEvent({
