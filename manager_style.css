@@ -216,6 +216,14 @@ button, input, select, textarea { font-family: inherit; }
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-color); letter-spacing: 0.01em; }
 .field { width: 100%; padding: 0.65rem; border: 1px solid var(--field-border); background: var(--field-bg); color: var(--text-color); border-radius: 0.5rem; box-sizing: border-box; font-size: 0.9rem; }
+.field-with-toggle { position: relative; }
+.field-with-toggle .field { padding-right: 5.6rem; }
+.toggle-secret {
+  position: absolute; right: 0.45rem; top: 50%; transform: translateY(-50%);
+  background: transparent; border: 0; color: var(--text-muted);
+  font-size: 0.78rem; font-weight: 600; cursor: pointer; padding: 0.2rem 0.25rem;
+}
+.toggle-secret:hover { color: var(--text-color); }
 #actDetails .detail-row {
   display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem;
   padding: 0.35rem 0; border-bottom: 1px solid var(--border-color);
