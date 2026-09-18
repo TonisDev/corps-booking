@@ -72,6 +72,7 @@ button, input, select, textarea { font-family: inherit; }
 .header-brand h2 { margin: 0; font-size: 1.25rem; }
 .header-brand span { font-size: 0.75rem; color: var(--text-muted); }
 .header-actions { grid-area: actions; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+/* Τετράγωνο logout πάνω δεξιά — το Lucide svg παίρνει μέγεθος από εδώ, όχι από HTML attrs */
 .btn-logout {
   grid-area: logout;
   width: 3.1rem;
@@ -147,7 +148,7 @@ button, input, select, textarea { font-family: inherit; }
 .badge-booked { background: #d1fae5; color: #065f46; }
 .badge-blocked { background: #e2e8f0; color: #475569; }
 .badge-rejected { background: #fee2e2; color: #991b1b; }
-.badge-cancelled { background: #fef9c3; color: #854d0e; }
+.badge-cancelled { background: #fef08a; color: #854d0e; }
 .list-empty { text-align: center; color: var(--text-muted); padding: 1.5rem 0; }
 .bulk-bar { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin: 0 0 0.75rem; padding: 0.65rem 0.8rem; border: 1px solid var(--border-color); border-radius: 0.65rem; background: var(--field-bg); }
 .overlap-box { margin: 0 0 1rem; padding: 0.85rem; border-radius: 0.7rem; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
