@@ -189,7 +189,7 @@ h1, h2, h3 {
 .text-red-600 { color: #b91c1c !important; }
 .text-amber-700, .text-amber-600 { color: var(--text-color) !important; }
 
-input, select, textarea {
+input, select, textarea, .time-dropdown-btn {
   width: 100%;
   box-sizing: border-box;
   min-height: 3.05rem;
@@ -215,7 +215,7 @@ input::placeholder, textarea::placeholder {
   text-align: inherit;
 }
 
-select {
+select, .time-dropdown-btn {
   appearance: none;
   -webkit-appearance: none;
   color-scheme: inherit;
@@ -226,6 +226,13 @@ select {
   background-size: 1rem;
   padding-left: 2.6rem !important;
   padding-right: 2.6rem !important;
+}
+.time-dropdown-btn { cursor: pointer; }
+.time-dropdown-btn.is-open,
+input:focus, select:focus, textarea:focus, .time-dropdown-btn:focus-visible {
+  outline: none;
+  border-color: var(--brand-color) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 0 28px color-mix(in srgb, var(--brand-color) 18%, transparent) !important;
 }
 select option,
 select optgroup {
@@ -238,18 +245,15 @@ select optgroup {
   color: #f8fafc;
 }
 
-input:hover, select:hover, textarea:hover {
+input:hover, select:hover, textarea:hover, .time-dropdown-btn:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--brand-color) 45%, var(--field-border)) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color) 10%, transparent), 0 0 22px color-mix(in srgb, var(--brand-color) 12%, transparent);
 }
-input:focus, select:focus, textarea:focus {
-  border-color: var(--brand-color) !important;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 0 28px color-mix(in srgb, var(--brand-color) 18%, transparent) !important;
-}
 
-select:disabled {
+select:disabled, .time-dropdown-btn:disabled {
   opacity: 0.62;
   box-shadow: none;
+  cursor: not-allowed;
 }
 .time-native {
   position: absolute;
@@ -257,100 +261,45 @@ select:disabled {
   height: 1px;
   opacity: 0;
   pointer-events: none;
-  overflow: hidden;
 }
-.time-picker-wrap {
-  position: relative;
-}
-.time-dropdown-btn {
-  width: 100%;
-  min-height: 3.05rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.85rem 2.6rem;
-  border: 1px solid var(--field-border);
-  background-color: var(--field-bg);
-  color: var(--text-color);
-  border-radius: 0.8rem;
-  font-size: 1rem;
-  font-weight: 500;
-  text-align: center;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.95rem center;
-  background-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.time-dropdown-btn:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--brand-color) 45%, var(--field-border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color) 10%, transparent), 0 0 22px color-mix(in srgb, var(--brand-color) 12%, transparent);
-}
-.time-dropdown-btn.is-open,
-.time-dropdown-btn:focus-visible {
-  outline: none;
-  border-color: var(--brand-color);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 0 28px color-mix(in srgb, var(--brand-color) 18%, transparent);
-}
-.time-dropdown-btn:disabled {
-  opacity: 0.62;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-.time-rollers.is-up {
-  top: auto;
+.time-picker-wrap { position: relative; }
+.time-rollers {
+  position: absolute;
+  left: 0;
+  right: 0;
   bottom: calc(100% + 0.4rem);
-}
-.time-rollers-mask {
+  z-index: 30;
   display: flex;
-  align-items: stretch;
   gap: 0.25rem;
+  padding: 0.4rem;
+  border-radius: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--field-border);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 18px 40px rgba(15, 23, 42, 0.16);
 }
-.time-col {
-  flex: 1;
-  max-height: 8.6rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  text-align: center;
-  padding: 0.15rem;
-}
-.time-col-sep {
+.time-col { flex: 1; max-height: 8.6rem; overflow-y: auto; text-align: center; }
+.time-rollers > span {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 0.9rem;
   color: var(--text-muted);
   font-weight: 700;
-  font-size: 1.15rem;
 }
 .time-item {
   display: block;
   width: 100%;
-  min-height: 2.5rem;
-  margin: 0.1rem 0;
+  min-height: 2.4rem;
   border: 0;
-  border-radius: 0.7rem;
+  border-radius: 0.65rem;
   background: transparent;
   color: var(--text-color);
-  font-size: 1.12rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
   cursor: pointer;
 }
-.time-item:hover:not(.is-off) {
-  background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg));
-}
+.time-item:hover { background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg)); }
 .time-item.is-on {
   background: color-mix(in srgb, var(--brand-color) 16%, var(--field-bg));
   color: var(--brand-color);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--brand-color) 22%, transparent);
-}
-.time-item.is-off {
-  color: var(--text-muted);
-  cursor: default;
 }
 
 #submitBtn {
