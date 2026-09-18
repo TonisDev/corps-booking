@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260916j">
+    <link rel="stylesheet" href="manager_style.css?v=20260916k">
 </head>
 <body data-theme="light">
 
@@ -74,7 +74,7 @@
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
       </div>
-      <button type="button" class="btn btn-danger btn-logout" onclick="handleLogout()" title="Αποσύνδεση" aria-label="Αποσύνδεση"><i data-lucide="log-out" size="16"></i></button>
+      <button type="button" class="btn btn-danger btn-logout" onclick="handleLogout()" title="Αποσύνδεση" aria-label="Αποσύνδεση"><i data-lucide="log-out" size="22"></i></button>
     </div>
 
     <div class="container">
@@ -128,7 +128,7 @@
             <span><i style="background:#7c3aed;"></i> Ουρά</span>
             <span><i style="background:#64748b;"></i> Κλειστό</span>
             <span><i style="background:#ef4444;"></i> Απορρίφθηκε</span>
-            <span><i style="background:#ea580c;"></i> Ακυρώθηκε</span>
+            <span><i style="background:#2563eb;"></i> Ακυρώθηκε</span>
           </div>
         </div>
         <div class="calendar-layout">
@@ -549,7 +549,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260916j"></script>
+<script src="manager.js?v=20260916k"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="toast" role="status" aria-live="polite" style="position:fixed;right:1.25rem;bottom:1.25rem;left:auto;transform:none;z-index:99999;display:none;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-radius:0.85rem;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,0.28);max-width:min(22rem,calc(100vw - 1.5rem));">
