@@ -30,277 +30,177 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260916b">
+    <link rel="stylesheet" href="style.css?v=20260918a">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα φόρμας. Το brand_color βάφει κουμπί/focus από πάνω. */
         :root, [data-theme="light"] {
-            --bg-color: #f3f4f6;
-            --bg-accent: #e5e7eb;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
-            --field-bg: #ffffff;
-            --field-border: #d1d5db;
+            --bg-color: #f4f1ec;
+            --bg-accent: #e7e0d6;
+            --card-bg: rgba(255, 252, 248, 0.82);
+            --text-color: #161412;
+            --text-muted: #6f6a63;
+            --border-color: rgba(28, 25, 23, 0.08);
+            --field-bg: rgba(255, 255, 255, 0.72);
+            --field-border: rgba(28, 25, 23, 0.12);
             --brand-color: #4f46e5;
-            --card-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-            --card-radius: 1.25rem;
+            --card-shadow: 0 1px 1px rgba(22, 20, 18, 0.04), 0 24px 64px rgba(22, 20, 18, 0.08);
+            --card-radius: 1.75rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --glow: rgba(79, 70, 229, 0.18);
         }
 
         [data-theme="dark"] {
-            --bg-color: #0b1220;
-            --bg-accent: #1e293b;
-            --card-bg: #151c2c;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --field-bg: #0f172a;
-            --field-border: #475569;
-            --brand-color: #818cf8;
-            --card-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
-            --card-radius: 1.25rem;
+            --bg-color: #07080c;
+            --bg-accent: #12151d;
+            --card-bg: rgba(18, 21, 29, 0.72);
+            --text-color: #f4f1ec;
+            --text-muted: #9a958c;
+            --border-color: rgba(244, 241, 236, 0.1);
+            --field-bg: rgba(255, 255, 255, 0.04);
+            --field-border: rgba(244, 241, 236, 0.14);
+            --brand-color: #a5b4fc;
+            --card-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 30px 80px rgba(0, 0, 0, 0.45);
+            --card-radius: 1.75rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --glow: rgba(165, 180, 252, 0.16);
         }
 
         [data-theme="warm"] {
-            --bg-color: #f6efe6;
-            --bg-accent: #ead9c6;
-            --card-bg: #fffaf4;
-            --text-color: #3f2a1d;
+            --bg-color: #f3ebe1;
+            --bg-accent: #e6d5c2;
+            --card-bg: rgba(255, 250, 244, 0.8);
+            --text-color: #2c1c12;
             --text-muted: #8a6d57;
-            --border-color: #ead9c6;
-            --field-bg: #fffdf9;
-            --field-border: #dcc4ab;
+            --border-color: rgba(63, 42, 29, 0.1);
+            --field-bg: rgba(255, 253, 249, 0.78);
+            --field-border: rgba(63, 42, 29, 0.14);
             --brand-color: #c2410c;
-            --card-shadow: 0 18px 40px rgba(124, 63, 22, 0.12);
-            --card-radius: 1.5rem;
+            --card-shadow: 0 1px 1px rgba(124, 63, 22, 0.06), 0 24px 64px rgba(124, 63, 22, 0.1);
+            --card-radius: 1.85rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Serif", "Noto Serif", serif;
+            --glow: rgba(194, 65, 12, 0.16);
         }
 
         [data-theme="ocean"] {
-            --bg-color: #e8f4f4;
-            --bg-accent: #cfe7e8;
-            --card-bg: #f7fcfc;
-            --text-color: #134e4a;
+            --bg-color: #e7f1f1;
+            --bg-accent: #cfe3e3;
+            --card-bg: rgba(247, 252, 252, 0.8);
+            --text-color: #0f2f2d;
             --text-muted: #5b7c7b;
-            --border-color: #cfe3e2;
-            --field-bg: #ffffff;
-            --field-border: #b6d4d3;
+            --border-color: rgba(19, 78, 74, 0.1);
+            --field-bg: rgba(255, 255, 255, 0.75);
+            --field-border: rgba(19, 78, 74, 0.14);
             --brand-color: #0f766e;
-            --card-shadow: 0 18px 40px rgba(15, 118, 110, 0.12);
-            --card-radius: 1.25rem;
+            --card-shadow: 0 1px 1px rgba(15, 118, 110, 0.05), 0 24px 64px rgba(15, 118, 110, 0.1);
+            --card-radius: 1.75rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --glow: rgba(15, 118, 110, 0.16);
         }
 
         body {
             background-color: var(--bg-color) !important;
-            background-image: radial-gradient(circle at top, var(--bg-accent), transparent 55%);
             color: var(--text-color);
             font-family: var(--body-font);
-            transition: background-color 0.2s, color 0.2s;
         }
 
         h1, h2, h3 {
             font-family: var(--heading-font);
         }
 
-        .booking-card {
-            background-color: var(--card-bg) !important;
-            border-color: var(--border-color) !important;
-            box-shadow: var(--card-shadow) !important;
-            border-radius: var(--card-radius) !important;
-        }
-
-        /* Εφαρμογή του brand_color (dynamic, ανά επιχείρηση) σε ό,τι πριν
-           ήταν hardcoded indigo. */
         #submitBtn {
             background-color: var(--brand-color) !important;
-            filter: brightness(1);
-            transition: filter 0.15s;
-        }
-        #submitBtn:hover {
-            filter: brightness(0.9);
         }
         input:focus, select:focus, textarea:focus {
             border-color: var(--brand-color) !important;
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-color) 30%, transparent) !important;
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 18%, transparent) !important;
             outline: none !important;
         }
         .time-picker-wrapper { display: flex; gap: 8px; align-items: center; }
         .time-picker-wrapper select { flex: 1; }
-
-        .business-logo {
-            width: 84px;
-            height: 84px;
-            margin: 0 auto 1rem;
-            border-radius: 1.25rem;
-            object-fit: cover;
-            background: var(--field-bg);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
-        }
-
-        .welcome-text {
-            padding: 0.75rem 1rem;
-            border-radius: 0.85rem;
-            background: color-mix(in srgb, var(--brand-color) 8%, var(--field-bg));
-            border: 1px solid color-mix(in srgb, var(--brand-color) 20%, var(--border-color));
-        }
-
-        .meta-label {
-            display: inline-block;
-            min-width: 4.6rem;
-            color: var(--text-muted);
-        }
-
-        .powered-by {
-            color: var(--text-muted);
-            opacity: 0.8;
-        }
-
-        .powered-by a {
-            color: var(--brand-color);
-            font-weight: 600;
-        }
-
-        .rhapsodus-stamp {
-            position: fixed;
-            right: 0.9rem;
-            bottom: 0.75rem;
-            z-index: 15;
-            margin: 0;
-            text-align: right;
-            font-size: 0.68rem;
-            letter-spacing: 0.06em;
-            pointer-events: none;
-        }
-        .rhapsodus-stamp strong {
-            font-weight: 700;
-            color: var(--text-color);
-        }
-
-        @media (max-width: 640px) {
-            body {
-                align-items: flex-start !important;
-                padding: 0 !important;
-                background-image: none;
-            }
-
-            .booking-card {
-                min-height: 100vh;
-                margin: 0 !important;
-                padding: 1.35rem !important;
-                border: 0 !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-            }
-
-            .business-logo {
-                width: 72px;
-                height: 72px;
-            }
-
-            #submitBtn {
-                position: sticky;
-                bottom: max(0.75rem, env(safe-area-inset-bottom));
-                z-index: 20;
-                box-shadow: 0 10px 24px color-mix(in srgb, var(--brand-color) 32%, transparent);
-            }
-
-            .rhapsodus-stamp {
-                bottom: calc(4.7rem + env(safe-area-inset-bottom));
-            }
-
-            input, select, textarea {
-                font-size: 16px !important;
-            }
-        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex items-center justify-center p-4">
+<body class="antialiased min-h-screen">
+    <div class="page-bg" aria-hidden="true"></div>
 
     <!-- [SECTION: FORM-HTML] -->
-    <div class="max-w-md w-full booking-card p-8 rounded-2xl shadow-lg border border-gray-100 my-8">
+    <main class="booking-shell">
+    <div class="booking-card">
 
         <!-- Loading State Αρχικής Φόρτωσης Επιχείρησης -->
-        <div id="initialLoader" class="text-center py-8">
-            <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-sm text-gray-500">Φόρτωση επιχείρησης...</p>
+        <div id="initialLoader" class="form-loader">
+            <span class="form-loader-dot"></span>
+            <p>Φόρτωση</p>
         </div>
 
         <!-- Header Επιχείρησης -->
-        <div id="businessHeader" class="text-center mb-6 hidden">
+        <div id="businessHeader" class="brand-block hidden">
             <img id="businessLogo" class="business-logo" src="demo-logo.svg" alt="Λογότυπο επιχείρησης">
-            <h1 id="businessName" class="text-2xl font-bold text-gray-900"></h1>
-            <p id="businessSubtitle" class="text-sm text-gray-500 mt-1">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
-            <button type="button" id="shopInfoBtn" onclick="openShopInfo()">Πληροφορίες</button>
+            <h1 id="businessName"></h1>
+            <p id="businessSubtitle">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
+            <button type="button" id="shopInfoBtn" onclick="openShopInfo()">Πληροφορίες καταστήματος</button>
         </div>
 
-        <p id="welcomeText" class="welcome-text text-sm text-center mb-5 hidden"></p>
+        <p id="welcomeText" class="welcome-text hidden"></p>
 
         <!-- Φόρμα Κράτησης -->
-        <form id="bookingForm" class="space-y-4 hidden">
+        <form id="bookingForm" class="booking-fields hidden">
 
             <!-- Honeypot field κατά spam -->
             <div style="display:none !important;">
                 <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ονοματεπώνυμο *</label>
-                <input type="text" id="name" required placeholder="Ονοματεπώνυμο" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <div class="field-block">
+                <label class="field-label" for="name">Ονοματεπώνυμο</label>
+                <input type="text" id="name" required placeholder="Το όνομά σας">
             </div>
 
-            <div id="wrapPhone">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Τηλέφωνο Επικοινωνίας *</label>
-                <input type="tel" id="phone" required placeholder="69XXXXXXXX" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <div class="field-block" id="wrapPhone">
+                <label class="field-label" for="phone">Τηλέφωνο</label>
+                <input type="tel" id="phone" required placeholder="69XXXXXXXX">
             </div>
 
-            <div id="wrapEmail">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <input type="email" id="email" required placeholder="name@email.com" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                <p class="text-xs text-gray-400 mt-1">Θα ενημερωθείτε εδώ αν το ραντεβού εγκριθεί ή απορριφθεί.</p>
+            <div class="field-block" id="wrapEmail">
+                <label class="field-label" for="email">Email</label>
+                <input type="email" id="email" required placeholder="name@email.com">
+                <p class="field-help">Θα ενημερωθείτε εδώ αν το ραντεβού εγκριθεί ή απορριφθεί.</p>
             </div>
 
-            <div id="wrapInstagram">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Instagram Username (προαιρετικό)</label>
-                <input type="text" id="instagram" placeholder="@username" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <div class="field-block" id="wrapInstagram">
+                <label class="field-label" for="instagram">Instagram <span>προαιρετικό</span></label>
+                <input type="text" id="instagram" placeholder="@username">
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Υπηρεσία *</label>
-                <select id="service" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    <option value="">-- Επιλέξτε Υπηρεσία --</option>
+            <div class="field-block">
+                <label class="field-label" for="service">Υπηρεσία</label>
+                <select id="service" required>
+                    <option value="">Επιλέξτε υπηρεσία</option>
                 </select>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ημερομηνία *</label>
-                <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly class="w-full px-4 py-2 border rounded-lg bg-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <div class="field-block">
+                <label class="field-label" for="date">Ημερομηνία</label>
+                <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly>
             </div>
 
-            <div>
-                <label id="timeLabel" class="block text-sm font-medium text-gray-700 mb-1">Διαθέσιμη Ώρα *</label>
+            <div class="field-block">
+                <label class="field-label" id="timeLabel" for="timeHour">Ώρα</label>
                 <div id="timePickerWrap" class="time-picker-wrapper">
-                    <select id="timeHour" disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <select id="timeHour" disabled>
                         <option value="">Ώρα</option>
                     </select>
                     <span>:</span>
-                    <select id="timeMinute" disabled class="w-full px-4 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <select id="timeMinute" disabled>
                         <option value="">--</option>
                         <option value="00">00</option>
                         <option value="30">30</option>
                     </select>
                 </div>
-                <p id="slotHint" class="text-xs text-gray-400 mt-1">Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.</p>
+                <p id="slotHint" class="field-help">Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.</p>
                 <div id="waitlistBox" class="hidden">
                     <p id="waitlistCopy">Ουπς, φαίνεται ότι όλες οι ώρες είναι κατειλημμένες.</p>
                     <p id="waitlistAsk" class="waitlist-ask">Θέλεις να είσαι ο πρώτος που θα ενημερωθεί εάν υπάρξει ακύρωση;</p>
@@ -308,12 +208,12 @@
                 </div>
             </div>
 
-            <div id="wrapNotes">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Σημειώσεις / Παρατηρήσεις</label>
-                <textarea id="notes" rows="2" placeholder="Προαιρετικές σημειώσεις για το ραντεβού" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+            <div class="field-block" id="wrapNotes">
+                <label class="field-label" for="notes">Σημειώσεις <span>προαιρετικό</span></label>
+                <textarea id="notes" rows="2" placeholder="Οτιδήποτε θέλετε να γνωρίζουμε"></textarea>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 shadow-md flex items-center justify-center space-x-2">
+            <button type="submit" id="submitBtn">
                 <span id="submitBtnText">Υποβολή Αιτήματος Κράτησης</span>
                 <svg id="submitSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -323,15 +223,14 @@
         </form>
 
         <!-- Μηνύματα Επιτυχίας / Google Calendar Action -->
-        <div id="responseContainer" class="mt-4 hidden text-center">
-            <div id="responseMessage" class="text-sm font-medium mb-3"></div>
-            <a id="gcalBtn" href="#" target="_blank" class="inline-flex items-center justify-center space-x-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition duration-200 shadow-sm hidden">
-                Προσθήκη στο Google Calendar
-            </a>
+        <div id="responseContainer" class="response-box hidden">
+            <div id="responseMessage"></div>
+            <a id="gcalBtn" href="#" target="_blank" class="hidden">Προσθήκη στο Google Calendar</a>
         </div>
 
-        <div id="loadingError" class="text-center text-red-600 text-sm font-medium hidden mt-4">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
+        <div id="loadingError" class="form-error hidden">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
     </div>
+    </main>
 
     <p class="powered-by rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
 
@@ -362,6 +261,7 @@
 
         function applyClientTheme(theme) {
             const next = CLIENT_THEMES.includes(theme) ? theme : 'light';
+            document.documentElement.setAttribute('data-theme', next);
             document.body.setAttribute('data-theme', next);
         }
 
@@ -412,7 +312,7 @@
                 'Θέλεις να είσαι ο πρώτος που θα ενημερωθεί εάν υπάρξει ακύρωση;';
             box.classList.remove('hidden');
             slotHint.textContent = 'Δεν χρειάζεται να επιλέξεις ώρα. Πάτα το κουμπί από κάτω.';
-            slotHint.className = 'text-xs text-amber-700 mt-1 font-medium';
+            slotHint.className = 'field-help field-help-wait';
             document.getElementById('submitBtnText').textContent = 'Ναι, ενημερώστε με';
         }
 
@@ -515,7 +415,7 @@
                 slotHint.textContent = closed
                     ? 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.'
                     : 'Οι ώρες είναι κλειστές ή ήδη κατειλημμένες.';
-                slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
+                slotHint.className = 'field-help field-help-wait';
                 return;
             }
             const hours = [...new Set(availableSlots.map((slot) => slot.slice(0, 2)))];
@@ -532,9 +432,7 @@
             timeMinuteSelect.disabled = true;
             timeMinuteSelect.classList.add('bg-gray-50');
             slotHint.textContent = hint;
-            slotHint.className = asWaitlist
-                ? 'text-xs text-amber-700 mt-1 font-medium'
-                : 'text-xs text-gray-500 mt-1';
+            slotHint.className = asWaitlist ? 'field-help field-help-wait' : 'field-help';
         }
 
         function selectedTimeValue() {
@@ -640,6 +538,7 @@
 
                 if (businessData.brand_color) {
                     document.documentElement.style.setProperty('--brand-color', businessData.brand_color);
+                    document.body.style.setProperty('--brand-color', businessData.brand_color);
                 }
                 document.getElementById('businessName').textContent = businessData.name;
                 document.getElementById('pageTitle').textContent = `Κράτηση Ραντεβού | ${businessData.name}`;
@@ -721,7 +620,7 @@
                     fp.clear();
                     resetTimePickers('Κλειστό');
                     slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
-                    slotHint.className = 'text-xs text-amber-700 mt-1 font-medium';
+                    slotHint.className = 'field-help field-help-wait';
                     return;
                 }
                 if (serviceSelect.value) {
@@ -745,7 +644,7 @@
             hideWaitlistBox();
             resetTimePickers('Υπολογισμός...');
             slotHint.textContent = 'Παρακαλώ περιμένετε...';
-            slotHint.className = 'text-xs text-gray-400 mt-1';
+            slotHint.className = 'field-help';
             if (!isRequestMode()) {
                 document.getElementById('timeLabel').textContent = 'Διαθέσιμη Ώρα *';
                 document.getElementById('submitBtnText').textContent = 'Υποβολή Αιτήματος Κράτησης';
@@ -760,7 +659,7 @@
                 if (requestId !== availabilityRequestId) return;
                 resetTimePickers('Κλειστό');
                 slotHint.textContent = 'Η επιχείρηση είναι κλειστή αυτή την ημέρα.';
-                slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
+                slotHint.className = 'field-help field-help-wait';
                 return;
             }
 
@@ -778,7 +677,7 @@
                     } else {
                         resetTimePickers('—');
                         slotHint.textContent = 'Η ημέρα έχει ήδη τα ραντεβού που δέχεται.';
-                        slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
+                        slotHint.className = 'field-help field-help-wait';
                     }
                     return;
                 }
@@ -835,7 +734,7 @@
                     }
                     resetTimePickers('—');
                     slotHint.textContent = 'Η ημέρα είναι πλήρης.';
-                    slotHint.className = 'text-xs text-amber-600 mt-1 font-medium';
+                    slotHint.className = 'field-help field-help-wait';
                     return;
                 }
 
@@ -851,13 +750,13 @@
                 timeHourSelect.classList.remove('bg-gray-50');
                 refreshMinuteOptions();
                 slotHint.textContent = `Διαθέσιμες ώρες: ${freeSlots.length} (ανά μισάωρο).`;
-                slotHint.className = 'text-xs text-green-600 mt-1 font-medium';
+                slotHint.className = 'field-help field-help-ok';
 
             } catch (err) {
                 if (requestId !== availabilityRequestId) return;
                 resetTimePickers('Σφάλμα');
                 slotHint.textContent = 'Αποτυχία σύνδεσης με τον διακομιστή.';
-                slotHint.className = 'text-xs text-red-600 mt-1 font-medium';
+                slotHint.className = 'field-help field-help-err';
             }
         }
 
@@ -888,7 +787,7 @@
             if (!waitlistMode && (!selectedTimeValue() || !availableSlots.includes(selectedTimeValue()))) {
                 responseContainer.classList.remove('hidden');
                 gcalBtn.classList.add('hidden');
-                responseMessage.className = 'text-sm font-medium text-red-600 mb-3';
+                responseMessage.className = 'text-red-600';
                 responseMessage.textContent = 'Παρακαλώ επιλέξτε διαθέσιμη ώρα (π.χ. 18:00 ή 18:30).';
                 return;
             }
@@ -937,7 +836,7 @@
 
                 responseContainer.classList.remove('hidden');
                 if (res.ok) {
-                    responseMessage.className = "text-sm font-medium text-green-600 mb-3";
+                    responseMessage.className = 'text-green-600';
                     responseMessage.textContent = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
 
                     if (data.status === 'WAITLIST' || isRequestMode()) {
@@ -954,16 +853,16 @@
                     slotHint.textContent = isRequestMode()
                         ? 'Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.'
                         : 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
-                    slotHint.className = 'text-xs text-gray-400 mt-1';
+                    slotHint.className = 'field-help';
                     document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης';
                     fp.clear();
                 } else {
-                    responseMessage.className = "text-sm font-medium text-red-600 mb-3";
+                    responseMessage.className = 'text-red-600';
                     responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
                 }
             } catch (err) {
                 responseContainer.classList.remove('hidden');
-                responseMessage.className = "text-sm font-medium text-red-600 mb-3";
+                responseMessage.className = 'text-red-600';
                 responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
             } finally {
                 submitBtn.disabled = false;
