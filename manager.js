@@ -111,6 +111,14 @@ async function adminFetch(pathAndQuery, options = {}) {
   return res;
 }
 
+function toggleSecret(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  if (btn) btn.textContent = show ? 'Απόκρυψη' : 'Εμφάνιση';
+}
+
 function toggleTheme() {
   const current = document.body.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
