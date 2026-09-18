@@ -30,7 +30,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260918c">
+    <link rel="stylesheet" href="style.css?v=20260918e">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα φόρμας. Το brand_color βάφει κουμπί/focus από πάνω. */
         :root, [data-theme="light"] {
@@ -123,8 +123,6 @@
             box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 18%, transparent) !important;
             outline: none !important;
         }
-        .time-picker-wrapper { display: flex; gap: 8px; align-items: center; }
-        .time-picker-wrapper select { flex: 1; }
     </style>
 </head>
 <body class="antialiased min-h-screen">
@@ -192,19 +190,28 @@
             </div>
 
             <div class="field-block">
-                <label class="field-label" id="timeLabel" for="timeHour">Ώρα</label>
-                <div id="timePickerWrap" class="time-picker-wrapper">
-                    <select id="timeHour" disabled>
+                <label class="field-label" id="timeLabel" for="timeDropdownBtn">Ώρα</label>
+                <div id="timePickerWrap" class="time-picker-wrap">
+                    <button type="button" id="timeDropdownBtn" class="time-dropdown-btn" disabled>
+                        <span id="timeDropdownLabel">Επιλέξτε ώρα</span>
+                    </button>
+                    <div id="timeRollers" class="time-rollers hidden">
+                        <div class="time-rollers-mask">
+                            <div class="time-col" id="timeHourCol"></div>
+                            <span class="time-col-sep">:</span>
+                            <div class="time-col" id="timeMinuteCol"></div>
+                        </div>
+                    </div>
+                    <select id="timeHour" class="time-native" tabindex="-1" aria-hidden="true" disabled>
                         <option value="">Ώρα</option>
                     </select>
-                    <span>:</span>
-                    <select id="timeMinute" disabled>
+                    <select id="timeMinute" class="time-native" tabindex="-1" aria-hidden="true" disabled>
                         <option value="">--</option>
                         <option value="00">00</option>
                         <option value="30">30</option>
                     </select>
                 </div>
-                <p id="slotHint" class="field-help">Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.</p>
+                <p id="slotHint" class="field-help">Άνοιξε το πεδίο και διάλεξε ώρα από τα δύο ρολάκια.</p>
                 <div id="waitlistBox" class="hidden">
                     <p id="waitlistCopy">Ουπς, φαίνεται ότι όλες οι ώρες είναι κατειλημμένες.</p>
                     <p id="waitlistAsk" class="waitlist-ask">Θέλεις να είσαι ο πρώτος που θα ενημερωθεί εάν υπάρξει ακύρωση;</p>
@@ -438,6 +445,7 @@
             timeMinuteSelect.classList.add('bg-gray-50');
             slotHint.textContent = hint;
             slotHint.className = asWaitlist ? 'field-help field-help-wait' : 'field-help';
+            syncTimeDropdown();
         }
 
         function selectedTimeValue() {
@@ -454,15 +462,142 @@
             timeMinuteSelect.disabled = true;
             timeMinuteSelect.classList.add('bg-gray-50');
             availableSlots = [];
+            closeTimeRollers();
+            syncTimeDropdown();
+        }
+
+        function timeDropdownLabelText() {
+            const picked = selectedTimeValue();
+            if (picked) return picked;
+            const first = timeHourSelect.options[0];
+            if (timeHourSelect.disabled && first && first.textContent && first.textContent !== 'Ώρα') {
+                return first.textContent;
+            }
+            if (timeHourSelect.value) return `${timeHourSelect.value}:—`;
+            if (timeMinuteSelect.value) return `—:${timeMinuteSelect.value}`;
+            return 'Επιλέξτε ώρα';
+        }
+
+        function renderTimeCols() {
+            const hourCol = document.getElementById('timeHourCol');
+            const minuteCol = document.getElementById('timeMinuteCol');
+            if (!hourCol || !minuteCol) return;
+            const hours = [...timeHourSelect.options].filter((opt) => opt.value).map((opt) => opt.value);
+            hourCol.innerHTML = hours.length
+                ? hours.map((hour) => `<button type="button" class="time-item${timeHourSelect.value === hour ? ' is-on' : ''}" data-hour="${hour}">${hour}</button>`).join('')
+                : '<span class="time-item is-off">—</span>';
+            const mins = [...timeMinuteSelect.options].filter((opt) => opt.value).map((opt) => opt.value);
+            minuteCol.innerHTML = mins.length
+                ? mins.map((min) => `<button type="button" class="time-item${timeMinuteSelect.value === min ? ' is-on' : ''}" data-min="${min}">${min}</button>`).join('')
+                : '<span class="time-item is-off">—</span>';
+            hourCol.querySelectorAll('[data-hour]').forEach((btn) => {
+                btn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    pickTimeHour(btn.getAttribute('data-hour'));
+                });
+            });
+            minuteCol.querySelectorAll('[data-min]').forEach((btn) => {
+                btn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    pickTimeMinute(btn.getAttribute('data-min'));
+                });
+            });
+            const panel = document.getElementById('timeRollers');
+            if (panel && !panel.classList.contains('hidden')) {
+                const hourOn = hourCol.querySelector('.is-on');
+                const minOn = minuteCol.querySelector('.is-on');
+                if (hourOn) hourOn.scrollIntoView({ block: 'nearest' });
+                if (minOn) minOn.scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function syncTimeDropdown() {
+            const btn = document.getElementById('timeDropdownBtn');
+            const label = document.getElementById('timeDropdownLabel');
+            if (btn) btn.disabled = timeHourSelect.disabled;
+            if (label) label.textContent = timeDropdownLabelText();
+            renderTimeCols();
+        }
+
+        function closeTimeRollers() {
+            const panel = document.getElementById('timeRollers');
+            const btn = document.getElementById('timeDropdownBtn');
+            if (panel) {
+                panel.classList.add('hidden');
+                panel.classList.remove('is-up');
+            }
+            if (btn) btn.classList.remove('is-open');
+        }
+
+        function toggleTimeRollers() {
+            if (timeHourSelect.disabled) return;
+            const panel = document.getElementById('timeRollers');
+            const btn = document.getElementById('timeDropdownBtn');
+            const wrap = document.getElementById('timePickerWrap');
+            if (!panel) return;
+            const open = panel.classList.contains('hidden');
+            if (open) {
+                panel.classList.remove('hidden');
+                if (btn) btn.classList.add('is-open');
+                if (wrap) wrap.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                requestAnimationFrame(() => {
+                    if (wrap) {
+                        const rect = wrap.getBoundingClientRect();
+                        const spaceBelow = window.innerHeight - rect.bottom;
+                        panel.classList.toggle('is-up', spaceBelow < 280 || spaceBelow < rect.top);
+                    }
+                    renderTimeCols();
+                    const hourOn = document.querySelector('#timeHourCol .is-on');
+                    const minOn = document.querySelector('#timeMinuteCol .is-on');
+                    if (hourOn) hourOn.scrollIntoView({ block: 'nearest' });
+                    if (minOn) minOn.scrollIntoView({ block: 'nearest' });
+                });
+            } else {
+                closeTimeRollers();
+            }
+        }
+
+        function pickTimeHour(hour) {
+            const prevMin = timeMinuteSelect.value;
+            timeHourSelect.value = hour;
+            refreshMinuteOptions();
+            const mins = [...timeMinuteSelect.options].filter((opt) => opt.value).map((opt) => opt.value);
+            if (prevMin && mins.includes(prevMin)) {
+                pickTimeMinute(prevMin);
+                return;
+            }
+            if (mins.length === 1) {
+                pickTimeMinute(mins[0]);
+                return;
+            }
+            timeMinuteSelect.value = '';
+            syncTimeDropdown();
+        }
+
+        function pickTimeMinute(min) {
+            if (![...timeMinuteSelect.options].some((opt) => opt.value === min)) {
+                const opt = document.createElement('option');
+                opt.value = min;
+                opt.textContent = min;
+                timeMinuteSelect.appendChild(opt);
+            }
+            timeMinuteSelect.value = min;
+            if (!timeHourSelect.value) {
+                syncTimeDropdown();
+                return;
+            }
+            timeMinuteSelect.disabled = false;
+            closeTimeRollers();
+            syncTimeDropdown();
         }
 
         function refreshMinuteOptions() {
             const hour = timeHourSelect.value;
-            const minutes = availableSlots
-                .filter(slot => slot.startsWith(`${hour}:`))
-                .map(slot => slot.slice(3));
+            const minutes = hour
+                ? availableSlots.filter((slot) => slot.startsWith(`${hour}:`)).map((slot) => slot.slice(3))
+                : [...new Set(availableSlots.map((slot) => slot.slice(3)))];
             timeMinuteSelect.innerHTML = '<option value="">--</option>';
-            ['00', '30'].forEach(min => {
+            ['00', '30'].forEach((min) => {
                 if (minutes.includes(min)) {
                     const opt = document.createElement('option');
                     opt.value = min;
@@ -473,6 +608,7 @@
             timeMinuteSelect.disabled = !hour || timeMinuteSelect.options.length < 2;
             if (timeMinuteSelect.disabled) timeMinuteSelect.classList.add('bg-gray-50');
             else timeMinuteSelect.classList.remove('bg-gray-50');
+            syncTimeDropdown();
         }
         // Guards against a slow /availability response landing after the user
         // has already changed the date or service (stale-response race condition).
@@ -641,6 +777,25 @@
         });
 
         timeHourSelect.addEventListener('change', refreshMinuteOptions);
+        document.getElementById('timeDropdownBtn').addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleTimeRollers();
+        });
+        document.getElementById('timeRollers').addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+        document.addEventListener('click', (event) => {
+            const wrap = document.getElementById('timePickerWrap');
+            if (!wrap) return;
+            const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+            if (path.includes(wrap) || wrap.contains(event.target)) return;
+            closeTimeRollers();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeTimeRollers();
+        });
+        syncTimeDropdown();
 
         // [SECTION: JS-SLOTS] — GET /availability, κλασικά slots (όχι request mode)
         async function fetchAvailableSlots(dateStr) {
