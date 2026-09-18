@@ -30,75 +30,79 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260918a">
+    <link rel="stylesheet" href="style.css?v=20260918c">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα φόρμας. Το brand_color βάφει κουμπί/focus από πάνω. */
         :root, [data-theme="light"] {
-            --bg-color: #f4f1ec;
-            --bg-accent: #e7e0d6;
-            --card-bg: rgba(255, 252, 248, 0.82);
-            --text-color: #161412;
-            --text-muted: #6f6a63;
-            --border-color: rgba(28, 25, 23, 0.08);
-            --field-bg: rgba(255, 255, 255, 0.72);
-            --field-border: rgba(28, 25, 23, 0.12);
+            color-scheme: light;
+            --bg-color: #eef1f6;
+            --bg-accent: #d9e0ea;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --field-bg: #ffffff;
+            --field-border: #cbd5e1;
             --brand-color: #4f46e5;
-            --card-shadow: 0 1px 1px rgba(22, 20, 18, 0.04), 0 24px 64px rgba(22, 20, 18, 0.08);
-            --card-radius: 1.75rem;
+            --card-shadow: 0 0 0 1px rgba(79, 70, 229, 0.08), 0 0 72px rgba(79, 70, 229, 0.18), 0 24px 48px rgba(15, 23, 42, 0.08);
+            --card-radius: 1.35rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --glow: rgba(79, 70, 229, 0.18);
+            --glow: rgba(79, 70, 229, 0.28);
         }
 
         [data-theme="dark"] {
-            --bg-color: #07080c;
-            --bg-accent: #12151d;
-            --card-bg: rgba(18, 21, 29, 0.72);
-            --text-color: #f4f1ec;
-            --text-muted: #9a958c;
-            --border-color: rgba(244, 241, 236, 0.1);
-            --field-bg: rgba(255, 255, 255, 0.04);
-            --field-border: rgba(244, 241, 236, 0.14);
-            --brand-color: #a5b4fc;
-            --card-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 30px 80px rgba(0, 0, 0, 0.45);
-            --card-radius: 1.75rem;
+            color-scheme: dark;
+            --bg-color: #0b1220;
+            --bg-accent: #1e293b;
+            --card-bg: #151c2c;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --field-bg: #0f172a;
+            --field-border: #475569;
+            --brand-color: #818cf8;
+            --card-shadow: 0 0 0 1px rgba(129, 140, 248, 0.18), 0 0 88px rgba(129, 140, 248, 0.22), 0 24px 48px rgba(0, 0, 0, 0.4);
+            --card-radius: 1.35rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --glow: rgba(165, 180, 252, 0.16);
+            --glow: rgba(129, 140, 248, 0.32);
         }
 
         [data-theme="warm"] {
-            --bg-color: #f3ebe1;
+            color-scheme: light;
+            --bg-color: #f3ebe2;
             --bg-accent: #e6d5c2;
-            --card-bg: rgba(255, 250, 244, 0.8);
-            --text-color: #2c1c12;
+            --card-bg: #fffaf4;
+            --text-color: #3f2a1d;
             --text-muted: #8a6d57;
-            --border-color: rgba(63, 42, 29, 0.1);
-            --field-bg: rgba(255, 253, 249, 0.78);
-            --field-border: rgba(63, 42, 29, 0.14);
+            --border-color: #ead9c6;
+            --field-bg: #fffdf9;
+            --field-border: #dcc4ab;
             --brand-color: #c2410c;
-            --card-shadow: 0 1px 1px rgba(124, 63, 22, 0.06), 0 24px 64px rgba(124, 63, 22, 0.1);
-            --card-radius: 1.85rem;
+            --card-shadow: 0 0 0 1px rgba(194, 65, 12, 0.1), 0 0 72px rgba(194, 65, 12, 0.16), 0 24px 48px rgba(124, 63, 22, 0.08);
+            --card-radius: 1.45rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --heading-font: "IBM Plex Serif", "Noto Serif", serif;
-            --glow: rgba(194, 65, 12, 0.16);
+            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --glow: rgba(194, 65, 12, 0.26);
         }
 
         [data-theme="ocean"] {
-            --bg-color: #e7f1f1;
+            color-scheme: light;
+            --bg-color: #e8f3f3;
             --bg-accent: #cfe3e3;
-            --card-bg: rgba(247, 252, 252, 0.8);
-            --text-color: #0f2f2d;
+            --card-bg: #f7fcfc;
+            --text-color: #134e4a;
             --text-muted: #5b7c7b;
-            --border-color: rgba(19, 78, 74, 0.1);
-            --field-bg: rgba(255, 255, 255, 0.75);
-            --field-border: rgba(19, 78, 74, 0.14);
+            --border-color: #cfe3e2;
+            --field-bg: #ffffff;
+            --field-border: #b6d4d3;
             --brand-color: #0f766e;
-            --card-shadow: 0 1px 1px rgba(15, 118, 110, 0.05), 0 24px 64px rgba(15, 118, 110, 0.1);
-            --card-radius: 1.75rem;
+            --card-shadow: 0 0 0 1px rgba(15, 118, 110, 0.1), 0 0 72px rgba(15, 118, 110, 0.16), 0 24px 48px rgba(15, 118, 110, 0.08);
+            --card-radius: 1.35rem;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
-            --glow: rgba(15, 118, 110, 0.16);
+            --glow: rgba(15, 118, 110, 0.26);
         }
 
         body {
@@ -263,6 +267,7 @@
             const next = CLIENT_THEMES.includes(theme) ? theme : 'light';
             document.documentElement.setAttribute('data-theme', next);
             document.body.setAttribute('data-theme', next);
+            document.documentElement.style.colorScheme = next === 'dark' ? 'dark' : 'light';
         }
 
         const dateInput = document.getElementById('date');
