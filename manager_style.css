@@ -74,13 +74,18 @@ button, input, select, textarea { font-family: inherit; }
 .header-actions { grid-area: actions; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .btn-logout {
   grid-area: logout;
-  width: 2.25rem;
-  height: 2.25rem;
-  min-width: 2.25rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  min-width: 2.6rem;
   padding: 0;
   justify-content: center;
-  border-radius: 0.5rem;
+  border-radius: 0.55rem;
   flex: none;
+}
+.btn-logout svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke-width: 2.4;
 }
 .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 .card { background: var(--card-bg); border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
@@ -142,7 +147,7 @@ button, input, select, textarea { font-family: inherit; }
 .badge-booked { background: #d1fae5; color: #065f46; }
 .badge-blocked { background: #e2e8f0; color: #475569; }
 .badge-rejected { background: #fee2e2; color: #991b1b; }
-.badge-cancelled { background: #ffedd5; color: #9a3412; }
+.badge-cancelled { background: #dbeafe; color: #1e40af; }
 .list-empty { text-align: center; color: var(--text-muted); padding: 1.5rem 0; }
 .bulk-bar { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin: 0 0 0.75rem; padding: 0.65rem 0.8rem; border: 1px solid var(--border-color); border-radius: 0.65rem; background: var(--field-bg); }
 .overlap-box { margin: 0 0 1rem; padding: 0.85rem; border-radius: 0.7rem; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
@@ -318,6 +323,22 @@ button, input, select, textarea { font-family: inherit; }
 .fc-timegrid-slot, .fc-daygrid-day { cursor: pointer; }
 .slot-choice-actions { display: flex; flex-direction: column; gap: 0.65rem; margin-top: 1.25rem; }
 .slot-choice-actions .btn { width: 100%; justify-content: center; }
+
+@media (min-width: 761px) {
+  .fc-timeGridDay-view .fc-timegrid-slot { height: 2.45rem; }
+  .fc-timeGridDay-view .fc-timegrid-event {
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+  .fc-timeGridDay-view .fc-event-main { padding: 3px 5px 4px; }
+  .fc-timeGridDay-view .fc-event-title {
+    white-space: normal;
+    overflow: visible;
+    font-weight: 600;
+    word-break: break-word;
+  }
+  .fc-timeGridDay-view .fc-event-time { display: none; }
+}
 
 /* [SECTION: CSS-MOBILE] */
 @media (max-width: 760px) {
