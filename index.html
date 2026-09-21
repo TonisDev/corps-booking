@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260921e">
+    <link rel="stylesheet" href="style.css?v=20260921f">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -209,22 +209,29 @@
         </section>
 
         <section class="home-close" id="aitima">
-            <h2>Αίτημα εγκατάστασης</h2>
-            <p>Στοιχεία καταστήματος, υπηρεσίες και ωράριο. Η απάντηση γίνεται απευθείας.</p>
-            <p class="home-owner"><strong>Αντώνης</strong><span class="home-mail">tonisdevv@gmail.com</span></p>
-            <form id="leadForm" class="home-lead">
-                <div class="home-honey" aria-hidden="true">
-                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+            <div class="home-request">
+                <div>
+                    <h2>Αίτημα εγκατάστασης</h2>
+                    <p>Αφήστε στοιχεία επικοινωνίας. Η απάντηση γίνεται απευθείας.</p>
+                    <form id="leadForm" class="home-lead">
+                        <div class="home-honey" aria-hidden="true">
+                            <input type="text" name="website" tabindex="-1" autocomplete="off">
+                        </div>
+                        <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
+                        <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
+                        <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
+                        <label>Email<input name="email" type="email" maxlength="120" autocomplete="email"></label>
+                        <p class="home-lead-hint">Τηλέφωνο ή email, ώστε να υπάρξει απάντηση.</p>
+                        <button type="submit">Υποβολή αιτήματος</button>
+                        <p id="leadStatus" class="home-lead-status" role="status"></p>
+                    </form>
                 </div>
-                <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
-                <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
-                <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
-                <label>Email<input name="email" type="email" maxlength="120" autocomplete="email"></label>
-                <label>Υπηρεσίες και ωράριο<textarea name="message" rows="3" maxlength="800"></textarea></label>
-                <p class="home-lead-hint">Τηλέφωνο ή email, ώστε να υπάρξει απάντηση.</p>
-                <button type="submit">Υποβολή αιτήματος</button>
-                <p id="leadStatus" class="home-lead-status" role="status"></p>
-            </form>
+                <aside class="home-contact">
+                    <h2>Επικοινωνήστε μαζί μας</h2>
+                    <p>Για την εγκατάσταση, χωρίς φόρμα.</p>
+                    <span class="home-mail">tonisdevv@gmail.com</span>
+                </aside>
+            </div>
         </section>
 
         <footer class="home-foot">
