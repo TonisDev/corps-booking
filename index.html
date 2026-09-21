@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260921b">
+    <link rel="stylesheet" href="style.css?v=20260921e">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -135,7 +135,7 @@
             <span class="home-mark">Κρατήσεις</span>
             <nav class="home-nav-links">
                 <a href="manager.html">Είσοδος</a>
-                <a class="home-nav-cta" href="mailto:tonisdevv@gmail.com?subject=%CE%91%CE%AF%CF%84%CE%B7%CE%BC%CE%B1%20%CE%B5%CE%B3%CE%BA%CE%B1%CF%84%CE%AC%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82">Αίτημα εγκατάστασης</a>
+                <a class="home-nav-cta" href="#aitima">Αίτημα εγκατάστασης</a>
             </nav>
         </header>
 
@@ -143,20 +143,41 @@
             <h1>Προγραμματισμός ραντεβών, με τον έλεγχο της επιχείρησης.</h1>
             <p>Ιδιωτικό σύστημα κρατήσεων. Ο πελάτης υποβάλλει αίτημα από έναν σύνδεσμο. Η επιχείρηση εγκρίνει, απορρίπτει ή μεταφέρει την ώρα από τον πίνακα ελέγχου.</p>
             <div class="home-actions">
-                <a class="home-primary" href="mailto:tonisdevv@gmail.com?subject=%CE%91%CE%AF%CF%84%CE%B7%CE%BC%CE%B1%20%CE%B5%CE%B3%CE%BA%CE%B1%CF%84%CE%AC%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82">Αίτημα εγκατάστασης</a>
+                <a class="home-primary" href="#aitima">Αίτημα εγκατάστασης</a>
                 <a class="home-secondary" href="manager.html">Είσοδος διαχειριστή</a>
             </div>
         </section>
 
         <section class="home-stage" aria-hidden="true">
             <div class="home-window">
-                <div class="home-pane">
-                    <div class="home-pane-kicker">Σελίδα πελάτη</div>
-                    <div class="home-shop">Το κατάστημα</div>
-                    <div class="home-field"><span>Υπηρεσία</span><b>Κούρεμα · 45′</b></div>
-                    <div class="home-field"><span>Ημερομηνία</span><b>Τρίτη 23/09</b></div>
-                    <div class="home-field"><span>Ώρα</span><b>19:30</b></div>
-                    <div class="home-send">Υποβολή αιτήματος</div>
+                <div class="home-form-shot">
+                    <div class="booking-card">
+                        <div class="brand-block">
+                            <img class="business-logo" src="demo-logo.svg" alt="">
+                            <h1 class="shot-name">Το κατάστημα</h1>
+                            <p class="shot-sub">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
+                            <span class="shot-info">Πληροφορίες καταστήματος</span>
+                        </div>
+                        <div class="booking-fields">
+                            <div class="field-block">
+                                <label class="field-label">Ονοματεπώνυμο</label>
+                                <input type="text" placeholder="Το όνομά σας" tabindex="-1" readonly>
+                            </div>
+                            <div class="field-block">
+                                <label class="field-label">Υπηρεσία</label>
+                                <select tabindex="-1"><option>Επιλέξτε υπηρεσία</option></select>
+                            </div>
+                            <div class="field-block">
+                                <label class="field-label">Ημερομηνία</label>
+                                <input type="text" placeholder="Επιλέξτε ημερομηνία" tabindex="-1" readonly>
+                            </div>
+                            <div class="field-block">
+                                <label class="field-label">Ώρα</label>
+                                <button type="button" class="time-dropdown-btn" tabindex="-1">Επιλέξτε ώρα</button>
+                            </div>
+                            <button type="button" class="shot-submit" tabindex="-1"><span>Υποβολή Αιτήματος Κράτησης</span></button>
+                        </div>
+                    </div>
                 </div>
                 <div class="home-pane home-pane-desk">
                     <div class="home-pane-kicker">Πίνακας ελέγχου</div>
@@ -187,11 +208,23 @@
             </article>
         </section>
 
-        <section class="home-close">
-            <h2>Εγκατάσταση για την επιχείρησή σας.</h2>
-            <p>Στοιχεία καταστήματος, υπηρεσίες και ωράριο. Η παράδοση περιλαμβάνει τη σελίδα πελάτη και τον πίνακα διαχείρισης.</p>
-            <a class="home-primary" href="mailto:tonisdevv@gmail.com?subject=%CE%91%CE%AF%CF%84%CE%B7%CE%BC%CE%B1%20%CE%B5%CE%B3%CE%BA%CE%B1%CF%84%CE%AC%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82">Αίτημα εγκατάστασης</a>
-            <p class="home-mail"><a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+        <section class="home-close" id="aitima">
+            <h2>Αίτημα εγκατάστασης</h2>
+            <p>Στοιχεία καταστήματος, υπηρεσίες και ωράριο. Η απάντηση γίνεται απευθείας.</p>
+            <p class="home-owner"><strong>Αντώνης</strong><span class="home-mail">tonisdevv@gmail.com</span></p>
+            <form id="leadForm" class="home-lead">
+                <div class="home-honey" aria-hidden="true">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
+                <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
+                <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
+                <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
+                <label>Email<input name="email" type="email" maxlength="120" autocomplete="email"></label>
+                <label>Υπηρεσίες και ωράριο<textarea name="message" rows="3" maxlength="800"></textarea></label>
+                <p class="home-lead-hint">Τηλέφωνο ή email, ώστε να υπάρξει απάντηση.</p>
+                <button type="submit">Υποβολή αιτήματος</button>
+                <p id="leadStatus" class="home-lead-status" role="status"></p>
+            </form>
         </section>
 
         <footer class="home-foot">
@@ -976,6 +1009,34 @@
                 submitBtnText.textContent = waitlistMode
                     ? 'Ναι, ενημερώστε με'
                     : (isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης');
+            }
+        });
+
+        document.getElementById('leadForm')?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const status = document.getElementById('leadStatus');
+            const button = form.querySelector('button');
+            const body = Object.fromEntries(new FormData(form).entries());
+            status.textContent = '';
+            status.className = 'home-lead-status';
+            button.disabled = true;
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/install-requests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Το αίτημα δεν στάλθηκε.');
+                form.reset();
+                status.classList.add('is-ok');
+                status.textContent = 'Το αίτημα καταχωρήθηκε.';
+            } catch (err) {
+                status.classList.add('is-err');
+                status.textContent = err.message || 'Το αίτημα δεν στάλθηκε.';
+            } finally {
+                button.disabled = false;
             }
         });
 
