@@ -295,18 +295,21 @@ html[data-mode="home"] .home .booking-card {
 }
 .home-grid p, .home-close p { margin: 0; color: #b7b1a6; font-size: 0.95rem; line-height: 1.55; }
 .home-close {
-  max-width: 40rem;
+  max-width: 68rem;
   margin: 0 auto;
   padding: 4.5rem 1.5rem 2rem;
 }
-.home-close .home-primary { margin-top: 1.25rem; }
-.home-mail { color: #f4f1ea; user-select: all; }
-.home-owner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin: 1.1rem 0 1.25rem;
+.home-request {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.8fr);
+  gap: 3rem;
+  align-items: start;
 }
+.home-mail { color: #f4f1ea; user-select: all; font-size: 1.05rem; }
+.home-contact {
+  padding-top: 0.15rem;
+}
+.home-contact .home-mail { display: block; margin-top: 0.85rem; }
 .home-lead { display: flex; flex-direction: column; gap: 0.75rem; max-width: 28rem; }
 .home-honey { position: absolute; left: -9999px; height: 0; overflow: hidden; }
 .home-lead label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem; font-weight: 650; color: #f4f1ea; }
@@ -783,7 +786,7 @@ body.shop-info-open { overflow: hidden; }
   }
   .booking-card:hover { box-shadow: none; }
   .home-hero { padding-top: 2.4rem; }
-  .home-window, .home-grid { grid-template-columns: 1fr; }
+  .home-window, .home-grid, .home-request { grid-template-columns: 1fr; }
   .home-nav { padding-inline: 1rem; }
   .home-nav-links a:not(.home-nav-cta) { padding-inline: 0.55rem; }
   .business-logo { width: 76px; height: 76px; }
