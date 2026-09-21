@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260921a">
+    <link rel="stylesheet" href="style.css?v=20260921b">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -130,25 +130,74 @@
 
     <!-- [SECTION: LANDING-HTML] — φαίνεται μόνο χωρίς business_code -->
     <main class="booking-shell">
-    <section class="landing-card" aria-label="Αρχική">
-        <div class="landing-top">
-            <a class="landing-login" href="manager.html">Είσοδος</a>
-        </div>
-        <h1>Προγραμματισμός ραντεβών.<br>Με δικό σας έλεγχο.</h1>
-        <p class="landing-lead">Ιδιωτικό σύστημα κρατήσεων, με την ταυτότητα και το ωράριο της επιχείρησης. Ο πελάτης υποβάλλει αίτημα από έναν σύνδεσμο. Η διαχείριση γίνεται από τον πίνακα ελέγχου: έγκριση, απόρριψη ή αλλαγή ώρας.</p>
-        <ul class="landing-points">
-            <li>Χωρίς παρουσία σε αγορά ή κατάλογο ανταγωνιστών.</li>
-            <li>Χωρίς εφαρμογή και χωρίς εγγραφή του πελάτη.</li>
-            <li>Παράδοση έτοιμου συστήματος, προσαρμοσμένου στις υπηρεσίες σας.</li>
-        </ul>
-        <p class="landing-setup">Για εγκατάσταση, αποστείλετε στοιχεία επιχείρησης, υπηρεσίες και ωράριο.</p>
-        <p class="landing-contact">
-            <strong>Αντώνης</strong>
-            <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a>
-        </p>
-        <a class="landing-cta" href="mailto:tonisdevv@gmail.com?subject=%CE%91%CE%AF%CF%84%CE%B7%CE%BC%CE%B1%20%CE%B5%CE%B3%CE%BA%CE%B1%CF%84%CE%AC%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82">Αίτημα εγκατάστασης</a>
-        <p class="legal-note"><a href="oroi.html" target="_blank" rel="noopener">Όροι χρήσης</a></p>
-    </section>
+    <div class="home">
+        <header class="home-nav">
+            <span class="home-mark">Κρατήσεις</span>
+            <nav class="home-nav-links">
+                <a href="manager.html">Είσοδος</a>
+                <a class="home-nav-cta" href="mailto:tonisdevv@gmail.com?subject=%CE%91%CE%AF%CF%84%CE%B7%CE%BC%CE%B1%20%CE%B5%CE%B3%CE%BA%CE%B1%CF%84%CE%AC%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82">Αίτημα εγκατάστασης</a>
+            </nav>
+        </header>
+
+        <section class="home-hero">
+            <h1>Προγραμματισμός ραντεβών, με τον έλεγχο της επιχείρησης.</h1>
+            <p>Ιδιωτικό σύστημα κρατήσεων. Ο πελάτης υποβάλλει αίτημα από έναν σύνδεσμο. Η επιχείρηση εγκρίνει, απορρίπτει ή μεταφέρει την ώρα από τον πίνακα ελέγχου.</p>
+            <div class="home-actions">
+                <a class="home-primary" href="mailto:tonisdevv@gmail.com?subject=%CE%91%CE%AF%CF%84%CE%B7%CE%BC%CE%B1%20%CE%B5%CE%B3%CE%BA%CE%B1%CF%84%CE%AC%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82">Αίτημα εγκατάστασης</a>
+                <a class="home-secondary" href="manager.html">Είσοδος διαχειριστή</a>
+            </div>
+        </section>
+
+        <section class="home-stage" aria-hidden="true">
+            <div class="home-window">
+                <div class="home-pane">
+                    <div class="home-pane-kicker">Σελίδα πελάτη</div>
+                    <div class="home-shop">Το κατάστημα</div>
+                    <div class="home-field"><span>Υπηρεσία</span><b>Κούρεμα · 45′</b></div>
+                    <div class="home-field"><span>Ημερομηνία</span><b>Τρίτη 23/09</b></div>
+                    <div class="home-field"><span>Ώρα</span><b>19:30</b></div>
+                    <div class="home-send">Υποβολή αιτήματος</div>
+                </div>
+                <div class="home-pane home-pane-desk">
+                    <div class="home-pane-kicker">Πίνακας ελέγχου</div>
+                    <div class="home-row"><span>Μαρία · 19:30</span><em class="is-wait">Εκκρεμεί</em></div>
+                    <div class="home-row"><span>Νίκος · 18:00</span><em class="is-ok">Εγκρίθηκε</em></div>
+                    <div class="home-row"><span>Ελένη · 20:00</span><em class="is-move">Αλλαγή ώρας</em></div>
+                    <div class="home-desk-note">Η θέση δεσμεύεται μόνο μετά την έγκριση.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-grid">
+            <article>
+                <h2>Ένας σύνδεσμος</h2>
+                <p>Ο πελάτης ανοίγει τη σελίδα από το Instagram, το μήνυμα ή την κάρτα. Χωρίς εφαρμογή και χωρίς λογαριασμό.</p>
+            </article>
+            <article>
+                <h2>Αίτημα, όχι αυτόματη κράτηση</h2>
+                <p>Η ώρα μένει διαθέσιμη μέχρι να την αποδεχτεί η επιχείρηση. Απόρριψη και ακύρωση είναι ξεχωριστές ενέργειες.</p>
+            </article>
+            <article>
+                <h2>Το πρόγραμμα της επιχείρησης</h2>
+                <p>Υπηρεσίες, ωράριο, κλειστές ώρες και ημερήσιο όριο. Η σελίδα φέρει το όνομα και τα χρώματα του καταστήματος.</p>
+            </article>
+            <article>
+                <h2>Χωρίς δημόσιο κατάλογο</h2>
+                <p>Η επιχείρηση δεν εμφανίζεται δίπλα σε άλλες. Η εγκατάσταση γίνεται κατόπιν αιτήματος, όχι με ανοιχτή εγγραφή.</p>
+            </article>
+        </section>
+
+        <section class="home-close">
+            <h2>Εγκατάσταση για την επιχείρησή σας.</h2>
+            <p>Στοιχεία καταστήματος, υπηρεσίες και ωράριο. Η παράδοση περιλαμβάνει τη σελίδα πελάτη και τον πίνακα διαχείρισης.</p>
+            <a class="home-primary" href="mailto:tonisdevv@gmail.com?subject=%CE%91%CE%AF%CF%84%CE%B7%CE%BC%CE%B1%20%CE%B5%CE%B3%CE%BA%CE%B1%CF%84%CE%AC%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82">Αίτημα εγκατάστασης</a>
+            <p class="home-mail"><a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+        </section>
+
+        <footer class="home-foot">
+            <a href="oroi.html">Όροι χρήσης</a>
+        </footer>
+    </div>
 
     <!-- [SECTION: FORM-HTML] -->
     <div class="booking-card">
