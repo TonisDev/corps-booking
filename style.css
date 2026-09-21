@@ -81,7 +81,7 @@ h1, h2, h3 {
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
   transition: box-shadow 0.28s ease, border-color 0.28s ease;
 }
-html[data-mode="home"] .booking-card,
+html[data-mode="home"] .booking-shell > .booking-card,
 html[data-mode="home"] .rhapsodus-stamp { display: none !important; }
 html[data-mode="book"] .home { display: none !important; }
 html[data-mode="home"] .booking-shell {
@@ -214,6 +214,26 @@ html[data-mode="home"] .page-bg { background: #0e0f12; }
   color: #8a8175;
 }
 .home-pane-desk .home-pane-kicker { color: #94a3b8; }
+.home-form-shot {
+  background: #eef1f6;
+  border-radius: 1rem;
+  padding: 0.85rem;
+}
+html[data-mode="home"] .home .booking-card {
+  display: block !important;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.55rem 1.2rem 1.3rem;
+  pointer-events: none;
+  box-shadow: none;
+}
+.home .shot-name { font-size: 1.35rem !important; }
+.home .shot-sub { font-size: 0.88rem !important; }
+.home .business-logo { width: 68px; height: 68px; margin-bottom: 0.75rem; }
+.home .brand-block { margin-bottom: 1.15rem; }
+.home .booking-fields { gap: 0.75rem; }
+.home .shot-submit { margin-top: 0.15rem; background: var(--brand-color); }
 .home-shop { margin-bottom: 0.9rem; font-size: 1.15rem; font-weight: 650; letter-spacing: -0.02em; }
 .home-field {
   margin-bottom: 0.55rem;
@@ -280,8 +300,41 @@ html[data-mode="home"] .page-bg { background: #0e0f12; }
   padding: 4.5rem 1.5rem 2rem;
 }
 .home-close .home-primary { margin-top: 1.25rem; }
-.home-mail { margin-top: 0.85rem !important; }
-.home-mail a { color: #f4f1ea; }
+.home-mail { color: #f4f1ea; user-select: all; }
+.home-owner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 1.1rem 0 1.25rem;
+}
+.home-lead { display: flex; flex-direction: column; gap: 0.75rem; max-width: 28rem; }
+.home-honey { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+.home-lead label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem; font-weight: 650; color: #f4f1ea; }
+.home-lead input, .home-lead textarea {
+  text-align: left !important;
+  padding-left: 0.9rem !important;
+  padding-right: 0.9rem !important;
+  background-image: none !important;
+}
+.home-lead textarea { min-height: 5.5rem; }
+.home-lead-hint { margin: 0 !important; font-size: 0.8rem !important; }
+.home-lead button {
+  align-self: flex-start;
+  min-height: 2.7rem;
+  padding: 0 1.05rem;
+  border: 0;
+  border-radius: 999px;
+  background: #f4f1ea;
+  color: #14120b;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.home-lead button:disabled { opacity: 0.6; cursor: wait; }
+.home-lead-status { min-height: 1.2rem; font-size: 0.88rem !important; }
+.home-lead-status.is-ok { color: #bbf7d0 !important; }
+.home-lead-status.is-err { color: #fecaca !important; }
 .home-foot {
   max-width: 68rem;
   margin: 0 auto;
@@ -311,19 +364,19 @@ html[data-mode="home"] .page-bg { background: #0e0f12; }
     0 0 0 5px color-mix(in srgb, var(--brand-color) 16%, transparent),
     0 0 28px color-mix(in srgb, var(--brand-color) 35%, transparent);
 }
-#businessName {
+#businessName, .shot-name {
   margin: 0;
   font-size: 1.65rem;
   line-height: 1.2;
 }
-#businessSubtitle {
+#businessSubtitle, .shot-sub {
   margin: 0.5rem 0 0;
   font-size: 0.95rem;
   line-height: 1.5;
   color: var(--text-muted) !important;
 }
 
-#shopInfoBtn {
+#shopInfoBtn, .shot-info {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -339,7 +392,7 @@ html[data-mode="home"] .page-bg { background: #0e0f12; }
   box-shadow: 0 0 22px color-mix(in srgb, var(--brand-color) 38%, transparent);
   transition: box-shadow 0.2s, transform 0.2s, filter 0.2s;
 }
-#shopInfoBtn:hover {
+#shopInfoBtn:hover, .shot-info:hover {
   transform: translateY(-1px);
   filter: brightness(1.08);
   box-shadow: 0 0 30px color-mix(in srgb, var(--brand-color) 52%, transparent);
@@ -509,7 +562,7 @@ select:disabled, .time-dropdown-btn:disabled {
 }
 
 /* [SECTION: CSS-SUBMIT] */
-#submitBtn {
+#submitBtn, .shot-submit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -526,13 +579,13 @@ select:disabled, .time-dropdown-btn:disabled {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-color) 20%, transparent), 0 10px 28px color-mix(in srgb, var(--brand-color) 34%, transparent);
   transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
 }
-#submitBtn:hover {
+#submitBtn:hover, .shot-submit:hover {
   transform: translateY(-1px);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-color) 30%, transparent), 0 0 36px color-mix(in srgb, var(--brand-color) 48%, transparent), 0 14px 32px color-mix(in srgb, var(--brand-color) 30%, transparent);
 }
-#submitBtn:active { transform: translateY(0); }
+#submitBtn:active, .shot-submit:active { transform: translateY(0); }
 #submitBtn:disabled { opacity: 0.6; transform: none; cursor: wait; }
-#submitBtn span { color: #fff !important; }
+#submitBtn span, .shot-submit span { color: #fff !important; }
 
 /* [SECTION: CSS-WAITLIST] */
 #waitlistBox {
