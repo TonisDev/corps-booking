@@ -85,9 +85,8 @@ h1, h2, h3 {
 html[data-mode="home"] .booking-card { display: none !important; }
 html[data-mode="book"] .landing-card { display: none !important; }
 @media (hover: hover) and (pointer: fine) {
-  body:has(.booking-card:hover, .landing-card:hover) .page-bg::before { opacity: 1; }
-  .booking-card:hover,
-  .landing-card:hover {
+  body:has(.booking-card:hover) .page-bg::before { opacity: 1; }
+  .booking-card:hover {
     border-color: color-mix(in srgb, var(--brand-color) 32%, var(--border-color));
     box-shadow:
       0 0 0 1px color-mix(in srgb, var(--brand-color) 22%, transparent),
@@ -639,8 +638,7 @@ body.shop-info-open { overflow: hidden; }
     border-radius: 0;
     box-shadow: none;
   }
-  .booking-card:hover,
-  .landing-card:hover { box-shadow: none; }
+  .booking-card:hover { box-shadow: none; }
   .business-logo { width: 76px; height: 76px; }
   #submitBtn {
     position: sticky;
