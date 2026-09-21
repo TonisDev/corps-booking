@@ -422,6 +422,19 @@ select:disabled, .time-dropdown-btn:disabled {
   font-weight: 600;
 }
 
+.legal-note {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+.legal-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .powered-by { color: var(--text-muted); opacity: 0.75; }
 .rhapsodus-stamp {
   position: fixed;
