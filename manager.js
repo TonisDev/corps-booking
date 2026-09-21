@@ -38,8 +38,8 @@ function formatServiceLabel(service) {
   return `${service.name} (${duration} min · ${price}€)`;
 }
 
-let currentBusinessCode = localStorage.getItem('biz_code') || '';
-let currentSessionToken = localStorage.getItem('session_token') || '';
+let currentBusinessCode = localStorage.getItem('biz_code') || sessionStorage.getItem('biz_code') || '';
+let currentSessionToken = localStorage.getItem('session_token') || sessionStorage.getItem('session_token') || '';
 let currentTenantData = null;
 let calendar = null;
 let selectedEventId = null;
@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (currentBusinessCode && currentSessionToken) {
     loadDashboard(currentBusinessCode);
   } else {
+    const rememberEl = document.getElementById('rememberMe');
+    if (rememberEl) rememberEl.checked = localStorage.getItem('remember_me') !== '0';
     const preset = new URLSearchParams(location.search).get('code');
     if (preset) {
       document.getElementById('loginCode').value = preset;
@@ -205,17 +207,36 @@ function openPublicPage() {
 }
 
 // [SECTION: JS-AUTH]
+function writeAuth(code, token, remember) {
+  localStorage.removeItem('biz_code');
+  localStorage.removeItem('session_token');
+  sessionStorage.removeItem('biz_code');
+  sessionStorage.removeItem('session_token');
+  const store = remember ? localStorage : sessionStorage;
+  store.setItem('biz_code', code);
+  store.setItem('session_token', token);
+  localStorage.setItem('remember_me', remember ? '1' : '0');
+}
+
+function clearAuth() {
+  localStorage.removeItem('biz_code');
+  localStorage.removeItem('session_token');
+  sessionStorage.removeItem('biz_code');
+  sessionStorage.removeItem('session_token');
+}
+
 async function handleLogin(event) {
   if (event) event.preventDefault();
   if (actionLock) return;
   actionLock = true;
-  const code = document.getElementById('loginCode').value.trim();
-  const pass = document.getElementById('loginPass').value.trim();
+  const code = document.getElementById('loginCode').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const remember = Boolean(document.getElementById('rememberMe')?.checked);
   const errorEl = document.getElementById('loginError');
   errorEl.style.display = 'none';
 
   if (!code || !pass) {
-    errorEl.textContent = 'Συμπληρώστε κωδικό και password.';
+    errorEl.textContent = 'Συμπλήρωσε business code και κωδικό. Όχι το Super Admin Key — αυτό είναι μόνο στο onboarding.';
     errorEl.style.display = 'block';
     actionLock = false;
     return;
@@ -225,16 +246,15 @@ async function handleLogin(event) {
     const res = await fetch(`${WORKER_URL}/api/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ business_code: code, password: pass })
+      body: JSON.stringify({ business_code: code, password: pass, remember })
     });
     const data = await res.json();
 
     if (!res.ok || !data.token) {
-      throw new Error(data.error || 'Αποτυχία σύνδεσης');
+      throw new Error(data.error || (res.status === 429 ? 'Πολλές προσπάθειες. Περίμενε λίγο.' : 'Αποτυχία σύνδεσης'));
     }
 
-    localStorage.setItem('biz_code', code);
-    localStorage.setItem('session_token', data.token);
+    writeAuth(code, data.token, remember);
     currentBusinessCode = code;
     currentSessionToken = data.token;
     loadDashboard(code);
@@ -247,8 +267,7 @@ async function handleLogin(event) {
 }
 
 function handleLogout(message) {
-  localStorage.removeItem('biz_code');
-  localStorage.removeItem('session_token');
+  clearAuth();
   currentBusinessCode = '';
   currentSessionToken = '';
   if (message) {
