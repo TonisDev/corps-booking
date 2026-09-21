@@ -2,13 +2,15 @@
 <html lang="el">
 <!--
   =============================================================================
-  INDEX.HTML — δημόσια φόρμα κράτησης (GitHub Pages)
-  URL: https://tonisdev.github.io/corps-booking/?business_code=SLUG
+  INDEX.HTML — χωρίς ?business_code = αρχική · με slug = φόρμα κράτησης
+  URL: https://tonisdev.github.io/corps-booking/
+       https://tonisdev.github.io/corps-booking/?business_code=SLUG
 
   ΝΕΟ CHAT: @public/index.html  +  όνομα ενότητας.
   Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
 
     THEME-CSS       θέματα light/dark/warm/ocean
+    LANDING-HTML    αρχική για καταστηματάρχες
     FORM-HTML       φόρμα πελάτη
     JS-SETUP        API URL, τιμή υπηρεσίας, θέμα
     JS-WAITLIST     CTA όταν η μέρα είναι γεμάτη
@@ -23,6 +25,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Κράτηση Ραντεβού</title>
+    <script>
+        document.documentElement.dataset.mode = new URLSearchParams(location.search).get('business_code') ? 'book' : 'home';
+        if (document.documentElement.dataset.mode === 'home') document.title = 'Κρατήσεις για το κατάστημά σας';
+    </script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Flatpickr CSS -->
@@ -30,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260918h">
+    <link rel="stylesheet" href="style.css?v=20260918i">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -122,8 +128,29 @@
 <body class="antialiased min-h-screen">
     <div class="page-bg" aria-hidden="true"></div>
 
-    <!-- [SECTION: FORM-HTML] -->
+    <!-- [SECTION: LANDING-HTML] — φαίνεται μόνο χωρίς business_code -->
     <main class="booking-shell">
+    <section class="landing-card" aria-label="Αρχική">
+        <div class="landing-top">
+            <a class="landing-login" href="manager.html">Είσοδος</a>
+        </div>
+        <h1>Κλείνουν μόνοι τους.<br>Εσείς λέτε ναι ή όχι.</h1>
+        <p class="landing-lead">Φόρμα ραντεβού με το όνομα, τα χρώματα και το ωράριο του μαγαζιού σας. Οι πελάτες πατάνε ένα link — στο Instagram, στο WhatsApp, στην κάρτα. Εσείς βλέπετε τα αιτήματα στο κινητό και εγκρίνετε.</p>
+        <ul class="landing-points">
+            <li>Δεν μπαίνετε σε αγορά δίπλα σε άλλους.</li>
+            <li>Κανείς δεν κατεβάζει εφαρμογή και δεν φτιάχνει λογαριασμό.</li>
+            <li>Το στήνω εγώ. Εσείς εγκρίνετε, όπως απαντάτε στα μηνύματα.</li>
+        </ul>
+        <p class="landing-setup">Θέλετε δικό σας; Πείτε μου το μαγαζί, τις υπηρεσίες και το ωράριο.</p>
+        <p class="landing-contact">
+            <strong>Αντώνης</strong>
+            <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a>
+        </p>
+        <a class="landing-cta" href="mailto:tonisdevv@gmail.com?subject=%CE%9A%CF%81%CE%B1%CF%84%CE%AE%CF%83%CE%B5%CE%B9%CF%82%20%CE%B3%CE%B9%CE%B1%20%CF%84%CE%BF%20%CE%BC%CE%B1%CE%B3%CE%B1%CE%B6%CE%AF%20%CE%BC%CE%BF%CF%85">Στείλε μήνυμα</a>
+        <p class="legal-note"><a href="oroi.html" target="_blank" rel="noopener">Όροι χρήσης</a></p>
+    </section>
+
+    <!-- [SECTION: FORM-HTML] -->
     <div class="booking-card">
 
         <!-- Loading State Αρχικής Φόρτωσης Επιχείρησης -->
@@ -535,12 +562,7 @@
 
         // [SECTION: JS-INIT] — GET /info, εμφάνιση επιχείρησης, ημερολόγιο
         async function initPage() {
-            if (!business_code) {
-                initialLoader.classList.add('hidden');
-                document.getElementById('loadingError').textContent = 'Δεν καθορίστηκε επιχείρηση (Missing business_code).';
-                document.getElementById('loadingError').classList.remove('hidden');
-                return;
-            }
+            if (!business_code) return;
 
             try {
                 const res = await fetch(`${API_BASE_URL}/api/${business_code}/info`);
