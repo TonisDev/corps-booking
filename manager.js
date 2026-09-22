@@ -131,6 +131,8 @@ function setAdminTheme(theme) {
   const next = theme === 'dark' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', next);
   document.body.setAttribute('data-theme', next);
+  const themeColor = document.getElementById('themeColor');
+  if (themeColor) themeColor.setAttribute('content', next === 'dark' ? '#0f172a' : '#f8fafc');
   const btn = document.getElementById('themeToggleBtn');
   if (btn) {
     btn.innerHTML = next === 'dark' ? '<i data-lucide="sun" size="16"></i>' : '<i data-lucide="moon" size="16"></i>';
