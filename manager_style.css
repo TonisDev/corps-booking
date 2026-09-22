@@ -151,6 +151,8 @@ button, input, select, textarea { font-family: inherit; }
 .badge-cancelled { background: #fef08a; color: #854d0e; }
 .list-empty { text-align: center; color: var(--text-muted); padding: 1.5rem 0; }
 .bulk-bar { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin: 0 0 0.75rem; padding: 0.65rem 0.8rem; border: 1px solid var(--border-color); border-radius: 0.65rem; background: var(--field-bg); }
+.bulk-actions { display:flex; gap:0.4rem; flex-wrap:wrap; }
+.select-all { display:inline-flex; align-items:center; gap:0.4rem; font-size:0.85rem; font-weight:600; cursor:pointer; }
 .overlap-box { margin: 0 0 1rem; padding: 0.85rem; border-radius: 0.7rem; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
 .overlap-suggestions { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom: 0.65rem; }
 .settings-save-bar { position: sticky; bottom: 0; display:flex; justify-content:flex-end; gap: 0.75rem; margin-top: 1.5rem; padding: 0.85rem 0 0; background: var(--card-bg); }
@@ -319,7 +321,7 @@ button, input, select, textarea { font-family: inherit; }
 .preview-business-name { margin: 0.55rem 0 0; font-size: 1.05rem; letter-spacing: -0.02em; color: var(--preview-text); }
 .preview-copy { margin: 0.35rem 0 0; font-size: 0.72rem; color: var(--preview-muted); line-height: 1.45; }
 .preview-info { display: inline-flex; margin-top: 0.7rem; padding: 0.32rem 0.75rem; border-radius: 999px; background: var(--preview-brand); color: #fff; font-size: 0.68rem; font-weight: 700; }
-.preview-welcome { margin: 0.75rem 0 0; padding: 0.5rem 0.6rem; border-radius: 0.7rem; background: color-mix(in srgb, var(--preview-brand) 8%, var(--preview-card)); border: 1px solid color-mix(in srgb, var(--preview-brand) 18%, var(--preview-border)); color: var(--preview-text); font-size: 0.68rem; }
+.preview-welcome { margin: 0.55rem 0 0.1rem; padding: 0 0.2rem; border: 0; background: none; color: var(--preview-muted); font-size: 0.68rem; font-style: italic; line-height: 1.45; }
 .preview-block { margin-top: 0.65rem; text-align: left; }
 .preview-label { display: block; margin: 0 0 0.28rem 0.1rem; font-size: 0.68rem; font-weight: 650; color: var(--preview-text); }
 .preview-input {
@@ -350,6 +352,8 @@ button, input, select, textarea { font-family: inherit; }
 #adminQr { width: 120px; height: 120px; margin: 0 auto; background: #fff; border-radius: 0.5rem; padding: 0.2rem; }
 .form-field-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem 1rem; }
 .form-field-toggles label { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; color: var(--text-color); cursor: pointer; }
+.extra-field-toggle, .extra-field-title { grid-column: 1 / -1; }
+.extra-field-title { min-height: 2.5rem; }
 
 /* [SECTION: CSS-CALENDAR] */
 [data-theme="dark"] .fc { color: #f8fafc; }
