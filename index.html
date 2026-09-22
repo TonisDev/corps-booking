@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260922d">
+    <link rel="stylesheet" href="style.css?v=20260922e">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -268,23 +268,23 @@
 
             <div class="field-block">
                 <label class="field-label" for="name">Ονοματεπώνυμο</label>
-                <input type="text" id="name" required placeholder="Το όνομά σας">
+                <input type="text" id="name" required maxlength="80" autocomplete="name" autocapitalize="words" placeholder="Το όνομά σας">
             </div>
 
             <div class="field-block" id="wrapPhone">
                 <label class="field-label" for="phone">Τηλέφωνο</label>
-                <input type="tel" id="phone" required placeholder="69XXXXXXXX">
+                <input type="tel" id="phone" required maxlength="24" autocomplete="tel" inputmode="tel" placeholder="69XXXXXXXX">
             </div>
 
             <div class="field-block" id="wrapEmail">
                 <label class="field-label" for="email">Email</label>
-                <input type="email" id="email" required placeholder="name@email.com">
+                <input type="email" id="email" required maxlength="120" autocomplete="email" inputmode="email" autocapitalize="none" placeholder="name@email.com">
                 <p class="field-help">Θα ενημερωθείτε εδώ αν το ραντεβού εγκριθεί ή απορριφθεί.</p>
             </div>
 
             <div class="field-block" id="wrapInstagram">
                 <label class="field-label" for="instagram"><span id="extraFieldLabel">Instagram</span> <span>προαιρετικό</span></label>
-                <input type="text" id="instagram" maxlength="80" placeholder="προαιρετικό">
+                <input type="text" id="instagram" maxlength="80" autocomplete="off" autocapitalize="none" placeholder="προαιρετικό">
             </div>
 
             <div class="field-block">
@@ -340,8 +340,8 @@
         </form>
 
         <!-- Μηνύματα Επιτυχίας / Google Calendar Action -->
-        <div id="responseContainer" class="response-box hidden">
-            <div id="responseMessage"></div>
+        <div id="responseContainer" class="response-box hidden" aria-live="polite">
+            <div id="responseMessage" tabindex="-1"></div>
             <a id="gcalBtn" href="#" target="_blank" class="hidden">Προσθήκη στο Google Calendar</a>
         </div>
 
@@ -931,10 +931,17 @@
             return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}&ctz=Europe/Athens`;
         }
 
-        function scrollBookingResponse() {
+        function revealBookingResponse() {
+            responseContainer.classList.remove('hidden');
+            const card = responseContainer.closest('.booking-card');
+            if (card) card.classList.add('is-answered');
+            if (document.activeElement && document.activeElement !== document.body) {
+                document.activeElement.blur();
+            }
             if (!window.matchMedia('(max-width: 640px)').matches) return;
             window.setTimeout(() => {
                 responseContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                responseMessage.focus({ preventScroll: true });
             }, 60);
         }
 
@@ -945,11 +952,10 @@
             if (document.getElementById('website').value !== '') return;
 
             if (!waitlistMode && (!selectedTimeValue() || !availableSlots.includes(selectedTimeValue()))) {
-                responseContainer.classList.remove('hidden');
                 gcalBtn.classList.add('hidden');
                 responseMessage.className = 'text-red-600';
                 responseMessage.textContent = 'Παρακαλώ επιλέξτε διαθέσιμη ώρα (π.χ. 18:00 ή 18:30).';
-                scrollBookingResponse();
+                revealBookingResponse();
                 return;
             }
 
@@ -961,6 +967,7 @@
             submitBtnText.textContent = 'Αποστολή...';
             submitSpinner.classList.remove('hidden');
             responseContainer.classList.add('hidden');
+            responseContainer.closest('.booking-card')?.classList.remove('is-answered');
             gcalBtn.classList.add('hidden');
 
             const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
@@ -969,14 +976,15 @@
             const timeVal = selectedTimeValue();
             const serviceNameVal = serviceSelect.value;
             const fields = (businessData && businessData.form_fields) || {};
+            const customerName = document.getElementById('name').value.trim();
             const notesVal = fields.notes === false ? '' : (document.getElementById('notes').value || '').trim();
             const waitlistNote = 'Λίστα αναμονής — χωρίς συγκεκριμένη ώρα';
 
             const payload = {
-                name: document.getElementById('name').value,
-                phone: fields.phone === false ? '' : document.getElementById('phone').value,
-                email: fields.email === false ? '' : document.getElementById('email').value,
-                instagram: fields.instagram === false ? '' : document.getElementById('instagram').value,
+                name: customerName,
+                phone: fields.phone === false ? '' : document.getElementById('phone').value.trim(),
+                email: fields.email === false ? '' : document.getElementById('email').value.trim(),
+                instagram: fields.instagram === false ? '' : document.getElementById('instagram').value.trim(),
                 service_name: serviceNameVal,
                 duration: duration,
                 date: dateVal,
@@ -993,9 +1001,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const data = await res.json();
+                const data = await res.json().catch(() => ({}));
 
-                responseContainer.classList.remove('hidden');
                 if (res.ok) {
                     responseMessage.className = 'text-green-600';
                     responseMessage.textContent = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
@@ -1017,17 +1024,16 @@
                     slotHint.className = 'field-help';
                     document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης';
                     fp.clear();
-                    scrollBookingResponse();
+                    revealBookingResponse();
                 } else {
                     responseMessage.className = 'text-red-600';
                     responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
-                    scrollBookingResponse();
+                    revealBookingResponse();
                 }
             } catch (err) {
-                responseContainer.classList.remove('hidden');
                 responseMessage.className = 'text-red-600';
                 responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
-                scrollBookingResponse();
+                revealBookingResponse();
             } finally {
                 submitBtn.disabled = false;
                 submitSpinner.classList.add('hidden');
