@@ -525,6 +525,8 @@ select:disabled, .time-dropdown-btn:disabled {
   overflow: hidden;
   clip-path: inset(50%);
 }
+.service-picker-btn,
+.service-picker-list { display: none !important; }
 .time-picker-wrap { position: relative; }
 .time-rollers {
   position: absolute;
@@ -857,6 +859,75 @@ body.shop-info-open { overflow: hidden; }
   }
   #clientQr table { display: none !important; }
   input, select, textarea { font-size: 16px !important; }
+
+  .service-picker { position: relative; }
+  .service-picker select {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    opacity: 0 !important;
+    pointer-events: none;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .service-picker-btn { display: block !important; }
+  .service-picker-list {
+    display: flex !important;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-height: min(18rem, 52vh);
+    overflow: hidden;
+    padding: 0.35rem;
+    border-radius: 0.85rem;
+    background: var(--card-bg);
+    border: 1px solid var(--field-border);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  .service-picker-list.is-up {
+    top: auto;
+    bottom: calc(100% + 0.35rem);
+  }
+  .service-picker-list.hidden { display: none !important; }
+  .service-picker-list.can-scroll { overflow-y: auto; }
+  .service-picker-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 3.15rem;
+    padding: 0.75rem 0.9rem;
+    border: 0;
+    border-radius: 0.65rem;
+    background: transparent;
+    color: var(--text-color);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  .service-picker-item:active {
+    background: color-mix(in srgb, var(--brand-color) 10%, var(--field-bg));
+  }
+  .service-picker-item.is-on {
+    background: color-mix(in srgb, var(--brand-color) 16%, var(--field-bg));
+    color: var(--brand-color);
+  }
+  html.service-menu-open,
+  html.service-menu-open body { overflow: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) {
