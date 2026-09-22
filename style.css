@@ -775,28 +775,84 @@ body.shop-info-open { overflow: hidden; }
 
 /* [SECTION: CSS-MOBILE] */
 @media (max-width: 640px) {
-  .booking-shell { align-items: stretch; padding: 0; }
+  html[data-mode="book"],
+  html[data-mode="book"] body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+  .booking-shell {
+    align-items: stretch;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
   .booking-card {
-    max-width: none;
-    min-height: 100vh;
-    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    margin: 0 auto;
     padding: 1.65rem 1.35rem calc(1.5rem + env(safe-area-inset-bottom));
     border: 0;
     border-radius: 0;
     box-shadow: none;
+    box-sizing: border-box;
   }
   .booking-card:hover { box-shadow: none; }
   .home-hero { padding-top: 2.4rem; }
   .home-window, .home-grid, .home-request { grid-template-columns: 1fr; }
   .home-nav { padding-inline: 1rem; }
   .home-nav-links a:not(.home-nav-cta) { padding-inline: 0.55rem; }
-  .business-logo { width: 76px; height: 76px; }
+  .business-logo { width: 76px; height: 76px; max-width: 100%; }
   #submitBtn {
     position: sticky;
     bottom: max(0.65rem, env(safe-area-inset-bottom));
     z-index: 20;
   }
-  .rhapsodus-stamp { bottom: calc(4.6rem + env(safe-area-inset-bottom)); }
+  .response-box { scroll-margin-bottom: 5.5rem; }
+  .rhapsodus-stamp {
+    position: static;
+    right: auto;
+    bottom: auto;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0.35rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    text-align: center;
+    background: var(--card-bg);
+    box-sizing: border-box;
+    z-index: auto;
+  }
+  .shop-info-modal {
+    padding: 0.75rem;
+    align-items: flex-end;
+  }
+  .shop-info-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: min(88dvh, 100%);
+    overflow: auto;
+    box-sizing: border-box;
+  }
+  #clientQr {
+    width: min(9.25rem, 100%);
+    max-width: 100%;
+    height: auto;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  #clientQr canvas,
+  #clientQr img {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+  }
+  #clientQr table { display: none !important; }
   input, select, textarea { font-size: 16px !important; }
 }
 
