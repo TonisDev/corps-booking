@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260921f">
+    <link rel="stylesheet" href="style.css?v=20260922c">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -52,8 +52,8 @@
             --text-color: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
-            --field-bg: #ffffff;
-            --field-border: #cbd5e1;
+            --field-bg: #f1f5f9;
+            --field-border: #e2e8f0;
             --brand-color: #4f46e5;
             --card-shadow: 0 0 0 1px rgba(79, 70, 229, 0.08), 0 0 72px rgba(79, 70, 229, 0.18), 0 24px 48px rgba(15, 23, 42, 0.08);
             --glow: rgba(79, 70, 229, 0.28);
@@ -63,12 +63,12 @@
             color-scheme: dark;
             --bg-color: #0b1220;
             --bg-accent: #1e293b;
-            --card-bg: #151c2c;
+            --card-bg: #1e293b;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
             --field-bg: #0f172a;
-            --field-border: #475569;
+            --field-border: #334155;
             --brand-color: #818cf8;
             --card-shadow: 0 0 0 1px rgba(129, 140, 248, 0.18), 0 0 88px rgba(129, 140, 248, 0.22), 0 24px 48px rgba(0, 0, 0, 0.4);
             --glow: rgba(129, 140, 248, 0.32);
@@ -78,12 +78,12 @@
             color-scheme: light;
             --bg-color: #f3ebe2;
             --bg-accent: #e6d5c2;
-            --card-bg: #fffaf4;
+            --card-bg: #fff6ee;
             --text-color: #3f2a1d;
             --text-muted: #8a6d57;
             --border-color: #ead9c6;
-            --field-bg: #fffdf9;
-            --field-border: #dcc4ab;
+            --field-bg: #f3ebe2;
+            --field-border: #ead9c6;
             --brand-color: #c2410c;
             --card-shadow: 0 0 0 1px rgba(194, 65, 12, 0.1), 0 0 72px rgba(194, 65, 12, 0.16), 0 24px 48px rgba(124, 63, 22, 0.08);
             --card-radius: 1.45rem;
@@ -94,12 +94,12 @@
             color-scheme: light;
             --bg-color: #e8f3f3;
             --bg-accent: #cfe3e3;
-            --card-bg: #f7fcfc;
+            --card-bg: #f4fbfb;
             --text-color: #134e4a;
             --text-muted: #5b7c7b;
             --border-color: #cfe3e2;
-            --field-bg: #ffffff;
-            --field-border: #b6d4d3;
+            --field-bg: #e7f3f3;
+            --field-border: #d5e8e7;
             --brand-color: #0f766e;
             --card-shadow: 0 0 0 1px rgba(15, 118, 110, 0.1), 0 0 72px rgba(15, 118, 110, 0.16), 0 24px 48px rgba(15, 118, 110, 0.08);
             --glow: rgba(15, 118, 110, 0.26);
@@ -283,8 +283,8 @@
             </div>
 
             <div class="field-block" id="wrapInstagram">
-                <label class="field-label" for="instagram">Instagram <span>προαιρετικό</span></label>
-                <input type="text" id="instagram" placeholder="@username">
+                <label class="field-label" for="instagram"><span id="extraFieldLabel">Instagram</span> <span>προαιρετικό</span></label>
+                <input type="text" id="instagram" maxlength="80" placeholder="προαιρετικό">
             </div>
 
             <div class="field-block">
@@ -445,6 +445,13 @@
                 fields.phone = true;
                 fields.email = true;
             }
+            const named = raw && Object.prototype.hasOwnProperty.call(raw, 'extra_label');
+            const extraLabel = named
+                ? String(raw.extra_label || '').trim()
+                : (fields.instagram ? 'Instagram' : '');
+            fields.instagram = fields.instagram && Boolean(extraLabel);
+            const extraLabelEl = document.getElementById('extraFieldLabel');
+            if (extraLabelEl && extraLabel) extraLabelEl.textContent = extraLabel;
             const setWrap = (wrapId, inputId, on, required) => {
                 const wrap = document.getElementById(wrapId);
                 const input = document.getElementById(inputId);
