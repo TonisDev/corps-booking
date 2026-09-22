@@ -500,7 +500,7 @@ function renderDayClickList(dateStr) {
   list.innerHTML = rows.map(item => `
     <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
       <div>
-        <div style="font-weight:600;">${escapeHtml(appointmentTimeLabel(item))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
+        <div style="font-weight:600;">${escapeHtml(appointmentTimeLabel(item))} · ${escapeHtml(item.status === 'BLOCKED' ? blockedLabel(item) : (item.customer_name || 'Χωρίς όνομα'))}</div>
         <div class="apt-row-meta">
           ${escapeHtml(item.service_name || '-')}
           ${item.customer_phone ? ' · ' + escapeHtml(item.customer_phone) : ''}
@@ -552,17 +552,69 @@ function openBookingModal(slot) {
 function openBlockModal(slot) {
   const form = document.querySelector('#blockModal form');
   if (form) form.reset();
+  const fromSlot = !!(slot && slot.hasTime);
+  document.getElementById('blockTimeGrid').classList.toggle('is-from-slot', fromSlot);
+  document.getElementById('blockStartFields').hidden = fromSlot;
+  document.getElementById('blockLead').hidden = !fromSlot;
+  document.getElementById('blockEndAt').hidden = !fromSlot;
+  document.getElementById('blockEndClocks').hidden = fromSlot;
+  document.getElementById('blockSpanChoices').hidden = !fromSlot;
   if (slot) {
     document.getElementById('blockDate').value = slot.date;
-    if (slot.hasTime) {
+    if (fromSlot) {
       setSelectValue('blockStartHour', slot.hour);
       setSelectValue('blockStartMin', slot.minute);
-      const end = addMinutesToClock(slot.hour, slot.minute, 30);
-      setSelectValue('blockEndHour', end.hour);
-      setSelectValue('blockEndMin', end.minute);
+      document.getElementById('blockLead').textContent = `Από ${slot.hour}:${slot.minute}. Διάλεξε μέχρι πότε μένουν κλειστές.`;
+      if (!fillBlockEndChoices(slot.hour, slot.minute)) {
+        showToast('Αυτή είναι η τελευταία ώρα της μέρας.', true);
+        return;
+      }
     }
   }
   openModal('blockModal');
+}
+
+function fillBlockEndChoices(hour, minute) {
+  const start = parseInt(hour, 10) * 60 + parseInt(minute, 10);
+  const ends = [];
+  for (let mins = start + 30; mins <= 22 * 60; mins += 30) ends.push(mins);
+  const select = document.getElementById('blockEndAt');
+  const choices = document.getElementById('blockSpanChoices');
+  select.innerHTML = '';
+  if (!ends.length) return false;
+  ends.forEach((mins) => {
+    const opt = document.createElement('option');
+    opt.value = String(mins);
+    opt.textContent = clockLabel(mins);
+    select.appendChild(opt);
+  });
+  const presets = [
+    { label: '30 λεπτά', mins: start + 30 },
+    { label: '1 ώρα', mins: start + 60 },
+    { label: '2 ώρες', mins: start + 120 },
+    { label: 'Μέχρι τις 22:00', mins: 22 * 60 }
+  ].filter((preset, index, all) => ends.includes(preset.mins) && all.findIndex((item) => item.mins === preset.mins) === index);
+  choices.innerHTML = presets.map((preset) => `<button type="button" class="btn btn-outline span-btn" data-end="${preset.mins}">${preset.label}</button>`).join('');
+  const apply = (mins) => {
+    select.value = String(mins);
+    applyBlockEndMinutes(mins);
+    choices.querySelectorAll('button').forEach((btn) => btn.classList.toggle('is-on', btn.getAttribute('data-end') === String(mins)));
+  };
+  choices.querySelectorAll('button').forEach((btn) => {
+    btn.addEventListener('click', () => apply(parseInt(btn.getAttribute('data-end'), 10)));
+  });
+  select.onchange = () => apply(parseInt(select.value, 10));
+  apply(ends[0]);
+  return true;
+}
+
+function clockLabel(mins) {
+  return `${pad2(Math.floor(mins / 60))}:${pad2(mins % 60)}`;
+}
+
+function applyBlockEndMinutes(mins) {
+  setSelectValue('blockEndHour', pad2(Math.floor(mins / 60)));
+  setSelectValue('blockEndMin', pad2(mins % 60));
 }
 
 // [SECTION: JS-CALENDAR]
@@ -626,7 +678,14 @@ function isCompactCalView(viewType) {
   return viewType === 'timeGridWeek' || viewType === 'dayGridWeek' || viewType === 'dayGridMonth';
 }
 
+function blockedLabel(item) {
+  const reason = String((item && item.notes) || '').trim();
+  if (reason && reason !== 'Μη διαθέσιμο') return reason;
+  return 'Κλειδωμένες ώρες';
+}
+
 function calendarEventTitle(item, compact) {
+  if (item && item.status === 'BLOCKED') return blockedLabel(item);
   const name = compact ? customerFirstName(item && item.customer_name) : (item && item.customer_name || 'Χωρίς όνομα');
   if (waitlistNeedsTime(item)) return `Ουρά · ${name}`;
   const service = (item && item.service_name) || '';
@@ -994,7 +1053,7 @@ function renderAppointmentList() {
 }
 
 function statusLabel(status) {
-  const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', WAITLIST: 'Ουρά', BLOCKED: 'Δεσμευμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο', CANCELLED: 'Ακυρώθηκε' };
+  const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', WAITLIST: 'Ουρά', BLOCKED: 'Κλειδωμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο', CANCELLED: 'Ακυρώθηκε' };
   return labels[status] || status;
 }
 
@@ -1032,7 +1091,9 @@ function openAppointmentDetails(item) {
     ? '<p class="guide-note">Προτιμώμενη ώρα. Επικοινώνησε με τον πελάτη πριν την έγκριση.</p>'
     : '';
 
-  document.getElementById('actTitle').innerHTML = `<button type="button" class="client-name-btn" onclick="openClientDrawer('${jsString(item.customer_phone || '')}', '${jsString(item.customer_name || '')}')">${escapeHtml(item.customer_name || 'Ραντεβού')}</button>`;
+  document.getElementById('actTitle').innerHTML = item.status === 'BLOCKED'
+    ? escapeHtml(blockedLabel(item))
+    : `<button type="button" class="client-name-btn" onclick="openClientDrawer('${jsString(item.customer_phone || '')}', '${jsString(item.customer_name || '')}')">${escapeHtml(item.customer_name || 'Ραντεβού')}</button>`;
   document.getElementById('actDetails').innerHTML = `
     <div>
       <div class="detail-row"><span class="detail-k">Ημερομηνία</span> <strong class="detail-v">${formatGreekDate(item.date)}</strong></div>
@@ -1246,8 +1307,8 @@ async function handleManualBooking(e) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: document.getElementById('custName').value,
-        phone: document.getElementById('custPhone').value,
+        name: document.getElementById('custName').value.trim(),
+        phone: document.getElementById('custPhone').value.trim(),
         service_name: document.getElementById('massageType').value,
         duration: duration,
         date: document.getElementById('bookDate').value,
@@ -1269,6 +1330,10 @@ async function handleBlockSlot(e) {
   e.preventDefault();
   const start = `${document.getElementById('blockStartHour').value}:${document.getElementById('blockStartMin').value}`;
   const end = `${document.getElementById('blockEndHour').value}:${document.getElementById('blockEndMin').value}`;
+  if (!document.getElementById('blockStartHour').value || !document.getElementById('blockEndHour').value || end <= start) {
+    showToast('Η ώρα λήξης πρέπει να είναι μετά την έναρξη.', true);
+    return;
+  }
 
   try {
     const res = await adminFetch(`/api/${currentBusinessCode}/admin/block-slot`, {
@@ -1281,11 +1346,12 @@ async function handleBlockSlot(e) {
         reason: document.getElementById('blockReason').value
       })
     });
-    if (!res.ok) throw new Error('Αποτυχία κλεισίματος slot');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Αποτυχία κλεισίματος ωρών');
     closeModal('blockModal');
     closeModal('slotChoiceModal');
     e.target.reset();
-    showToast('Το slot δεσμεύτηκε.');
+    showToast('Οι ώρες κλειδώθηκαν.');
     fetchAppointments();
   } catch (err) {
     if (err.message !== 'Unauthorized') showToast(err.message, true);
