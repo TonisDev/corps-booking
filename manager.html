@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260922c">
+    <link rel="stylesheet" href="manager_style.css?v=20260923a">
 </head>
 <body data-theme="light">
 
@@ -81,7 +81,7 @@
       <div class="header-actions">
         <button class="btn btn-outline" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> <span class="btn-label">Ιστορικό</span></button>
         <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> <span class="btn-label">Σελίδα Πελάτη</span></button>
-        <button class="btn btn-outline" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> <span class="btn-label">Κλείσιμο Slot</span></button>
+        <button class="btn btn-outline" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> <span class="btn-label">Κλείδωσε ώρες</span></button>
         <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
@@ -359,7 +359,7 @@
       <div id="dayAppointmentsList"></div>
       <div class="slot-choice-actions">
         <button type="button" class="btn" onclick="chooseSlotBooking()"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
-        <button type="button" class="btn btn-outline" onclick="chooseSlotBlock()"><i data-lucide="lock" size="16"></i> Κλείσιμο Slot</button>
+        <button type="button" class="btn btn-outline" onclick="chooseSlotBlock()"><i data-lucide="lock" size="16"></i> Κλείδωσε ώρες</button>
         <button type="button" class="btn btn-outline" onclick="closeModal('slotChoiceModal')">Κλείσιμο</button>
       </div>
     </div>
@@ -375,8 +375,8 @@
           <input class="field" type="text" id="custName" required placeholder="Ονοματεπώνυμο">
         </div>
         <div class="form-group">
-          <label>Τηλέφωνο</label>
-          <input class="field" type="tel" id="custPhone" required placeholder="69XXXXXXXX">
+          <label>Τηλέφωνο (προαιρετικό)</label>
+          <input class="field" type="tel" id="custPhone" placeholder="69XXXXXXXX">
         </div>
         <div class="form-group">
           <label>Υπηρεσία</label>
@@ -420,17 +420,18 @@
     </div>
   </div>
 
-  <!-- Modal: Κλείσιμο Slot -->
+  <!-- Modal: κλείδωμα εύρους ωρών -->
   <div class="modal" id="blockModal">
     <div class="modal-content">
-      <h3 style="margin-top:0;">Κλείσιμο Slot</h3>
+      <h3 style="margin-top:0;">Κλείδωσε ώρες</h3>
+      <p id="blockLead" hidden>Από την ώρα που πάτησες. Διάλεξε μέχρι πότε μένουν κλειστές.</p>
       <form onsubmit="handleBlockSlot(event)">
         <div class="form-group">
           <label>Ημερομηνία</label>
           <input class="field" type="date" id="blockDate" required>
         </div>
-        <div class="form-grid">
-          <div class="form-group">
+        <div class="form-grid" id="blockTimeGrid">
+          <div class="form-group" id="blockStartFields">
             <label>Από</label>
             <div class="time-picker-wrapper">
               <select id="blockStartHour" required>
@@ -450,9 +451,10 @@
               </select>
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="blockEndFields">
             <label>Έως</label>
-            <div class="time-picker-wrapper">
+            <select id="blockEndAt" class="field" hidden></select>
+            <div id="blockEndClocks" class="time-picker-wrapper">
               <select id="blockEndHour" required>
                 <option value="" disabled selected>Ώρα</option>
                 <option value="08">08</option><option value="09">09</option><option value="10">10</option>
@@ -470,6 +472,7 @@
                 <option value="45">45</option>
               </select>
             </div>
+            <div id="blockSpanChoices" class="span-choices" hidden></div>
           </div>
         </div>
         <div class="form-group">
@@ -478,7 +481,7 @@
         </div>
         <div class="modal-form-actions">
           <button type="button" class="btn btn-outline" onclick="closeModal('blockModal')">Ακύρωση</button>
-          <button type="submit" class="btn btn-danger">Δέσμευση</button>
+          <button type="submit" class="btn btn-danger">Κλείδωμα</button>
         </div>
       </form>
     </div>
@@ -566,7 +569,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260922d"></script>
+<script src="manager.js?v=20260923a"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="toast" role="status" aria-live="polite" style="position:fixed;right:1.25rem;bottom:1.25rem;left:auto;transform:none;z-index:99999;display:none;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-radius:0.85rem;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,0.28);max-width:min(22rem,calc(100vw - 1.5rem));">
