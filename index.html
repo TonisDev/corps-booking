@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260922c">
+    <link rel="stylesheet" href="style.css?v=20260922d">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -931,6 +931,13 @@
             return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}&ctz=Europe/Athens`;
         }
 
+        function scrollBookingResponse() {
+            if (!window.matchMedia('(max-width: 640px)').matches) return;
+            window.setTimeout(() => {
+                responseContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 60);
+        }
+
         // [SECTION: JS-SUBMIT] — POST /bookings (slots | request | waitlist)
         bookingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -942,6 +949,7 @@
                 gcalBtn.classList.add('hidden');
                 responseMessage.className = 'text-red-600';
                 responseMessage.textContent = 'Παρακαλώ επιλέξτε διαθέσιμη ώρα (π.χ. 18:00 ή 18:30).';
+                scrollBookingResponse();
                 return;
             }
 
@@ -1009,14 +1017,17 @@
                     slotHint.className = 'field-help';
                     document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης';
                     fp.clear();
+                    scrollBookingResponse();
                 } else {
                     responseMessage.className = 'text-red-600';
                     responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
+                    scrollBookingResponse();
                 }
             } catch (err) {
                 responseContainer.classList.remove('hidden');
                 responseMessage.className = 'text-red-600';
                 responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
+                scrollBookingResponse();
             } finally {
                 submitBtn.disabled = false;
                 submitSpinner.classList.add('hidden');
