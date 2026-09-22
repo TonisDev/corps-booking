@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setAdminTheme(savedTheme);
   const support = document.getElementById('supportLink');
   if (support) {
-    support.href = `mailto:${SUPER_ADMIN_EMAIL}`;
     support.textContent = SUPER_ADMIN_EMAIL;
   }
 
@@ -318,14 +317,17 @@ function renderAdminQr() {
 }
 
 function formFieldsFromTenant(tenant) {
-  const d = { phone: true, email: true, instagram: true, notes: true };
+  const d = { phone: true, email: true, instagram: true, notes: true, extra_label: 'Instagram' };
   const raw = tenant && tenant.form_fields;
   if (!raw || typeof raw !== 'object') return d;
+  const instagram = raw.instagram !== false && raw.instagram !== 0 && raw.instagram !== '0';
+  const hasLabel = Object.prototype.hasOwnProperty.call(raw, 'extra_label');
   return {
     phone: raw.phone !== false && raw.phone !== 0 && raw.phone !== '0',
     email: raw.email !== false && raw.email !== 0 && raw.email !== '0',
-    instagram: raw.instagram !== false && raw.instagram !== 0 && raw.instagram !== '0',
-    notes: raw.notes !== false && raw.notes !== 0 && raw.notes !== '0'
+    instagram,
+    notes: raw.notes !== false && raw.notes !== 0 && raw.notes !== '0',
+    extra_label: hasLabel ? String(raw.extra_label || '').trim() : (instagram ? 'Instagram' : '')
   };
 }
 
@@ -336,6 +338,59 @@ function guardContactFields(changed) {
   if (changed === 'phone') email.checked = true;
   else phone.checked = true;
   showToast('Πρέπει να μείνει τηλέφωνο ή email.', true);
+}
+
+function extraFieldTitle() {
+  const fields = formFieldsFromTenant(currentTenantData);
+  return fields.extra_label || 'Instagram';
+}
+
+function formFieldBoxes() {
+  return ['formFieldPhone', 'formFieldEmail', 'formFieldInstagram', 'formFieldNotes']
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+}
+
+function syncFormFieldSelect() {
+  const master = document.getElementById('selectAllFormFields');
+  const boxes = formFieldBoxes();
+  if (!master || !boxes.length) return;
+  master.checked = boxes.every((box) => box.checked);
+  master.indeterminate = boxes.some((box) => box.checked) && !master.checked;
+}
+
+function toggleFormFields(checked) {
+  if (checked) {
+    formFieldBoxes().forEach((box) => { box.checked = true; });
+  } else {
+    const instagram = document.getElementById('formFieldInstagram');
+    const notes = document.getElementById('formFieldNotes');
+    if (instagram) instagram.checked = false;
+    if (notes) notes.checked = false;
+  }
+  syncExtraField();
+  syncFormFieldSelect();
+}
+
+function syncExtraField() {
+  const on = document.getElementById('formFieldInstagram');
+  const input = document.getElementById('formFieldExtraLabel');
+  if (!on || !input) return;
+  input.style.display = on.checked ? 'block' : 'none';
+}
+
+function toggleNamedChecks(name, checked) {
+  document.querySelectorAll(`input[name="${name}"]`).forEach((box) => { box.checked = checked; });
+  if (name === 'w_day') syncHoursEditors();
+  syncNamedChecks(name, name === 'w_day' ? 'selectAllDays' : '');
+}
+
+function syncNamedChecks(name, masterId) {
+  const master = masterId ? document.getElementById(masterId) : null;
+  const boxes = [...document.querySelectorAll(`input[name="${name}"]`)];
+  if (!master || !boxes.length) return;
+  master.checked = boxes.every((box) => box.checked);
+  master.indeterminate = boxes.some((box) => box.checked) && !master.checked;
 }
 
 function populateServicesDropdown() {
@@ -900,6 +955,7 @@ function renderAppointmentList() {
   const list = document.getElementById('aptList');
   if (!rows.length) {
     list.innerHTML = '<div class="list-empty">Δεν βρέθηκαν ραντεβού.</div>';
+    syncBulkBar();
     return;
   }
 
@@ -980,6 +1036,7 @@ function openAppointmentDetails(item) {
       <div class="detail-row"><span class="detail-k">Ημερομηνία</span> <strong class="detail-v">${formatGreekDate(item.date)}</strong></div>
       <div class="detail-row"><span class="detail-k">Τηλέφωνο</span> <strong class="detail-v">${escapeHtml(item.customer_phone || '-')}</strong></div>
       <div class="detail-row"><span class="detail-k">Email</span> <strong class="detail-v">${escapeHtml(item.customer_email || '-')}</strong></div>
+      ${item.instagram ? `<div class="detail-row"><span class="detail-k">${escapeHtml(extraFieldTitle())}</span> <strong class="detail-v">${escapeHtml(item.instagram)}</strong></div>` : ''}
       <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
       <div class="detail-row"><span class="detail-k">Ώρα</span> <strong class="detail-v">${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
       <div class="detail-row"><span class="detail-k">Κατάσταση</span> <strong class="detail-v">${statusLabel(item.status)}</strong></div>
@@ -996,18 +1053,24 @@ function openAppointmentDetails(item) {
   }
   document.getElementById('rescheduleDate').value = item.date || '';
   document.getElementById('rescheduleTime').value = item.start_time || '';
+  const past = isPastAppointment(item);
   const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
   const approved = item.status === 'BOOKED' || item.status === 'CONFIRMED';
+  const historyItem = past || item.status === 'REJECTED' || item.status === 'CANCELLED';
   document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || item.status === 'CANCELLED' || item.status === 'REJECTED') ? 'none' : 'inline-flex';
   document.getElementById('btnReject').style.display = actionable ? 'inline-flex' : 'none';
-  document.getElementById('btnCancelAppt').style.display = approved && !isPastAppointment(item) ? 'inline-flex' : 'none';
-  document.getElementById('btnDeleteAppt').style.display = (approved && !isPastAppointment(item)) ? 'none' : 'inline-flex';
-  const canReschedule = item.status !== 'BLOCKED' && !isPastAppointment(item);
+  document.getElementById('btnCancelAppt').style.display = approved && !past ? 'inline-flex' : 'none';
+  const deleteBtn = document.getElementById('btnDeleteAppt');
+  deleteBtn.style.display = (approved && !past) ? 'none' : 'inline-flex';
+  deleteBtn.innerHTML = historyItem
+    ? '<i data-lucide="trash-2" size="16"></i> Διαγραφή'
+    : '<i data-lucide="trash-2" size="16"></i> Διαγραφή οριστικά';
+  const canReschedule = item.status !== 'BLOCKED' && !past;
   document.getElementById('rescheduleGroup').style.display = 'none';
   const rescheduleBtn = document.getElementById('btnReschedule');
   rescheduleBtn.style.display = canReschedule ? 'inline-flex' : 'none';
   rescheduleBtn.innerHTML = '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
-  document.getElementById('reasonGroup').style.display = (actionable || approved) ? 'block' : 'none';
+  document.getElementById('reasonGroup').style.display = (actionable || (approved && !past)) ? 'block' : 'none';
   document.getElementById('actReason').value = item.status_reason || '';
   openModal('actionModal');
 }
@@ -1144,17 +1207,25 @@ async function deleteAppointment() {
 
 async function restoreAppointment(snapshot) {
   if (!snapshot || !snapshot.id) return;
+  await restoreAppointments([snapshot], 'Η διαγραφή αναιρέθηκε.');
+}
+
+async function restoreAppointments(snapshots, message) {
+  const rows = (snapshots || []).filter((snapshot) => snapshot && snapshot.id);
+  if (!rows.length) return;
   await withLock(async () => {
     try {
-      const res = await adminFetch(`/api/${currentBusinessCode}/admin/restore`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(snapshot)
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Σφάλμα αναίρεσης');
-      selectedEventId = snapshot.id;
-      showToast('Η διαγραφή αναιρέθηκε.');
+      for (const snapshot of rows) {
+        const res = await adminFetch(`/api/${currentBusinessCode}/admin/restore`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(snapshot)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Σφάλμα αναίρεσης');
+      }
+      selectedEventId = rows[0].id;
+      showToast(message || 'Η διαγραφή αναιρέθηκε.');
       fetchAppointments();
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα αναίρεσης.', true);
@@ -1243,6 +1314,9 @@ function openSettingsModal() {
   document.getElementById('formFieldEmail').checked = fields.email;
   document.getElementById('formFieldInstagram').checked = fields.instagram;
   document.getElementById('formFieldNotes').checked = fields.notes;
+  document.getElementById('formFieldExtraLabel').value = fields.extra_label || '';
+  syncExtraField();
+  syncFormFieldSelect();
   document.getElementById('setTelegramChatId').value = currentTenantData.telegram_chat_id || '';
   const botUser = String(currentTenantData.telegram_bot_username || '').replace(/^@/, '');
   const botWrap = document.getElementById('telegramBotLinkWrap');
@@ -1263,6 +1337,7 @@ function openSettingsModal() {
   document.querySelectorAll('input[name="w_day"]').forEach(cb => {
     cb.checked = workDays.includes(parseInt(cb.value));
   });
+  syncNamedChecks('w_day', 'selectAllDays');
 
   const hours = currentTenantData.working_hours;
   const perDay = hours && !Array.isArray(hours);
@@ -1456,6 +1531,7 @@ function syncHoursEditors(fromOpen) {
     fillShiftList(listId, existing);
   });
   window._perDayHoursDraft = draft;
+  syncNamedChecks('w_day', 'selectAllDays');
   lucide.createIcons();
 }
 
@@ -1492,11 +1568,19 @@ async function saveSettings(e) {
   const success_message = document.getElementById('setSuccessMessage').value.trim();
   const buffer_minutes = parseInt(document.getElementById('setBuffer').value) || 0;
   const telegram_chat_id = document.getElementById('setTelegramChatId').value.trim();
+  const extraOn = document.getElementById('formFieldInstagram').checked;
+  const extraLabel = document.getElementById('formFieldExtraLabel').value.trim();
+  if (extraOn && !extraLabel) {
+    showToast('Γράψε τίτλο για το επιπλέον πεδίο.', true);
+    document.getElementById('formFieldExtraLabel').focus();
+    return;
+  }
   const form_fields = {
     phone: document.getElementById('formFieldPhone').checked,
     email: document.getElementById('formFieldEmail').checked,
-    instagram: document.getElementById('formFieldInstagram').checked,
-    notes: document.getElementById('formFieldNotes').checked
+    instagram: extraOn,
+    notes: document.getElementById('formFieldNotes').checked,
+    extra_label: extraLabel
   };
   if (!form_fields.phone && !form_fields.email) {
     showToast('Πρέπει να μείνει τηλέφωνο ή email στη φόρμα.', true);
@@ -1557,11 +1641,53 @@ async function saveSettings(e) {
 
 // [SECTION: JS-BULK]
 function syncBulkBar() {
-  const ids = selectedBulkIds();
+  const checks = [...document.querySelectorAll('#aptList .bulk-check')];
+  const ids = checks.filter((el) => el.checked).map((el) => el.getAttribute('data-id'));
   const bar = document.getElementById('bulkBar');
   if (!bar) return;
-  bar.style.display = ids.length ? 'flex' : 'none';
+  bar.style.display = checks.length ? 'flex' : 'none';
+  const allBox = document.getElementById('selectAllApts');
+  if (allBox) {
+    allBox.checked = checks.length > 0 && ids.length === checks.length;
+    allBox.indeterminate = ids.length > 0 && ids.length < checks.length;
+  }
   document.getElementById('bulkCount').textContent = `${ids.length} επιλεγμένα`;
+  renderBulkActions(ids);
+}
+
+function toggleSelectAllApts(checked) {
+  document.querySelectorAll('#aptList .bulk-check').forEach((el) => { el.checked = checked; });
+  syncBulkBar();
+}
+
+function selectedAppointments(ids) {
+  const wanted = new Set(ids || selectedBulkIds());
+  return allAppointments.filter((item) => wanted.has(item.id));
+}
+
+function renderBulkActions(ids) {
+  const wrap = document.getElementById('bulkActions');
+  if (!wrap) return;
+  const selected = selectedAppointments(ids);
+  if (!selected.length) {
+    wrap.innerHTML = '';
+    return;
+  }
+  const pending = selected.filter((item) => item.status === 'PENDING' || item.status === 'WAITLIST');
+  const cancellable = selected.filter((item) => (item.status === 'BOOKED' || item.status === 'CONFIRMED') && !isPastAppointment(item));
+  const removable = selected.filter((item) => isPastAppointment(item) || item.status === 'REJECTED' || item.status === 'CANCELLED');
+  const buttons = [];
+  if ((currentListKind === 'pending' || currentListKind === 'all') && pending.length) {
+    buttons.push(`<button type="button" class="btn" onclick="bulkSetStatus('BOOKED')">Έγκριση (${pending.length})</button>`);
+    buttons.push(`<button type="button" class="btn btn-outline" onclick="bulkSetStatus('REJECTED')">Απόρριψη (${pending.length})</button>`);
+  }
+  if ((currentListKind === 'booked' || currentListKind === 'all') && cancellable.length) {
+    buttons.push(`<button type="button" class="btn btn-warning" onclick="bulkCancelSelected()">Ακύρωση (${cancellable.length})</button>`);
+  }
+  if ((currentListKind === 'history' || currentListKind === 'all') && removable.length) {
+    buttons.push(`<button type="button" class="btn btn-danger" onclick="bulkDeleteSelected()">Διαγραφή (${removable.length})</button>`);
+  }
+  wrap.innerHTML = buttons.join('');
 }
 
 function selectedBulkIds() {
@@ -1582,6 +1708,51 @@ async function bulkCancelSelected() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Σφάλμα μαζικής ακύρωσης');
       showToast(`Ακυρώθηκαν ${data.cancelled || 0} ραντεβού.`);
+      fetchAppointments();
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message, true);
+    }
+  });
+}
+
+async function bulkSetStatus(status) {
+  const selected = selectedAppointments().filter((item) => item.status === 'PENDING' || item.status === 'WAITLIST');
+  if (!selected.length) return;
+  const label = status === 'BOOKED' ? 'Έγκριση' : 'Απόρριψη';
+  if (!confirm(`${label} ${selected.length} εκκρεμών;`)) return;
+  await withLock(async () => {
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/bulk-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selected.map((item) => item.id), status })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα μαζικής ενημέρωσης');
+      const skipped = data.skipped ? ` (${data.skipped} δεν άλλαξαν)` : '';
+      showToast(`${label}: ${data.updated || 0}${skipped}.`);
+      fetchAppointments();
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message, true);
+    }
+  });
+}
+
+async function bulkDeleteSelected() {
+  const selected = selectedAppointments().filter((item) => isPastAppointment(item) || item.status === 'REJECTED' || item.status === 'CANCELLED');
+  if (!selected.length) return;
+  if (!confirm(`Διαγραφή ${selected.length} ραντεβού από το ιστορικό;`)) return;
+  await withLock(async () => {
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/bulk-delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selected.map((item) => item.id) })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Σφάλμα διαγραφής');
+      lastUndo = { type: 'bulk-delete', snapshots: selected };
+      showToast(`Διαγράφηκαν ${data.deleted || 0} ραντεβού.`, false, true);
       fetchAppointments();
     } catch (err) {
       if (err.message !== 'Unauthorized') showToast(err.message, true);
@@ -1636,7 +1807,7 @@ function showToast(text, isError = false, undoable = false) {
   toast.style.background = isError ? '#ef4444' : '#0f172a';
   toast.style.color = '#fff';
   toast.classList.add('show');
-  const canUndo = Boolean(undoable && lastUndo && lastUndo.id);
+  const canUndo = Boolean(undoable && lastUndo && (lastUndo.id || (lastUndo.snapshots && lastUndo.snapshots.length)));
   if (undoBtn) {
     undoBtn.style.display = canUndo ? 'inline-flex' : 'none';
     undoBtn.onclick = () => {
@@ -1648,6 +1819,10 @@ function showToast(text, isError = false, undoable = false) {
       toast.classList.remove('show');
       if (undo.type === 'delete') {
         restoreAppointment(undo.snapshot);
+        return;
+      }
+      if (undo.type === 'bulk-delete') {
+        restoreAppointments(undo.snapshots, 'Οι διαγραφές αναιρέθηκαν.');
         return;
       }
       selectedEventId = undo.id;
