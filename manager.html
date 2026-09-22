@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260921c">
+    <link rel="stylesheet" href="manager_style.css?v=20260922b">
 </head>
 <body data-theme="light">
 
@@ -249,13 +249,14 @@
         <div class="form-group" style="margin-top: 1rem;">
           <label>Ημέρες Λειτουργίας</label>
           <div class="checkbox-group" id="setWorkDays">
-            <label><input type="checkbox" name="w_day" value="1" onchange="syncHoursEditors()"> Δευτ</label>
-            <label><input type="checkbox" name="w_day" value="2" onchange="syncHoursEditors()"> Τρί</label>
-            <label><input type="checkbox" name="w_day" value="3" onchange="syncHoursEditors()"> Τετ</label>
-            <label><input type="checkbox" name="w_day" value="4" onchange="syncHoursEditors()"> Πέμ</label>
-            <label><input type="checkbox" name="w_day" value="5" onchange="syncHoursEditors()"> Παρ</label>
-            <label><input type="checkbox" name="w_day" value="6" onchange="syncHoursEditors()"> Σάβ</label>
-            <label><input type="checkbox" name="w_day" value="0" onchange="syncHoursEditors()"> Κυρ</label>
+            <label><input type="checkbox" id="selectAllDays" onchange="toggleNamedChecks('w_day', this.checked)"> Επιλογή όλων</label>
+            <label><input type="checkbox" name="w_day" value="1" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Δευτ</label>
+            <label><input type="checkbox" name="w_day" value="2" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τρί</label>
+            <label><input type="checkbox" name="w_day" value="3" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τετ</label>
+            <label><input type="checkbox" name="w_day" value="4" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Πέμ</label>
+            <label><input type="checkbox" name="w_day" value="5" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Παρ</label>
+            <label><input type="checkbox" name="w_day" value="6" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Σάβ</label>
+            <label><input type="checkbox" name="w_day" value="0" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Κυρ</label>
           </div>
           <label style="margin-top: 0.85rem; display:flex; align-items:center; gap:0.45rem; font-weight:500; color: var(--text-color);">
             <input type="checkbox" id="perDayHoursToggle" onchange="syncHoursEditors()">
@@ -283,12 +284,14 @@
 
         <div class="help-box">
           <h3>Πεδία φόρμας πελάτη</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Ξετσεκάρισε ό,τι δεν θέλεις να εμφανίζεται. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong> (το Instagram δεν μετράει).</p>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Ξετσεκάρισε ό,τι δεν θέλεις να εμφανίζεται. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong>. Το επιπλέον πεδίο δεν μετράει ως επικοινωνία.</p>
           <div class="form-field-toggles">
-            <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone')"> Τηλέφωνο</label>
-            <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email')"> Email</label>
-            <label><input type="checkbox" id="formFieldInstagram" checked> Instagram</label>
-            <label><input type="checkbox" id="formFieldNotes" checked> Σημειώσεις</label>
+            <label><input type="checkbox" id="selectAllFormFields" onchange="toggleFormFields(this.checked)"> Επιλογή όλων</label>
+            <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone'); syncFormFieldSelect()"> Τηλέφωνο</label>
+            <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email'); syncFormFieldSelect()"> Email</label>
+            <label><input type="checkbox" id="formFieldNotes" checked onchange="syncFormFieldSelect()"> Σημειώσεις</label>
+            <label class="extra-field-toggle"><input type="checkbox" id="formFieldInstagram" checked onchange="syncExtraField(); syncFormFieldSelect()"> Επιπλέον πεδίο</label>
+            <input class="field extra-field-title" type="text" id="formFieldExtraLabel" maxlength="40" placeholder="Τίτλος, π.χ. Instagram ή Telegram" oninput="syncExtraField()">
           </div>
         </div>
 
@@ -505,8 +508,9 @@
         </select>
       </div>
       <div id="bulkBar" class="bulk-bar" style="display:none;">
+        <label class="select-all"><input type="checkbox" id="selectAllApts" onchange="toggleSelectAllApts(this.checked)"> Επιλογή όλων</label>
         <span id="bulkCount">0 επιλεγμένα</span>
-        <button type="button" class="btn btn-danger" onclick="bulkCancelSelected()">Ακύρωση επιλεγμένων</button>
+        <div id="bulkActions" class="bulk-actions"></div>
       </div>
       <div id="aptList" class="apt-list"></div>
       <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('listModal')">Κλείσιμο</button>
@@ -562,7 +566,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260921b"></script>
+<script src="manager.js?v=20260922b"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="toast" role="status" aria-live="polite" style="position:fixed;right:1.25rem;bottom:1.25rem;left:auto;transform:none;z-index:99999;display:none;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-radius:0.85rem;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,0.28);max-width:min(22rem,calc(100vw - 1.5rem));">
