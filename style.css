@@ -813,7 +813,10 @@ body.shop-info-open { overflow: hidden; }
     bottom: max(0.65rem, env(safe-area-inset-bottom));
     z-index: 20;
   }
+  html[data-mode="book"] { scroll-padding-bottom: 6rem; }
   .response-box { scroll-margin-bottom: 5.5rem; }
+  #responseMessage:focus { outline: none; }
+  .booking-card.is-answered #submitBtn { position: static; }
   .rhapsodus-stamp {
     position: static;
     right: auto;
