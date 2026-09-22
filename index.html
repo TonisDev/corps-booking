@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260922e">
+    <link rel="stylesheet" href="style.css?v=20260922f">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -289,9 +289,13 @@
 
             <div class="field-block">
                 <label class="field-label" for="service">Υπηρεσία</label>
-                <select id="service" required>
-                    <option value="">Επιλέξτε υπηρεσία</option>
-                </select>
+                <div class="service-picker" id="servicePicker">
+                    <select id="service" required>
+                        <option value="">Επιλέξτε υπηρεσία</option>
+                    </select>
+                    <button type="button" id="servicePickerBtn" class="time-dropdown-btn service-picker-btn" aria-haspopup="listbox" aria-expanded="false">Επιλέξτε υπηρεσία</button>
+                    <div id="servicePickerList" class="service-picker-list hidden" role="listbox"></div>
+                </div>
             </div>
 
             <div class="field-block">
@@ -722,6 +726,7 @@
                     opt.textContent = formatServiceLabel(s);
                     serviceSelect.appendChild(opt);
                 });
+                syncServicePicker();
 
                 initialLoader.classList.add('hidden');
                 bookingForm.classList.remove('hidden');
@@ -766,9 +771,73 @@
         });
 
         serviceSelect.addEventListener('change', () => {
+            syncServicePicker();
             if (dateInput.value) {
                 fetchAvailableSlots(dateInput.value);
             }
+        });
+        bookingForm.addEventListener('reset', () => {
+            window.setTimeout(syncServicePicker, 0);
+        });
+        serviceSelect.addEventListener('invalid', (event) => {
+            if (!window.matchMedia('(max-width: 640px)').matches) return;
+            event.preventDefault();
+            setServiceMenu(true);
+        });
+
+        const servicePickerBtn = document.getElementById('servicePickerBtn');
+        const servicePickerList = document.getElementById('servicePickerList');
+
+        function serviceMenuOpen() {
+            return servicePickerList && !servicePickerList.classList.contains('hidden');
+        }
+
+        function setServiceMenu(open) {
+            if (!servicePickerList || !servicePickerBtn) return;
+            servicePickerList.classList.toggle('hidden', !open);
+            servicePickerBtn.classList.toggle('is-open', open);
+            servicePickerBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            document.documentElement.classList.toggle('service-menu-open', open);
+            if (open) {
+                const roomBelow = window.innerHeight - servicePickerBtn.getBoundingClientRect().bottom;
+                servicePickerList.classList.toggle('is-up', roomBelow < 220);
+                servicePickerList.classList.toggle('can-scroll', servicePickerList.scrollHeight > servicePickerList.clientHeight + 2);
+            }
+        }
+
+        function syncServicePicker() {
+            if (!servicePickerBtn || !servicePickerList) return;
+            const chosen = serviceSelect.selectedOptions[0];
+            servicePickerBtn.textContent = chosen && chosen.value ? chosen.textContent : 'Επιλέξτε υπηρεσία';
+            servicePickerList.innerHTML = '';
+            [...serviceSelect.options].forEach((option) => {
+                if (!option.value) return;
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'service-picker-item' + (option.selected ? ' is-on' : '');
+                item.setAttribute('role', 'option');
+                item.setAttribute('aria-selected', option.selected ? 'true' : 'false');
+                item.textContent = option.textContent;
+                item.addEventListener('click', () => {
+                    serviceSelect.value = option.value;
+                    serviceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    setServiceMenu(false);
+                });
+                servicePickerList.appendChild(item);
+            });
+        }
+
+        servicePickerBtn?.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (!window.matchMedia('(max-width: 640px)').matches) return;
+            setServiceMenu(!serviceMenuOpen());
+        });
+        servicePickerList?.addEventListener('click', (event) => event.stopPropagation());
+        servicePickerList?.addEventListener('touchmove', (event) => {
+            if (!servicePickerList.classList.contains('can-scroll')) event.preventDefault();
+        }, { passive: false });
+        document.addEventListener('click', () => {
+            if (serviceMenuOpen()) setServiceMenu(false);
         });
 
         timeHourSelect.addEventListener('change', refreshMinuteOptions);
