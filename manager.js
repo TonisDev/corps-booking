@@ -1736,7 +1736,8 @@ function selectedAppointments(ids) {
 function canDeleteAppointment(item) {
   if (!item) return false;
   if (item.status === 'BLOCKED') return true;
-  return item.status === 'REJECTED' || item.status === 'CANCELLED';
+  if (item.status === 'REJECTED' || item.status === 'CANCELLED') return true;
+  return isPastAppointment(item);
 }
 
 function renderBulkActions(ids) {
