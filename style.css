@@ -883,7 +883,7 @@ body.shop-info-open { overflow: hidden; }
     z-index: 40;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.65rem;
     max-height: min(18rem, 52vh);
     overflow: hidden;
     padding: 0.35rem;
@@ -907,9 +907,10 @@ body.shop-info-open { overflow: hidden; }
     width: 100%;
     min-height: 3.15rem;
     padding: 0.75rem 0.9rem;
-    border: 0;
+    border: 1px solid color-mix(in srgb, var(--text-color) 22%, var(--field-border));
     border-radius: 0.65rem;
-    background: transparent;
+    background: var(--field-bg);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
     color: var(--text-color);
     font: inherit;
     font-size: 1rem;
@@ -924,6 +925,7 @@ body.shop-info-open { overflow: hidden; }
   }
   .service-picker-item.is-on {
     background: color-mix(in srgb, var(--brand-color) 16%, var(--field-bg));
+    border-color: color-mix(in srgb, var(--brand-color) 55%, var(--field-border));
     color: var(--brand-color);
   }
   html.service-menu-open,
