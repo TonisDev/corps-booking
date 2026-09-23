@@ -48,7 +48,7 @@ let allAppointments = [];
 let currentListKind = 'all';
 let toastTimer;
 let searchRelaxed = true;
-let actionLock = false;
+let pendingResetToken = '';
 let lastUndo = null;
 let overlayStack = []; // ιστορικό Back: κάθε modal/drawer κάνει pushState
 let silentPop = 0;     // close από κουμπί → history.back() χωρίς διπλό κλείσιμο
@@ -76,15 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dismissTopOverlay()) e.preventDefault();
   });
 
-  if (currentBusinessCode && currentSessionToken) {
+  if (currentBusinessCode && currentSessionToken && !new URLSearchParams(location.search).get('reset')) {
     loadDashboard(currentBusinessCode);
   } else {
     const rememberEl = document.getElementById('rememberMe');
     if (rememberEl) rememberEl.checked = localStorage.getItem('remember_me') !== '0';
-    const preset = new URLSearchParams(location.search).get('code');
-    if (preset) {
-      document.getElementById('loginCode').value = preset;
-      document.getElementById('loginPass').focus();
+    const params = new URLSearchParams(location.search);
+    const resetToken = params.get('reset');
+    if (resetToken) {
+      pendingResetToken = resetToken;
+      history.replaceState({}, '', location.pathname);
+      showResetForm();
+    } else {
+      const preset = params.get('code');
+      if (preset) {
+        document.getElementById('loginCode').value = preset;
+        document.getElementById('loginPass').focus();
+      }
     }
   }
 });
@@ -260,10 +268,96 @@ async function handleLogin(event) {
     currentSessionToken = data.token;
     loadDashboard(code);
   } catch (err) {
+    errorEl.style.color = '#dc2626';
     errorEl.textContent = err.message;
     errorEl.style.display = 'block';
   } finally {
     actionLock = false;
+  }
+}
+
+function showLoginForm() {
+  document.getElementById('loginForm').style.display = '';
+  document.getElementById('forgotOpen').style.display = '';
+  document.getElementById('forgotForm').style.display = 'none';
+  document.getElementById('resetForm').style.display = 'none';
+}
+
+function showForgotForm() {
+  document.getElementById('forgotCode').value = document.getElementById('loginCode').value.trim();
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('forgotOpen').style.display = 'none';
+  document.getElementById('forgotForm').style.display = '';
+  document.getElementById('resetForm').style.display = 'none';
+  document.getElementById('forgotCode').focus();
+}
+
+function showResetForm() {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('forgotOpen').style.display = 'none';
+  document.getElementById('forgotForm').style.display = 'none';
+  document.getElementById('resetForm').style.display = '';
+  document.getElementById('resetPass').focus();
+}
+
+function showAuthNote(id, text, isError) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.color = isError ? '#dc2626' : '#166534';
+}
+
+async function handleForgotPassword(event) {
+  event.preventDefault();
+  const code = document.getElementById('forgotCode').value.trim().toLowerCase();
+  if (!code) {
+    showAuthNote('forgotMessage', 'Γράψε το business code.', true);
+    return;
+  }
+  try {
+    const res = await fetch(`${WORKER_URL}/api/admin/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ business_code: code })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Δεν στάλθηκε ο σύνδεσμος.');
+    showAuthNote('forgotMessage', data.message || 'Αν ο λογαριασμός έχει email, θα λάβεις σύνδεσμο.', false);
+  } catch (err) {
+    showAuthNote('forgotMessage', err.message || 'Δεν στάλθηκε ο σύνδεσμος.', true);
+  }
+}
+
+async function handleResetPassword(event) {
+  event.preventDefault();
+  const password = document.getElementById('resetPass').value;
+  const confirm = document.getElementById('resetPass2').value;
+  if (password.length < 8) {
+    showAuthNote('resetMessage', 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.', true);
+    return;
+  }
+  if (password !== confirm) {
+    showAuthNote('resetMessage', 'Οι κωδικοί δεν ταιριάζουν.', true);
+    return;
+  }
+  try {
+    const res = await fetch(`${WORKER_URL}/api/admin/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: pendingResetToken, password })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Ο κωδικός δεν άλλαξε.');
+    pendingResetToken = '';
+    if (data.business_code) document.getElementById('loginCode').value = data.business_code;
+    document.getElementById('loginPass').value = '';
+    showLoginForm();
+    const errorEl = document.getElementById('loginError');
+    errorEl.textContent = 'Ο κωδικός άλλαξε. Συνδέσου με τον νέο.';
+    errorEl.style.color = '#166534';
+    errorEl.style.display = 'block';
+  } catch (err) {
+    showAuthNote('resetMessage', err.message || 'Ο κωδικός δεν άλλαξε.', true);
   }
 }
 
@@ -287,6 +381,11 @@ async function loadDashboard(code) {
     const res = await adminFetch(`/api/${code}/admin/settings`);
     currentTenantData = await res.json();
     document.getElementById('storeTitle').innerText = currentTenantData.name;
+    const businessEmail = String(currentTenantData.email || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(businessEmail) && !sessionStorage.getItem('email_nudge_' + code)) {
+      sessionStorage.setItem('email_nudge_' + code, '1');
+      showToast('Βάλε email επιχείρησης στις ρυθμίσεις. Χωρίς αυτό δεν γίνεται ανάκτηση κωδικού.', true);
+    }
 
     populateServicesDropdown();
   } catch (e) {
@@ -1626,6 +1725,11 @@ async function saveSettings(e) {
   await withLock(async () => {
   const name = document.getElementById('setName').value.trim();
   const email = document.getElementById('setEmail').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Το email της επιχείρησης είναι υποχρεωτικό. Εκεί στέλνεται ο νέος κωδικός.', true);
+    document.getElementById('setEmail').focus();
+    return;
+  }
   const phone = document.getElementById('setPhone').value.trim();
   const address = document.getElementById('setAddress').value.trim();
   const logo_url = document.getElementById('setLogo').value.trim();
