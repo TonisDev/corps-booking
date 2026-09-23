@@ -50,6 +50,7 @@ let toastTimer;
 let searchRelaxed = true;
 let pendingResetToken = '';
 let lastUndo = null;
+let actionLock = false;
 let overlayStack = []; // ιστορικό Back: κάθε modal/drawer κάνει pushState
 let silentPop = 0;     // close από κουμπί → history.back() χωρίς διπλό κλείσιμο
 
