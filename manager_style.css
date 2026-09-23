@@ -124,6 +124,11 @@ button, input, select, textarea { font-family: inherit; }
   max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color);
   padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
+.login-quiet {
+  display: block; width: 100%; margin-top: 0.85rem; padding: 0.35rem 0;
+  background: none; border: 0; color: var(--text-muted); font: inherit; font-size: 0.85rem;
+  text-align: center; cursor: pointer; text-decoration: underline;
+}
 
 /* [SECTION: CSS-LISTS] */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
