@@ -194,6 +194,11 @@
             <label>Email επιχείρησης</label>
             <input class="field" type="email" id="setEmail" required placeholder="info@domain.gr" autocomplete="email">
             <p style="margin:0.35rem 0 0; color:var(--text-muted); font-size:0.78rem;">Υποχρεωτικό. Εδώ έρχεται ο σύνδεσμος αν ξεχάσεις τον κωδικό.</p>
+            <label class="remember-me" style="margin-top:0.65rem;">
+              <input type="checkbox" id="setEmailNotify" checked>
+              Email ενημερώσεις
+            </label>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Ένα email την προηγούμενη μέρα, με όλες τις συνεδρίες εκείνης της ημέρας. Τίποτα άλλο. Ξετσέκαρέ το αν δεν το θες.</p>
           </div>
           <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
         </div>
@@ -337,6 +342,17 @@
           <div class="form-group" style="margin:0; max-width: 280px;">
             <label>Chat ID</label>
             <input class="field" type="text" id="setTelegramChatId" inputmode="numeric" placeholder="123456789" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="help-box">
+          <h3>Google Calendar</h3>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Τα εγκεκριμένα ραντεβού μπαίνουν σε αυτό το ημερολόγιο. Η ειδοποίηση 24 ωρών δεν μπαίνει μόνη της στο συμβάν. Στο Google, άνοιξε τις ρυθμίσεις αυτού του ημερολογίου και βάλε ειδοποίηση 1 ημέρα πριν. Ισχύει για όλα τα συμβάντα του.</p>
+          <p id="calendarMissing" style="display:none; margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Χρειάζεται ενημέρωση της βάσης για να βγει ο σύνδεσμος.</p>
+          <input class="field readonly-url" id="calendarUrl" readonly>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
+            <a class="btn btn-outline" id="calendarGoogleLink" href="#" target="_blank" rel="noopener">Προσθήκη στο Google Calendar</a>
+            <button type="button" class="btn btn-outline" onclick="copyCalendarLink()">Αντιγραφή συνδέσμου</button>
           </div>
         </div>
 
@@ -597,7 +613,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260923e"></script>
+<script src="manager.js?v=20260924a"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="toast" role="status" aria-live="polite" style="position:fixed;right:1.25rem;bottom:1.25rem;left:auto;transform:none;z-index:99999;display:none;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-radius:0.85rem;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,0.28);max-width:min(22rem,calc(100vw - 1.5rem));">
