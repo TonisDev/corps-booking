@@ -34,14 +34,14 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260923a">
+    <link rel="stylesheet" href="manager_style.css?v=20260923b">
 </head>
 <body data-theme="light">
 
   <!-- [SECTION: HTML-LOGIN] -->
   <div id="loginScreen">
     <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="log-in" size="22"></i> Είσοδος διαχειριστή</h2>
-    <form onsubmit="handleLogin(event)">
+    <form id="loginForm" onsubmit="handleLogin(event)">
       <div class="form-group" style="margin-top: 1rem;">
         <label>Business Code / Slug</label>
         <input class="field" type="text" id="loginCode" placeholder="business-code" autocomplete="username" autocapitalize="none" spellcheck="false">
@@ -61,6 +61,30 @@
       </div>
       <div id="loginError" style="color:#dc2626; font-size:0.85rem; margin-bottom: 0.5rem; display:none;"></div>
       <button class="btn" type="submit" style="width:100%; justify-content:center; margin-top: 1rem;">Σύνδεση</button>
+    </form>
+    <button type="button" class="login-quiet" id="forgotOpen" onclick="showForgotForm()">Ξέχασα τον κωδικό</button>
+    <form id="forgotForm" onsubmit="handleForgotPassword(event)" style="display:none;">
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.4rem 0 0.8rem;">Γράψε το business code. Αν ο λογαριασμός έχει email, θα έρθει σύνδεσμος για νέο κωδικό.</p>
+      <div class="form-group">
+        <label>Business Code / Slug</label>
+        <input class="field" type="text" id="forgotCode" placeholder="business-code" autocomplete="username" autocapitalize="none" spellcheck="false">
+      </div>
+      <div id="forgotMessage" style="font-size:0.85rem; margin-bottom: 0.5rem; display:none;"></div>
+      <button class="btn" type="submit" style="width:100%; justify-content:center;">Αποστολή συνδέσμου</button>
+      <button type="button" class="login-quiet" onclick="showLoginForm()">Πίσω στη σύνδεση</button>
+    </form>
+    <form id="resetForm" onsubmit="handleResetPassword(event)" style="display:none;">
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.4rem 0 0.8rem;">Διάλεξε νέο κωδικό. Μετά συνδέσου με αυτόν.</p>
+      <div class="form-group">
+        <label>Νέος κωδικός</label>
+        <input class="field" type="password" id="resetPass" minlength="8" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Επιβεβαίωση</label>
+        <input class="field" type="password" id="resetPass2" minlength="8" autocomplete="new-password">
+      </div>
+      <div id="resetMessage" style="font-size:0.85rem; margin-bottom: 0.5rem; display:none;"></div>
+      <button class="btn" type="submit" style="width:100%; justify-content:center;">Αποθήκευση κωδικού</button>
     </form>
     <p style="color: var(--text-muted); font-size: 0.8rem; margin: 1.1rem 0 0; line-height: 1.45;">
       Από κινητό: άνοιξε αυτό το link, συνδέσου μία φορά, και μετά
@@ -166,7 +190,11 @@
           <input class="field" type="text" id="setName" required>
         </div>
         <div class="form-grid">
-          <div class="form-group"><label>Email</label><input class="field" type="email" id="setEmail"></div>
+          <div class="form-group">
+            <label>Email επιχείρησης</label>
+            <input class="field" type="email" id="setEmail" required placeholder="info@domain.gr" autocomplete="email">
+            <p style="margin:0.35rem 0 0; color:var(--text-muted); font-size:0.78rem;">Υποχρεωτικό. Εδώ έρχεται ο σύνδεσμος αν ξεχάσεις τον κωδικό.</p>
+          </div>
           <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
         </div>
         <div class="form-group">
@@ -300,7 +328,7 @@
           <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">
             1) Άνοιξε το bot (δεν χρειάζεσαι token).<br>
             2) Πάτα <strong>Έναρξη / Start</strong>.<br>
-            3) Αντιγράψε το Chat ID που σου στέλνει και αποθήκευσε το εδώ.
+            3) Αντίγραψε το Chat ID που σου στέλνει και αποθήκευσε το εδώ.
             Κενό = χωρίς ειδοποιήσεις.
           </p>
           <p id="telegramBotLinkWrap" style="margin:0 0 0.7rem; display:none;">
@@ -324,7 +352,7 @@
 
         <div class="help-box">
           <h3>Αλλαγή κωδικού</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Αλλάζεις τον κωδικό σου. Αν τον χάσεις, ο super admin μπορεί ακόμα να κάνει reset.</p>
+          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Αλλάζεις τον κωδικό σου. Αν τον χάσεις, στην είσοδο πάτα «Ξέχασα τον κωδικό». Ο σύνδεσμος πάει στο email της επιχείρησης. Μπορεί και ο super admin να βάλει νέο κωδικό.</p>
           <div class="form-group">
             <label>Τρέχων κωδικός</label>
             <input class="field" type="password" id="currentPassword" autocomplete="current-password">
@@ -569,7 +597,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260923b"></script>
+<script src="manager.js?v=20260923d"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="toast" role="status" aria-live="polite" style="position:fixed;right:1.25rem;bottom:1.25rem;left:auto;transform:none;z-index:99999;display:none;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-radius:0.85rem;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,0.28);max-width:min(22rem,calc(100vw - 1.5rem));">
