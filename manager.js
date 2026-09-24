@@ -1731,21 +1731,34 @@ function clockPart(value) {
   return { hour, minute };
 }
 
-function clockSelects(value, kind) {
+function shiftClock(value, kind) {
   const picked = clockPart(value);
-  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-  const minutes = ['00', '15', '30', '45'];
+  const minutes = ['00', '30'];
   if (!minutes.includes(picked.minute)) minutes.push(picked.minute);
-  const options = (list, selected) => list.map((item) => `<option value="${item}"${item === selected ? ' selected' : ''}>${item}</option>`).join('');
-  return `<select class="field shift-${kind}-h">${options(hours, picked.hour)}</select><span>:</span><select class="field shift-${kind}-m">${options(minutes.sort(), picked.minute)}</select>`;
+  const hourBtns = Array.from({ length: 24 }, (_, i) => {
+    const hour = String(i).padStart(2, '0');
+    return `<button type="button" class="shift-tick${hour === picked.hour ? ' is-on' : ''}" data-h="${hour}">${hour}</button>`;
+  }).join('');
+  const minuteBtns = minutes.map((minute) => `<button type="button" class="shift-tick${minute === picked.minute ? ' is-on' : ''}" data-m="${minute}">${minute}</button>`).join('');
+  return `
+    <div class="shift-clock" data-kind="${kind}">
+      <button type="button" class="shift-clock-btn">${picked.hour}:${picked.minute}</button>
+      <div class="shift-clock-panel" hidden>
+        <div class="shift-clock-col">${hourBtns}</div>
+        <div class="shift-clock-col shift-clock-mins">${minuteBtns}</div>
+      </div>
+      <input type="hidden" class="shift-${kind}-h" value="${picked.hour}">
+      <input type="hidden" class="shift-${kind}-m" value="${picked.minute}">
+    </div>`;
 }
 
 function shiftRowHtml(start, end) {
   return `
     <div class="shift-row">
-      <span style="font-size:0.8rem; color:var(--text-muted);">Από</span> ${clockSelects(start, 'start')}
-      <span style="font-size:0.8rem; color:var(--text-muted);">Έως</span> ${clockSelects(end, 'end')}
+      <span class="shift-k">Από</span> ${shiftClock(start, 'start')}
+      <span class="shift-k">Έως</span> ${shiftClock(end, 'end')}
       <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
+      <p class="shift-foul" hidden>Η λήξη είναι πριν την έναρξη.</p>
     </div>
   `;
 }
@@ -1757,6 +1770,7 @@ function fillShiftList(listId, shifts) {
   (shifts && shifts.length ? shifts : [{ start: '09:00', end: '21:00' }]).forEach(sh => {
     list.insertAdjacentHTML('beforeend', shiftRowHtml(sh.start || '09:00', sh.end || '17:00'));
   });
+  list.querySelectorAll('.shift-row').forEach(markShiftRow);
 }
 
 function collectShifts(listEl) {
@@ -1773,6 +1787,56 @@ function collectShifts(listEl) {
 function invalidShift(shifts) {
   return (shifts || []).find((shift) => shift.end <= shift.start) || null;
 }
+
+function markShiftRow(row) {
+  if (!row) return;
+  const start = `${row.querySelector('.shift-start-h')?.value || ''}:${row.querySelector('.shift-start-m')?.value || ''}`;
+  const end = `${row.querySelector('.shift-end-h')?.value || ''}:${row.querySelector('.shift-end-m')?.value || ''}`;
+  const bad = /^\d{2}:\d{2}$/.test(start) && /^\d{2}:\d{2}$/.test(end) && end <= start;
+  row.classList.toggle('is-bad', bad);
+  const note = row.querySelector('.shift-foul');
+  if (note) note.hidden = !bad;
+}
+
+function closeShiftClocks(except) {
+  document.querySelectorAll('.shift-clock-panel').forEach((panel) => {
+    if (panel !== except) panel.hidden = true;
+  });
+}
+
+document.addEventListener('click', (event) => {
+  const tick = event.target.closest('.shift-tick');
+  const opener = event.target.closest('.shift-clock-btn');
+  if (!tick && !opener) {
+    closeShiftClocks(null);
+    return;
+  }
+  const clock = event.target.closest('.shift-clock');
+  const row = clock && clock.closest('.shift-row');
+  if (opener && clock) {
+    const panel = clock.querySelector('.shift-clock-panel');
+    const open = panel.hidden;
+    closeShiftClocks(null);
+    panel.hidden = !open;
+    if (open) panel.querySelector('.is-on')?.scrollIntoView({ block: 'nearest' });
+    return;
+  }
+  if (!tick || !clock || !row) return;
+  const hour = tick.getAttribute('data-h');
+  const minute = tick.getAttribute('data-m');
+  const kind = clock.getAttribute('data-kind');
+  if (hour) clock.querySelector(`.shift-${kind}-h`).value = hour;
+  if (minute) clock.querySelector(`.shift-${kind}-m`).value = minute;
+  const h = clock.querySelector(`.shift-${kind}-h`).value;
+  const m = clock.querySelector(`.shift-${kind}-m`).value;
+  clock.querySelector('.shift-clock-btn').textContent = `${h}:${m}`;
+  clock.querySelectorAll('.shift-tick').forEach((btn) => {
+    const on = (hour && btn.getAttribute('data-h') === hour) || (minute && btn.getAttribute('data-m') === minute);
+    if (btn.hasAttribute(hour ? 'data-h' : 'data-m')) btn.classList.toggle('is-on', on);
+  });
+  if (minute) clock.querySelector('.shift-clock-panel').hidden = true;
+  markShiftRow(row);
+});
 
 function addShiftRow(listId) {
   const list = document.getElementById(listId);
@@ -1892,7 +1956,7 @@ async function saveSettings(e) {
   const allShifts = Array.isArray(working_hours) ? working_hours : Object.values(working_hours).flat();
   const badShift = invalidShift(allShifts);
   if (badShift) {
-    showToast(`Η βάρδια ${badShift.start}–${badShift.end} τελειώνει πριν ξεκινήσει. Το μεσημέρι είναι 12:30, τα μεσάνυχτα 00:30.`, true);
+    showToast(`Η βάρδια ${badShift.start}–${badShift.end} τελειώνει πριν ξεκινήσει.`, true);
     return;
   }
 
