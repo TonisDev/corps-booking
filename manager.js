@@ -156,6 +156,20 @@ function managerLoginUrl(code) {
   return page.toString();
 }
 
+async function copyCalendarLink() {
+  const url = document.getElementById('calendarUrl').value.trim();
+  if (!url) {
+    showToast('Ο σύνδεσμος ημερολογίου δεν είναι έτοιμος.', true);
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Ο σύνδεσμος ημερολογίου αντιγράφηκε.');
+  } catch (err) {
+    prompt('Αντιγραφή:', url);
+  }
+}
+
 async function copyManagerLink() {
   const url = managerLoginUrl();
   try {
@@ -394,9 +408,59 @@ async function loadDashboard(code) {
   }
 
   if (!calendar) initCalendar();
-  fetchAppointments();
+  fetchAppointments().then(() => {
+    lastPendingCount = Number(document.getElementById('statPending').innerText) || 0;
+    markDashFresh();
+  });
+  startDashAutoRefresh();
   renderAdminQr();
   lucide.createIcons();
+}
+
+let lastPendingCount = null;
+let dashTimer = 0;
+
+function markDashFresh() {
+  const el = document.getElementById('dashFresh');
+  if (!el) return;
+  el.textContent = new Date().toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function startDashAutoRefresh() {
+  if (dashTimer) clearInterval(dashTimer);
+  dashTimer = setInterval(() => {
+    if (document.visibilityState === 'hidden' || !currentBusinessCode) return;
+    refreshDashboard(true);
+  }, 60000);
+}
+
+async function refreshDashboard(silent) {
+  if (!currentBusinessCode) return;
+  const btn = document.getElementById('refreshDashBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/settings`);
+    if (res.ok) {
+      currentTenantData = await res.json();
+      const title = document.getElementById('storeTitle');
+      if (title) title.innerText = currentTenantData.name || '';
+      populateServicesDropdown();
+    }
+    await fetchAppointments();
+    const pending = Number(document.getElementById('statPending').innerText) || 0;
+    const pill = document.getElementById('pendingNew');
+    const arrived = lastPendingCount !== null && pending > lastPendingCount;
+    if (pill) pill.hidden = !arrived;
+    lastPendingCount = pending;
+    markDashFresh();
+    if (arrived && silent) showToast('Νέο αίτημα.');
+    else if (!silent) showToast('Ενημερώθηκε.');
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast('Η ανανέωση δεν ολοκληρώθηκε.', true);
+  } finally {
+    if (btn) btn.disabled = false;
+    lucide.createIcons();
+  }
 }
 
 function renderAdminQr() {
@@ -1075,6 +1139,10 @@ function toggleSearchMode() {
 }
 
 function openAppointmentList(kind) {
+  if (kind === 'pending') {
+    const pill = document.getElementById('pendingNew');
+    if (pill) pill.hidden = true;
+  }
   currentListKind = kind;
   const titles = {
     all: 'Συνολικά ραντεβού',
@@ -1463,6 +1531,8 @@ function openSettingsModal() {
   if (!currentTenantData) return;
   document.getElementById('setName').value = currentTenantData.name || '';
   document.getElementById('setEmail').value = currentTenantData.email || '';
+  const emailNotify = document.getElementById('setEmailNotify');
+  if (emailNotify) emailNotify.checked = currentTenantData.email_notify !== false;
   document.getElementById('setPhone').value = currentTenantData.phone || '';
   document.getElementById('setAddress').value = currentTenantData.address || '';
   document.getElementById('setLogo').value = currentTenantData.logo_url || '';
@@ -1497,6 +1567,17 @@ function openSettingsModal() {
     botWrap.style.display = 'none';
   }
   document.getElementById('managerMobileUrl').value = managerLoginUrl();
+  const calendarUrl = document.getElementById('calendarUrl');
+  const calendarLink = document.getElementById('calendarGoogleLink');
+  const calendarMissing = document.getElementById('calendarMissing');
+  const ics = currentTenantData.calendar_url || '';
+  if (calendarUrl) calendarUrl.value = ics;
+  if (calendarLink) {
+    calendarLink.href = currentTenantData.google_calendar_url || '#';
+    calendarLink.style.display = ics ? '' : 'none';
+  }
+  if (calendarMissing) calendarMissing.style.display = ics ? 'none' : 'block';
+  if (calendarUrl) calendarUrl.style.display = ics ? '' : 'none';
   document.getElementById('currentPassword').value = '';
   document.getElementById('newPassword').value = '';
   document.getElementById('newPassword2').value = '';
@@ -1796,7 +1877,8 @@ async function saveSettings(e) {
         name, email, phone, address, logo_url, brand_color,
         client_theme, booking_subtitle, welcome_text, success_message,
         work_days, working_hours, services,
-        buffer_minutes, telegram_chat_id, form_fields
+        buffer_minutes, telegram_chat_id, form_fields,
+        email_notify: document.getElementById('setEmailNotify').checked
       })
     });
 
