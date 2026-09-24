@@ -18,6 +18,8 @@
 /* [SECTION: CSS-PAGE] — χωρίς μόνιμο halo· ανάβει στο hover της κάρτας */
 html { color-scheme: light; }
 .hidden { display: none !important; }
+.submit-spin { width: 1.25rem; height: 1.25rem; color: #fff; animation: submit-spin 0.8s linear infinite; }
+@keyframes submit-spin { to { transform: rotate(360deg); } }
 body {
   margin: 0;
   min-height: 100vh;
@@ -542,7 +544,7 @@ select:disabled, .time-dropdown-btn:disabled {
   border: 1px solid var(--field-border);
   box-shadow: 0 0 28px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 18px 40px rgba(15, 23, 42, 0.16);
 }
-.time-col { flex: 1; max-height: 8.6rem; overflow-y: auto; text-align: center; }
+.time-col { flex: 1; max-height: 16rem; overflow-y: auto; text-align: center; }
 .time-rollers > span {
   display: flex;
   align-items: center;
