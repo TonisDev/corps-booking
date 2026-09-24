@@ -47,7 +47,7 @@ let pendingSlot = null;
 let allAppointments = [];
 let currentListKind = 'all';
 let toastTimer;
-let searchRelaxed = true;
+let searchRelaxed = false;
 let pendingResetToken = '';
 let lastUndo = null;
 let actionLock = false;
@@ -1145,7 +1145,10 @@ function matchesQuery(item, q) {
 function toggleSearchMode() {
   searchRelaxed = !searchRelaxed;
   const btn = document.getElementById('searchModeBtn');
-  if (btn) btn.textContent = searchRelaxed ? 'Χαλαρό' : 'Ακριβές';
+  if (btn) {
+    btn.classList.toggle('is-on', searchRelaxed);
+    btn.setAttribute('aria-pressed', searchRelaxed ? 'true' : 'false');
+  }
   renderAppointmentList();
 }
 
