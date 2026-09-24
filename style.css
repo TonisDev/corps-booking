@@ -534,7 +534,7 @@ select:disabled, .time-dropdown-btn:disabled {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(100% + 0.4rem);
+  top: calc(100% + 0.35rem);
   z-index: 30;
   display: flex;
   gap: 0.25rem;
