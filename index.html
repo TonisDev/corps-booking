@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260922g">
+    <link rel="stylesheet" href="style.css?v=20260924a">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -1000,6 +1000,24 @@
             return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}&ctz=Europe/Athens`;
         }
 
+        function showSuccessDialog(text, calendarUrl) {
+            const modal = document.getElementById('successModal');
+            document.getElementById('successText').textContent = text;
+            const calendar = document.getElementById('successCalendar');
+            if (calendarUrl) {
+                calendar.href = calendarUrl;
+                calendar.classList.remove('hidden');
+            } else {
+                calendar.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+            document.getElementById('successOk').focus();
+        }
+
+        function closeSuccessDialog() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
         function revealBookingResponse() {
             responseContainer.classList.remove('hidden');
             const card = responseContainer.closest('.booking-card');
@@ -1073,17 +1091,11 @@
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok) {
-                    responseMessage.className = 'text-green-600';
-                    responseMessage.textContent = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
-
-                    if (data.status === 'WAITLIST' || isRequestMode()) {
-                        gcalBtn.classList.add('hidden');
-                    } else {
-                        const gcalUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
-                        gcalBtn.href = gcalUrl;
-                        gcalBtn.classList.remove('hidden');
+                    const successText = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
+                    let calendarUrl = '';
+                    if (data.status !== 'WAITLIST' && !isRequestMode()) {
+                        calendarUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
                     }
-
                     bookingForm.reset();
                     resetTimePickers();
                     hideWaitlistBox();
@@ -1093,7 +1105,9 @@
                     slotHint.className = 'field-help';
                     document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης';
                     fp.clear();
-                    revealBookingResponse();
+                    responseContainer.classList.add('hidden');
+                    gcalBtn.classList.add('hidden');
+                    showSuccessDialog(successText, calendarUrl);
                 } else {
                     responseMessage.className = 'text-red-600';
                     responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
@@ -1142,6 +1156,14 @@
 
         initPage();
     </script>
+    <div id="successModal" class="success-modal hidden">
+        <div class="success-card" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+            <h2 id="successTitle">Επιτυχία</h2>
+            <p id="successText"></p>
+            <a id="successCalendar" href="#" target="_blank" rel="noopener" class="hidden">Προσθήκη στο Google Calendar</a>
+            <button type="button" id="successOk" onclick="closeSuccessDialog()">ΟΚ</button>
+        </div>
+    </div>
     <div id="shopInfoModal" class="shop-info-modal hidden" onclick="if (event.target === this) closeShopInfo()">
         <div class="shop-info-card" role="dialog" aria-modal="true" aria-labelledby="shopInfoTitle">
             <h2 id="shopInfoTitle">Πληροφορίες</h2>
