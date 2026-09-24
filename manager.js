@@ -420,7 +420,7 @@ async function loadDashboard(code) {
 
   if (!calendar) initCalendar();
   fetchAppointments().then(() => {
-    lastPendingCount = Number(document.getElementById('statPending').innerText) || 0;
+    lastPendingCount = Number(document.getElementById('statPending').dataset.open) || 0;
     markDashFresh();
   });
   startDashAutoRefresh();
@@ -458,7 +458,7 @@ async function refreshDashboard(silent) {
       populateServicesDropdown();
     }
     await fetchAppointments();
-    const pending = Number(document.getElementById('statPending').innerText) || 0;
+    const pending = Number(document.getElementById('statPending').dataset.open) || 0;
     const pill = document.getElementById('pendingNew');
     const arrived = lastPendingCount !== null && pending > lastPendingCount;
     if (pill) pill.hidden = !arrived;
@@ -944,11 +944,12 @@ async function fetchAppointments() {
     const data = await res.json();
     allAppointments = Array.isArray(data) ? data : [];
 
-    let pending = 0, booked = 0, history = 0;
+    let pending = 0, waitlist = 0, booked = 0, history = 0;
     calendar.removeAllEvents();
 
     allAppointments.forEach(item => {
-      if (item.status === 'PENDING' || item.status === 'WAITLIST') pending++;
+      if (item.status === 'PENDING') pending++;
+      if (item.status === 'WAITLIST') waitlist++;
       if (item.status === 'BOOKED' || item.status === 'CONFIRMED') {
         if (!isPastAppointment(item)) booked++;
       }
@@ -977,7 +978,14 @@ async function fetchAppointments() {
 
     const realAppointments = allAppointments.filter(item => item.status !== 'BLOCKED');
     document.getElementById('statTotal').innerText = realAppointments.length;
-    document.getElementById('statPending').innerText = pending;
+    const pendingEl = document.getElementById('statPending');
+    const waitEl = document.getElementById('statWaitlist');
+    pendingEl.innerText = pending;
+    pendingEl.dataset.open = String(pending + waitlist);
+    if (waitEl) {
+      waitEl.textContent = `ουρά ${waitlist}`;
+      waitEl.hidden = waitlist < 1;
+    }
     document.getElementById('statBooked').innerText = booked;
     document.getElementById('statHistory').innerText = history;
     renderTodayList();
