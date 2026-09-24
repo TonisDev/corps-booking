@@ -1213,7 +1213,7 @@ function renderAppointmentList() {
   list.innerHTML = rows.map(item => `
     <div class="apt-row" data-id="${escapeHtml(item.id)}">
       <input type="checkbox" class="bulk-check" data-id="${escapeHtml(item.id)}" onclick="event.stopPropagation(); syncBulkBar()">
-      <button type="button" style="background:none;border:none;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer;">
+        <button type="button" class="apt-row-main">
         <div style="font-weight:600;">
           <span class="client-name-btn" data-phone="${escapeHtml(item.customer_phone || '')}">${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</span>
         </div>
@@ -1223,7 +1223,7 @@ function renderAppointmentList() {
           ${item.customer_phone ? ' · ' + escapeHtml(item.customer_phone) : ''}
         </div>
       </button>
-      <div style="display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end;">${statusBadge(item)}</div>
+      <div class="apt-badges">${statusBadge(item)}</div>
     </div>
   `).join('');
 
