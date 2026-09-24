@@ -1724,11 +1724,27 @@ function closeModal(id) {
 
 const DAY_LABELS = { 0: 'Κυριακή', 1: 'Δευτέρα', 2: 'Τρίτη', 3: 'Τετάρτη', 4: 'Πέμπτη', 5: 'Παρασκευή', 6: 'Σάββατο' };
 
+function clockPart(value) {
+  const match = String(value || '').match(/(\d{1,2}):(\d{2})/);
+  const hour = match ? String(Math.min(23, Number(match[1]))).padStart(2, '0') : '09';
+  const minute = match ? match[2] : '00';
+  return { hour, minute };
+}
+
+function clockSelects(value, kind) {
+  const picked = clockPart(value);
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const minutes = ['00', '15', '30', '45'];
+  if (!minutes.includes(picked.minute)) minutes.push(picked.minute);
+  const options = (list, selected) => list.map((item) => `<option value="${item}"${item === selected ? ' selected' : ''}>${item}</option>`).join('');
+  return `<select class="field shift-${kind}-h">${options(hours, picked.hour)}</select><span>:</span><select class="field shift-${kind}-m">${options(minutes.sort(), picked.minute)}</select>`;
+}
+
 function shiftRowHtml(start, end) {
   return `
     <div class="shift-row">
-      <span style="font-size:0.8rem; color:var(--text-muted);">Από:</span> <input class="field" type="time" value="${start}">
-      <span style="font-size:0.8rem; color:var(--text-muted);">Έως:</span> <input class="field" type="time" value="${end}">
+      <span style="font-size:0.8rem; color:var(--text-muted);">Από</span> ${clockSelects(start, 'start')}
+      <span style="font-size:0.8rem; color:var(--text-muted);">Έως</span> ${clockSelects(end, 'end')}
       <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
     </div>
   `;
@@ -1747,12 +1763,15 @@ function collectShifts(listEl) {
   const hours = [];
   if (!listEl) return hours;
   listEl.querySelectorAll('.shift-row').forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    if (inputs[0] && inputs[1] && inputs[0].value && inputs[1].value) {
-      hours.push({ start: inputs[0].value.slice(0, 5), end: inputs[1].value.slice(0, 5) });
-    }
+    const start = `${row.querySelector('.shift-start-h')?.value || ''}:${row.querySelector('.shift-start-m')?.value || ''}`;
+    const end = `${row.querySelector('.shift-end-h')?.value || ''}:${row.querySelector('.shift-end-m')?.value || ''}`;
+    if (/^\d{2}:\d{2}$/.test(start) && /^\d{2}:\d{2}$/.test(end)) hours.push({ start, end });
   });
   return hours;
+}
+
+function invalidShift(shifts) {
+  return (shifts || []).find((shift) => shift.end <= shift.start) || null;
 }
 
 function addShiftRow(listId) {
@@ -1868,6 +1887,13 @@ async function saveSettings(e) {
   } else {
     working_hours = collectShifts(document.getElementById('setShiftsList'));
     if (!working_hours.length) working_hours = [{ start: '09:00', end: '21:00' }];
+  }
+
+  const allShifts = Array.isArray(working_hours) ? working_hours : Object.values(working_hours).flat();
+  const badShift = invalidShift(allShifts);
+  if (badShift) {
+    showToast(`Η βάρδια ${badShift.start}–${badShift.end} τελειώνει πριν ξεκινήσει. Το μεσημέρι είναι 12:30, τα μεσάνυχτα 00:30.`, true);
+    return;
   }
 
   let services = [];
