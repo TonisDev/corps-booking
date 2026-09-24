@@ -137,6 +137,9 @@ button, input, select, textarea { font-family: inherit; }
 .stat-card.clickable { cursor: pointer; text-align: left; width: 100%; font: inherit; color: inherit; }
 .stat-card.clickable:hover { border-color: #4f46e5; background: color-mix(in srgb, #4f46e5 6%, var(--card-bg)); }
 .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 0.25rem; }
+.stat-pending-row { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; }
+.stat-wait { color: #7c3aed; font-size: 1.15rem; }
+.stat-wait[hidden] { display: none !important; }
 .dash-fresh { color: var(--text-muted); font-size: 0.75rem; align-self: center; }
 .new-pill {
   display: inline-flex;
