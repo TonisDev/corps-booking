@@ -24,19 +24,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://npmcdn.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://corporate-bookings.tonisdevv.workers.dev">
     <title id="pageTitle">Κράτηση Ραντεβού</title>
     <script>
         document.documentElement.dataset.mode = new URLSearchParams(location.search).get('business_code') ? 'book' : 'home';
         if (document.documentElement.dataset.mode === 'home') document.title = 'Σύστημα κρατήσεων';
     </script>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260924a">
+    <link rel="stylesheet" href="style.css?v=20260924e">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -335,7 +334,7 @@
 
             <button type="submit" id="submitBtn">
                 <span id="submitBtnText">Υποβολή Αιτήματος Κράτησης</span>
-                <svg id="submitSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg id="submitSpinner" class="submit-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -518,7 +517,6 @@
             const shifts = getShiftsForDate(dateStr);
             const slots = [];
             const step = 30;
-            const dur = duration || 60;
             const blockedRanges = (blocked || []).map((occ) => ({
                 start: timeToMinutes(occ.start_time),
                 end: timeToMinutes(occ.end_time)
@@ -526,8 +524,7 @@
             shifts.forEach((shift) => {
                 const alignedStart = Math.ceil(shift.start / step) * step;
                 for (let mins = alignedStart; mins < shift.end; mins += step) {
-                    const slotEnd = mins + dur;
-                    const hit = blockedRanges.some((r) => mins < r.end && slotEnd > r.start);
+                    const hit = blockedRanges.some((r) => mins >= r.start && mins < r.end);
                     if (!hit) slots.push(minutesToTime(mins));
                 }
             });
@@ -548,7 +545,8 @@
                 return;
             }
             fillHourOptions(availableSlots);
-            slotHint.textContent = hint;
+            const windows = getShiftsForDate(dateStr).map((shift) => `${minutesToTime(shift.start)}–${minutesToTime(shift.end)}`);
+            slotHint.textContent = windows.length ? `Ωράριο: ${windows.join(', ')}. ${hint}` : hint;
             slotHint.className = asWaitlist ? 'field-help field-help-wait' : 'field-help';
         }
 
@@ -665,7 +663,7 @@
             if (!business_code) return;
 
             try {
-                const res = await fetch(`${API_BASE_URL}/api/${business_code}/info`);
+                const res = await fetch(`${API_BASE_URL}/api/${business_code}/info`, { cache: 'no-store' });
                 let payload = {};
                 try { payload = await res.json(); } catch (e) {}
                 if (!res.ok) {
@@ -896,7 +894,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/${business_code}/availability?date=${dateStr}`);
+                const response = await fetch(`${API_BASE_URL}/api/${business_code}/availability?date=${dateStr}`, { cache: 'no-store' });
                 if (!response.ok) throw new Error('Availability request failed');
                 const data = await response.json();
 
@@ -915,9 +913,7 @@
                 }
 
                 if (isRequestMode()) {
-                    const blocked = (data.occupied || []).filter((occ) =>
-                      occ.status === 'BLOCKED' || occ.status === 'BOOKED' || occ.status === 'CONFIRMED'
-                    );
+                    const blocked = (data.occupied || []).filter((occ) => occ.status === 'BLOCKED');
                     fillPreferredTimes(
                       'Προτιμώμενη ώρα μέσα στο ωράριο — δεν δεσμεύεται αυτόματα.',
                       false,
@@ -971,7 +967,17 @@
                 }
 
                 fillHourOptions(freeSlots);
-                slotHint.textContent = `Διαθέσιμες ώρες: ${freeSlots.length} (ανά μισάωρο).`;
+                const windows = shifts.map((shift) => `${minutesToTime(shift.start)}–${minutesToTime(shift.end)}`);
+                const missed = shifts.filter((shift) => !freeSlots.some((slot) => {
+                    const mins = timeToMinutes(slot);
+                    return mins >= shift.start && mins < shift.end;
+                }));
+                const missedNote = missed.map((shift) => {
+                    const label = `${minutesToTime(shift.start)}–${minutesToTime(shift.end)}`;
+                    if (duration > shift.end - shift.start) return `${label} δεν χωράει την υπηρεσία (${duration} λεπτά)`;
+                    return `${label} είναι κατειλημμένη`;
+                }).join('. ');
+                slotHint.textContent = `Ωράριο: ${windows.join(', ')}. Διαθέσιμες: ${freeSlots.length}.${missedNote ? ' ' + missedNote + '.' : ''}`;
                 slotHint.className = 'field-help field-help-ok';
 
             } catch (err) {
