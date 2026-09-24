@@ -35,7 +35,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260924d">
+    <link rel="stylesheet" href="manager_style.css?v=20260924h">
 </head>
 <body data-theme="light">
 
@@ -551,7 +551,7 @@
       </div>
       <div class="list-filters">
         <input class="field" type="search" id="listSearch" placeholder="Αναζήτηση ονόματος, τηλεφώνου, υπηρεσίας..." oninput="renderAppointmentList()">
-        <button type="button" class="btn btn-outline" id="searchModeBtn" onclick="toggleSearchMode()" title="Ακριβές ή χαλαρό ταίριασμα">Χαλαρό</button>
+        <button type="button" class="btn btn-outline" id="searchModeBtn" onclick="toggleSearchMode()" title="Πιο γενική αναζήτηση, αν δεν θυμάσαι ακριβώς κάποιο στοιχείο." aria-pressed="false">Στο περίπου</button>
         <select class="field" id="listStatusFilter" onchange="renderAppointmentList()">
           <option value="">Όλες οι καταστάσεις</option>
           <option value="PENDING">Εκκρεμή</option>
@@ -621,7 +621,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260924g"></script>
+<script src="manager.js?v=20260924h"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
