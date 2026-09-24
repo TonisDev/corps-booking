@@ -701,6 +701,63 @@ select:disabled, .time-dropdown-btn:disabled {
   background: rgba(15, 23, 42, 0.55);
 }
 .shop-info-modal.hidden { display: none !important; }
+.success-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+  background: rgba(15, 23, 42, 0.55);
+}
+.success-modal.hidden { display: none !important; }
+.success-card {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 1.15rem;
+  padding: 1.45rem 1.35rem 1.2rem;
+  width: min(22rem, 100%);
+  text-align: center;
+  box-shadow: 0 0 60px color-mix(in srgb, var(--brand-color) 22%, transparent), 0 24px 48px rgba(0,0,0,0.2);
+}
+.success-card h2 {
+  font-size: 1.2rem;
+  margin: 0 0 0.65rem;
+  color: var(--text-color) !important;
+}
+#successText {
+  margin: 0 0 1.1rem;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+#successCalendar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  margin-bottom: 0.65rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--border-color);
+  color: var(--text-color) !important;
+  text-decoration: none;
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+#successCalendar.hidden { display: none !important; }
+#successOk {
+  width: 100%;
+  min-height: 2.85rem;
+  border: 0;
+  border-radius: 0.8rem;
+  background: var(--brand-color);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
 .shop-info-card {
   background: var(--card-bg);
   color: var(--text-color);
