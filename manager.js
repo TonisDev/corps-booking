@@ -275,7 +275,9 @@ async function handleLogin(event) {
     const data = await res.json();
 
     if (!res.ok || !data.token) {
-      throw new Error(data.error || (res.status === 429 ? 'Πολλές προσπάθειες. Περίμενε λίγο.' : 'Αποτυχία σύνδεσης'));
+      const failure = new Error(data.error || (res.status === 429 ? 'Πολλές προσπάθειες. Περίμενε λίγο.' : 'Αποτυχία σύνδεσης'));
+      failure.warning = Boolean(data.warning);
+      throw failure;
     }
 
     writeAuth(code, data.token, remember);
@@ -283,7 +285,7 @@ async function handleLogin(event) {
     currentSessionToken = data.token;
     loadDashboard(code);
   } catch (err) {
-    errorEl.style.color = '#dc2626';
+    errorEl.style.color = err.warning ? '#b45309' : '#dc2626';
     errorEl.textContent = err.message;
     errorEl.style.display = 'block';
   } finally {
@@ -453,7 +455,7 @@ async function refreshDashboard(silent) {
     if (pill) pill.hidden = !arrived;
     lastPendingCount = pending;
     markDashFresh();
-    if (arrived && silent) showToast('Νέο αίτημα.');
+    if (arrived && silent) showNewNotice();
     else if (!silent) showToast('Ενημερώθηκε.');
   } catch (err) {
     if (err.message !== 'Unauthorized') showToast('Η ανανέωση δεν ολοκληρώθηκε.', true);
@@ -1735,7 +1737,7 @@ function collectShifts(listEl) {
   listEl.querySelectorAll('.shift-row').forEach(row => {
     const inputs = row.querySelectorAll('input');
     if (inputs[0] && inputs[1] && inputs[0].value && inputs[1].value) {
-      hours.push({ start: inputs[0].value, end: inputs[1].value });
+      hours.push({ start: inputs[0].value.slice(0, 5), end: inputs[1].value.slice(0, 5) });
     }
   });
   return hours;
@@ -2056,6 +2058,15 @@ function openClientDrawer(phone, name) {
 
 function closeClientDrawer() {
   closeOverlay('drawer', 'clientDrawer');
+}
+
+let newNoticeTimer;
+function showNewNotice() {
+  const el = document.getElementById('newToast');
+  if (!el) return;
+  el.hidden = false;
+  clearTimeout(newNoticeTimer);
+  newNoticeTimer = setTimeout(() => { el.hidden = true; }, 7000);
 }
 
 // [SECTION: JS-TOAST] — αναίρεση επαναφέρει previous_status
