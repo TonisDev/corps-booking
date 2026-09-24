@@ -118,6 +118,15 @@ async function adminFetch(pathAndQuery, options = {}) {
     handleLogout('Η συνεδρία έληξε ή δεν είναι έγκυρη. Παρακαλώ συνδεθείτε ξανά.');
     throw new Error('Unauthorized');
   }
+  if (res.status === 403) {
+    let message = 'Ο λογαριασμός είναι σε παύση. Ο πίνακας είναι κλειστός.';
+    try {
+      const data = await res.clone().json();
+      if (data && data.error) message = data.error;
+    } catch (err) {}
+    handleLogout(message);
+    throw new Error(message);
+  }
   return res;
 }
 
@@ -455,7 +464,7 @@ async function refreshDashboard(silent) {
     if (pill) pill.hidden = !arrived;
     lastPendingCount = pending;
     markDashFresh();
-    if (arrived && silent) showNewNotice();
+    if (arrived) showNewNotice();
     else if (!silent) showToast('Ενημερώθηκε.');
   } catch (err) {
     if (err.message !== 'Unauthorized') showToast('Η ανανέωση δεν ολοκληρώθηκε.', true);
@@ -2064,7 +2073,13 @@ let newNoticeTimer;
 function showNewNotice() {
   const el = document.getElementById('newToast');
   if (!el) return;
+  document.body.appendChild(el);
   el.hidden = false;
+  el.style.position = 'fixed';
+  el.style.right = '1.25rem';
+  el.style.left = 'auto';
+  el.style.bottom = document.getElementById('toast')?.classList.contains('show') ? '5.6rem' : '1.25rem';
+  el.style.zIndex = '100000';
   clearTimeout(newNoticeTimer);
   newNoticeTimer = setTimeout(() => { el.hidden = true; }, 7000);
 }
