@@ -1150,6 +1150,25 @@ function matchesQuery(item, q) {
   return needle.split(/\s+/).filter(Boolean).every((part) => hay.includes(part));
 }
 
+function syncSearchModeBtn(show) {
+  const input = document.getElementById('listSearch');
+  const btn = document.getElementById('searchModeBtn');
+  if (!input || !btn) return;
+  if (show === true) {
+    btn.hidden = false;
+    return;
+  }
+  const apply = () => {
+    const active = document.activeElement;
+    btn.hidden = active !== input && active !== btn;
+  };
+  if (show === false) {
+    setTimeout(apply, 0);
+    return;
+  }
+  apply();
+}
+
 function toggleSearchMode() {
   searchRelaxed = !searchRelaxed;
   const btn = document.getElementById('searchModeBtn');
@@ -1181,6 +1200,7 @@ function openAppointmentList(kind) {
   document.getElementById('listTitle').textContent = titles[kind] || 'Ραντεβού';
   document.getElementById('listSubtitle').textContent = subtitles[kind] || '';
   document.getElementById('listSearch').value = '';
+  syncSearchModeBtn();
   document.getElementById('listStatusFilter').value = '';
   document.getElementById('listStatusFilter').style.display = kind === 'pending' || kind === 'booked' ? 'none' : 'block';
   openModal('listModal');
