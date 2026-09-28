@@ -1451,7 +1451,7 @@ async function deleteAppointment() {
       closeModal('actionModal');
       lastUndo = current ? { type: 'delete', id: current.id, snapshot: current } : null;
       showToast('Το ραντεβού διαγράφηκε.', false, true);
-      fetchAppointments();
+      await fetchAppointments();
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα διαγραφής.', true);
     }
@@ -1479,7 +1479,7 @@ async function restoreAppointments(snapshots, message) {
       }
       selectedEventId = rows[0].id;
       showToast(message || 'Η διαγραφή αναιρέθηκε.');
-      fetchAppointments();
+      await fetchAppointments();
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα αναίρεσης.', true);
     }
