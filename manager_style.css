@@ -1,18 +1,3 @@
-/* =============================================================================
- * MANAGER_STYLE.CSS — εμφάνιση πίνακα διαχειριστή
- * Συνδέεται από public/manager.html
- * ΝΕΟ CHAT: @public/manager_style.css + όνομα ενότητας
- * Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
- *
- *   CSS-THEME      light/dark μεταβλητές + φόντο σελίδας
- *   CSS-LAYOUT     header, κάρτες, κουμπιά, στατιστικά
- *   CSS-LISTS      λίστες ραντεβού, badges, bulk bar
- *   CSS-MODALS     παράθυρα (συμπαγές background)
- *   CSS-APPEARANCE προεπισκόπηση θέματος φόρμας πελάτη
- *   CSS-CALENDAR   FullCalendar dark
- *   CSS-MOBILE     < 760px
- * ============================================================================= */
-
 /* [SECTION: CSS-THEME] */
 :root, html[data-theme="light"], body[data-theme="light"] {
     --bg-color: #f8fafc;
@@ -217,7 +202,7 @@ button, input, select, textarea { font-family: inherit; }
 .overlap-suggestions { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom: 0.65rem; }
 .settings-save-bar { position: sticky; bottom: 0; display:flex; justify-content:flex-end; gap: 0.75rem; margin-top: 1.5rem; padding: 0.85rem 0 0; background: var(--card-bg); }
 .support-strip { margin: 1.25rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
-.support-strip span { font-weight: 600; user-select: all; }
+.support-strip a { color: inherit; font-weight: 600; user-select: all; }
 .client-drawer { display:none; position:fixed; top:0; right:0; width:min(380px,100%); height:100%; background: var(--card-bg); color: var(--text-color); border-left: 1px solid var(--border-color); z-index: 150; padding: 1.25rem; overflow-y: auto; box-shadow: -12px 0 30px rgba(0,0,0,0.12); }
 .client-drawer.open { display:flex; flex-direction: column; }
 .client-drawer-head { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom: 1rem; }
