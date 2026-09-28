@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260928h">
+    <link rel="stylesheet" href="style.css?v=20260929a">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -112,20 +112,38 @@
         </header>
 
         <section class="home-hero">
-            <h1>Κράτηση ραντεβού για το κατάστημά σου</h1>
-            <p>Ο πελάτης ανοίγει έναν σύνδεσμο και στέλνει αίτημα. Το βλέπεις στον πίνακα και το εγκρίνεις, το απορρίπτεις ή αλλάζεις την ώρα. Η ώρα δεν κλείνει μόνη της.</p>
-            <ul class="home-points">
-                <li>Χωρίς εφαρμογή. Ο πελάτης δεν φτιάχνει λογαριασμό.</li>
-                <li>Το ωράριο, τις υπηρεσίες και τις κλειστές ώρες τα βάζεις εσύ.</li>
-                <li>Το κατάστημα δεν μπαίνει σε κατάλογο μαζί με άλλα.</li>
-            </ul>
+            <h1>Ραντεβού για το κατάστημα, από έναν σύνδεσμο</h1>
+            <p>Ο πελάτης ανοίγει τη σελίδα και ζητάει ώρα. Το αίτημα φαίνεται στον πίνακα. Από εκεί εγκρίνεται, απορρίπτεται ή αλλάζει ώρα. Η θέση κλείνει μόνο μετά την έγκριση. Χωρίς εφαρμογή και χωρίς λογαριασμό για τον πελάτη.</p>
+        </section>
+
+        <section class="home-samples" aria-label="Παράδειγμα">
+            <figure class="home-sample">
+                <figcaption>Αυτό συμπληρώνει ο πελάτης</figcaption>
+                <div class="home-sample-card">
+                    <strong>Το κατάστημα</strong>
+                    <label>Όνομα<input readonly tabindex="-1" value="Μαρία Παπαδοπούλου"></label>
+                    <label>Υπηρεσία<input readonly tabindex="-1" value="Μασάζ 60′"></label>
+                    <label>Ημέρα<input readonly tabindex="-1" value="Δευτέρα 5 Οκτωβρίου"></label>
+                    <label>Ώρα<input readonly tabindex="-1" value="19:30"></label>
+                    <span class="home-sample-btn">Αίτημα ραντεβού</span>
+                </div>
+            </figure>
+            <figure class="home-sample">
+                <figcaption>Αυτό φαίνεται στον πίνακα</figcaption>
+                <div class="home-sample-card home-sample-desk">
+                    <div class="home-sample-row"><span>19:30 · Μαρία Παπαδοπούλου</span><em class="is-wait">Εκκρεμεί</em></div>
+                    <div class="home-sample-row"><span>18:00 · Νίκος Αλεξίου</span><em class="is-ok">Εγκρίθηκε</em></div>
+                    <div class="home-sample-row"><span>20:15 · Ελένη Δημητρίου</span><em class="is-move">Αλλαγή ώρας</em></div>
+                    <p>Η ώρα μένει ελεύθερη μέχρι την έγκριση.</p>
+                </div>
+            </figure>
         </section>
 
         <section class="home-close" id="aitima">
             <div class="home-request">
                 <div>
-                    <h2>Αίτημα εγκατάστασης</h2>
-                    <p>Γράψε όνομα, κατάστημα και τηλέφωνο ή email. Απαντάω εγώ. Αλλιώς στείλε μήνυμα στο <span class="home-mail">tonisdevv@gmail.com</span>.</p>
+                    <h2>Θέλεις κι εσύ αυτό το σύστημα;</h2>
+                    <p>Συμπλήρωσε τη φόρμα.</p>
                     <form id="leadForm" class="home-lead">
                         <div class="home-honey" aria-hidden="true">
                             <input type="text" name="website" tabindex="-1" autocomplete="off">
@@ -134,7 +152,7 @@
                         <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
                         <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
                         <label>Email<input name="email" type="email" maxlength="120" autocomplete="email"></label>
-                        <p class="home-lead-hint">Βάλε τηλέφωνο ή email, για να απαντήσω.</p>
+                        <p class="home-lead-hint">Τηλέφωνο ή email.</p>
                         <button type="submit">Υποβολή αιτήματος</button>
                         <p id="leadStatus" class="home-lead-status" role="status"></p>
                     </form>
