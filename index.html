@@ -1,26 +1,5 @@
 <!DOCTYPE html>
 <html lang="el">
-<!--
-  =============================================================================
-  INDEX.HTML — χωρίς ?business_code = αρχική · με slug = φόρμα κράτησης
-  URL: https://tonisdev.github.io/corps-booking/
-       https://tonisdev.github.io/corps-booking/?business_code=SLUG
-
-  ΝΕΟ CHAT: @public/index.html  +  όνομα ενότητας.
-  Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
-
-    THEME-CSS       θέματα light/dark/warm/ocean
-    LANDING-HTML    αρχική για καταστηματάρχες
-    FORM-HTML       φόρμα πελάτη
-    JS-SETUP        API URL, τιμή υπηρεσίας, θέμα
-    JS-WAITLIST     CTA όταν η μέρα είναι γεμάτη
-    JS-REQUEST      αίτημα ραντεβού + blocked slots
-    JS-TIME         ένα dropdown, δύο ρολάκια ώρας/λεπτών
-    JS-INIT         φόρτωση επιχείρησης + flatpickr
-    JS-SLOTS        διαθεσιμότητα ωρών (classic slots)
-    JS-SUBMIT       αποστολή κράτησης
-  =============================================================================
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -190,7 +169,6 @@
         <!-- Φόρμα Κράτησης -->
         <form id="bookingForm" class="booking-fields hidden">
 
-            <!-- Honeypot field κατά spam -->
             <div style="display:none !important;">
                 <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
             </div>
