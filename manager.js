@@ -235,7 +235,7 @@ async function changeOwnPassword() {
 
 function openPublicPage() {
   if (!currentBusinessCode) return;
-  const url = `https://tonisdev.github.io/corps-booking/?business_code=${currentBusinessCode}`;
+  const url = `https://quickbook.gr/?business_code=${currentBusinessCode}`;
   window.open(url, '_blank');
 }
 
