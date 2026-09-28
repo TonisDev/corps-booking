@@ -96,7 +96,22 @@ button, input, select, textarea { font-family: inherit; }
 .btn-danger:hover { background: #dc2626; }
 .btn-outline { background: var(--card-bg); border: 1px solid var(--field-border); color: var(--text-color); }
 .btn-outline:hover { background: var(--border-color); }
+.list-search { position: relative; min-width: 0; display: flex; gap: 0.5rem; align-items: center; }
+.list-search .field { flex: 1; min-width: 0; }
+#searchModeBtn { position: relative; flex: none; }
+#searchModeBtn[hidden] { display: none !important; }
 #searchModeBtn.is-on { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+.search-mode-tip {
+  position: absolute; left: 0; top: calc(100% + 0.35rem); z-index: 6;
+  width: max-content; max-width: 16rem;
+  padding: 0.4rem 0.55rem; border-radius: 0.45rem;
+  background: #0f172a; color: #fff;
+  font-size: 0.75rem; font-weight: 500; line-height: 1.35; text-align: left;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  opacity: 0; pointer-events: none;
+}
+#searchModeBtn:hover .search-mode-tip,
+#searchModeBtn:focus-visible .search-mode-tip { opacity: 1; }
 .btn-warning { background: #ea580c; color: #fff; }
 .btn-warning:hover { background: #c2410c; }
 .btn-quiet-danger {
@@ -156,7 +171,7 @@ button, input, select, textarea { font-family: inherit; }
   max-width: min(820px, calc(100vw - 2rem));
   overflow-x: hidden;
 }
-.list-filters { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 180px); gap: 0.75rem; margin: 1rem 0; align-items: center; }
+.list-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 180px); gap: 0.75rem; margin: 1rem 0; align-items: center; }
 .apt-list { display: flex; flex-direction: column; gap: 0.85rem; max-height: 55vh; overflow-x: hidden; overflow-y: auto; }
 .apt-day-group { display: flex; flex-direction: column; gap: 0.4rem; }
 .apt-day {
