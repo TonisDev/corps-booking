@@ -1,22 +1,5 @@
 <!DOCTYPE html>
 <html lang="el" data-theme="light">
-<!--
-  =============================================================================
-  MANAGER.HTML — πίνακας διαχειριστή (GitHub Pages)
-  URL: https://tonisdev.github.io/corps-booking/manager.html
-
-  ΝΕΟ CHAT: @public/manager.html  +  όνομα ενότητας.
-  Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
-
-    CSS            στο manager_style.css (μην βάζεις <style> εδώ)
-    JS             στο manager.js (μην βάζεις <script> λογικής εδώ)
-    HTML-LOGIN      οθόνη σύνδεσης
-    HTML-DASH       στατιστικά, σήμερα, ημερολόγιο, support
-    HTML-SETTINGS   ρυθμίσεις (το Αποθήκευση είναι στο τέλος της φόρμας)
-    HTML-MODALS     νέα κράτηση / block / λίστα / ενέργειες ραντεβού
-    HTML-CLIENT     πλευρικό ιστορικό πελάτη + toast undo
-  =============================================================================
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -555,7 +538,7 @@
       <div class="list-filters">
         <div class="list-search">
           <input class="field" type="search" id="listSearch" placeholder="Αναζήτηση ονόματος, τηλεφώνου, υπηρεσίας..." oninput="renderAppointmentList()" onfocus="syncSearchModeBtn(true)" onblur="syncSearchModeBtn(false)">
-          <button type="button" class="btn btn-outline" id="searchModeBtn" hidden onclick="toggleSearchMode()" onmousedown="event.preventDefault()" aria-pressed="false">
+          <button type="button" class="btn btn-outline" id="searchModeBtn" hidden onclick="toggleSearchMode()" onmousedown="event.preventDefault()" onfocus="syncSearchModeBtn(true)" onblur="syncSearchModeBtn(false)" aria-pressed="false">
             Στο περίπου
             <span class="search-mode-tip">Πιο χαλαρή αναζήτηση, αν δεν θυμάσαι ακριβώς το όνομα ή το τηλέφωνο.</span>
           </button>
@@ -629,7 +612,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260928f"></script>
+<script src="manager.js?v=20260928i"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
