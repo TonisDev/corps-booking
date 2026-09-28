@@ -1198,10 +1198,16 @@ function escapeHtml(value) {
 function renderAppointmentList() {
   const q = (document.getElementById('listSearch').value || '').trim();
   const status = document.getElementById('listStatusFilter').value;
+  const dayDir = currentListKind === 'booked' || currentListKind === 'pending' ? 1 : -1;
+  const showBadge = currentListKind === 'all' || currentListKind === 'history';
   const rows = appointmentsForKind(currentListKind)
     .filter(item => !status || item.status === status)
     .filter(item => matchesQuery(item, q))
-    .sort((a, b) => `${b.date}T${b.start_time || ''}`.localeCompare(`${a.date}T${a.start_time || ''}`));
+    .sort((a, b) => {
+      const byDay = String(a.date || '').localeCompare(String(b.date || '')) * dayDir;
+      if (byDay) return byDay;
+      return String(a.start_time || '').localeCompare(String(b.start_time || ''));
+    });
 
   const list = document.getElementById('aptList');
   if (!rows.length) {
@@ -1210,21 +1216,33 @@ function renderAppointmentList() {
     return;
   }
 
-  list.innerHTML = rows.map(item => `
-    <div class="apt-row" data-id="${escapeHtml(item.id)}">
-      <input type="checkbox" class="bulk-check" data-id="${escapeHtml(item.id)}" onclick="event.stopPropagation(); syncBulkBar()">
-        <button type="button" class="apt-row-main">
-        <div style="font-weight:600;">
-          <span class="client-name-btn" data-phone="${escapeHtml(item.customer_phone || '')}">${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</span>
+  const groups = [];
+  rows.forEach((item) => {
+    const last = groups[groups.length - 1];
+    if (!last || last.date !== item.date) groups.push({ date: item.date, items: [item] });
+    else last.items.push(item);
+  });
+
+  list.innerHTML = groups.map((group) => `
+    <section class="apt-day-group">
+      <h3 class="apt-day">${escapeHtml(formatLongGreekDate(group.date))} · ${group.items.length}</h3>
+      ${group.items.map((item) => `
+        <div class="apt-row" data-id="${escapeHtml(item.id)}">
+          <input type="checkbox" class="bulk-check" data-id="${escapeHtml(item.id)}" onclick="event.stopPropagation(); syncBulkBar()">
+          <div class="apt-time">${escapeHtml(appointmentTimeLabel(item).slice(0, 5))}</div>
+          <button type="button" class="apt-row-main">
+            <div style="font-weight:650;">
+              <span class="client-name-btn" data-phone="${escapeHtml(item.customer_phone || '')}">${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</span>
+            </div>
+            <div class="apt-row-meta">
+              ${escapeHtml(item.service_name || '-')}
+              ${item.customer_phone ? ' · ' + escapeHtml(item.customer_phone) : ''}
+            </div>
+          </button>
+          ${showBadge ? `<div class="apt-badges">${statusBadge(item)}</div>` : ''}
         </div>
-        <div class="apt-row-meta">
-          ${formatGreekDate(item.date)} · ${escapeHtml(item.start_time || '-')}–${escapeHtml(item.end_time || '-')}
-          · ${escapeHtml(item.service_name || '-')}
-          ${item.customer_phone ? ' · ' + escapeHtml(item.customer_phone) : ''}
-        </div>
-      </button>
-      <div class="apt-badges">${statusBadge(item)}</div>
-    </div>
+      `).join('')}
+    </section>
   `).join('');
 
   list.querySelectorAll('.apt-row').forEach(row => {
