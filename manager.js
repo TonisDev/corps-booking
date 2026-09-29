@@ -1,24 +1,5 @@
-/* =============================================================================
- * MANAGER.JS — λογική πίνακα διαχειριστή
- * Συνδέεται από public/manager.html
- * ΝΕΟ CHAT: @public/manager.js + όνομα ενότητας
- * Αναζήτησε:  [SECTION: ΟΝΟΜΑ]
- *
- *   JS-SETUP        Worker URL, τιμή υπηρεσίας, adminFetch
- *   JS-AUTH         login / logout / session
- *   JS-CALENDAR     FullCalendar + κλικ σε slot
- *   JS-LISTS        εγκεκριμένα (μέλλον) / ιστορικό / fuzzy search
- *   JS-ACTIONS      έγκριση, overlap, reschedule, ακύρωση ≠ απόρριψη
- *   JS-SETTINGS     αποθήκευση ρυθμίσεων
- *   JS-BULK         μαζική ακύρωση
- *   JS-CLIENT       drawer πελάτη
- *   JS-OVERLAY      Back του κινητού κλείνει modal/drawer, όχι την αρχική
- *   JS-TOAST        αναίρεση τελευταίας κατάστασης
- * ============================================================================= */
-
 // [SECTION: JS-SETUP]
 const WORKER_URL = "https://corporate-bookings.tonisdevv.workers.dev";
-const SUPER_ADMIN_EMAIL = "tonisdevv@gmail.com";
 
 function parseOptionalPrice(raw) {
   if (raw === null || raw === undefined || raw === '') return null;
@@ -57,11 +38,6 @@ let silentPop = 0;     // close από κουμπί → history.back() χωρί�
 document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('admin_theme') || 'light';
   setAdminTheme(savedTheme);
-  const support = document.getElementById('supportLink');
-  if (support) {
-    support.textContent = SUPER_ADMIN_EMAIL;
-  }
-
   document.querySelectorAll('.appearance-input, input[name="clientTheme"], #setName').forEach(control => {
     control.addEventListener('input', updateAppearancePreview);
     control.addEventListener('change', updateAppearancePreview);
@@ -331,6 +307,47 @@ function showAuthNote(id, text, isError) {
   el.textContent = text;
   el.style.display = 'block';
   el.style.color = isError ? '#dc2626' : '#166534';
+}
+
+function toggleSupportForm() {
+  const form = document.getElementById('supportForm');
+  form.hidden = !form.hidden;
+  if (!form.hidden) document.getElementById('supportMessage').focus();
+}
+
+async function sendSupportMessage(event) {
+  event.preventDefault();
+  const note = document.getElementById('supportNote');
+  const message = document.getElementById('supportMessage').value.trim();
+  note.hidden = true;
+  if (message.length < 4) {
+    note.hidden = false;
+    note.style.color = '#dc2626';
+    note.textContent = 'Γράψε ένα σύντομο μήνυμα.';
+    return;
+  }
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/support`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json().catch(() => ({}));
+    note.hidden = false;
+    if (!res.ok) {
+      note.style.color = '#dc2626';
+      note.textContent = data.error || 'Το μήνυμα δεν στάλθηκε.';
+      return;
+    }
+    note.style.color = '#166534';
+    note.textContent = data.message || 'Το μήνυμα στάλθηκε.';
+    document.getElementById('supportMessage').value = '';
+  } catch (err) {
+    if (err && err.message === 'Unauthorized') return;
+    note.hidden = false;
+    note.style.color = '#dc2626';
+    note.textContent = 'Το μήνυμα δεν στάλθηκε.';
+  }
 }
 
 async function handleForgotPassword(event) {
