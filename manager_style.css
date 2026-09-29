@@ -203,6 +203,11 @@ button, input, select, textarea { font-family: inherit; }
 .settings-save-bar { position: sticky; bottom: 0; display:flex; justify-content:flex-end; gap: 0.75rem; margin-top: 1.5rem; padding: 0.85rem 0 0; background: var(--card-bg); }
 .support-strip { margin: 1.25rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .support-strip a { color: inherit; font-weight: 600; user-select: all; }
+.support-box { margin-top: 0.35rem; }
+.support-open { margin-top: 0.55rem; }
+#supportForm { display: grid; gap: 0.55rem; max-width: 28rem; margin-top: 0.7rem; }
+#supportForm[hidden] { display: none; }
+#supportNote { margin: 0; font-size: 0.85rem; }
 .client-drawer { display:none; position:fixed; top:0; right:0; width:min(380px,100%); height:100%; background: var(--card-bg); color: var(--text-color); border-left: 1px solid var(--border-color); z-index: 150; padding: 1.25rem; overflow-y: auto; box-shadow: -12px 0 30px rgba(0,0,0,0.12); }
 .client-drawer.open { display:flex; flex-direction: column; }
 .client-drawer-head { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom: 1rem; }
