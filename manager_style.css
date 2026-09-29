@@ -203,6 +203,8 @@ button, input, select, textarea { font-family: inherit; }
 .settings-save-bar { position: sticky; bottom: 0; display:flex; justify-content:flex-end; gap: 0.75rem; margin-top: 1.5rem; padding: 0.85rem 0 0; background: var(--card-bg); }
 .support-strip { margin: 1.25rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .support-strip a { color: inherit; font-weight: 600; user-select: all; }
+.billing-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+#billingBox[hidden], .billing-actions[hidden], #billingPortal[hidden] { display: none !important; }
 .support-box { margin-top: 0.35rem; }
 .support-open { margin-top: 0.55rem; }
 #supportForm { display: grid; gap: 0.55rem; max-width: 28rem; margin-top: 0.7rem; }
