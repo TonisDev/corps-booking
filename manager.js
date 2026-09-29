@@ -898,6 +898,42 @@ function applyCalendarEventTitles() {
   });
 }
 
+let calendarTouch = null;
+let calendarIgnoreClickUntil = 0;
+
+function bindCalendarSwipe(calendarEl) {
+  calendarEl.addEventListener('touchstart', (event) => {
+    if (!managerIsPhone() || !event.touches || event.touches.length !== 1) {
+      calendarTouch = null;
+      return;
+    }
+    const touch = event.touches[0];
+    calendarTouch = { x: touch.clientX, y: touch.clientY };
+  }, { passive: true });
+
+  calendarEl.addEventListener('touchend', (event) => {
+    const start = calendarTouch;
+    calendarTouch = null;
+    if (!start || !calendar || !managerIsPhone()) return;
+    const touch = event.changedTouches && event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy)) return;
+    calendarIgnoreClickUntil = Date.now() + 500;
+    if (dx < 0) calendar.next();
+    else calendar.prev();
+  }, { passive: true });
+
+  calendarEl.addEventListener('touchcancel', () => {
+    calendarTouch = null;
+  }, { passive: true });
+}
+
+function calendarClickIgnored() {
+  return Date.now() < calendarIgnoreClickUntil;
+}
+
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
   const phone = managerIsPhone();
@@ -935,6 +971,7 @@ function initCalendar() {
       }
     },
     eventClick: info => {
+      if (calendarClickIgnored()) return;
       if (isPhoneDayGrid(info.view.type)) {
         info.jsEvent.preventDefault();
         openSlotChoice({ date: info.event.start, view: { type: info.view.type } });
@@ -945,7 +982,10 @@ function initCalendar() {
       });
       openAppointmentDetails(item);
     },
-    dateClick: info => openSlotChoice(info),
+    dateClick: info => {
+      if (calendarClickIgnored()) return;
+      openSlotChoice(info);
+    },
     datesSet: () => {
       if (!calendar) return;
       const nextHeight = calendarHeight();
@@ -958,6 +998,7 @@ function initCalendar() {
     windowResize: applyCalendarLayout
   });
   calendar.render();
+  bindCalendarSwipe(calendarEl);
 }
 
 async function fetchAppointments() {
