@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260929b">
+    <link rel="stylesheet" href="manager_style.css?v=20260929c">
 </head>
 <body data-theme="light">
 
@@ -170,7 +170,15 @@
           </aside>
         </div>
       </div>
-      <p class="support-strip">Υποστήριξη: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+      <div class="support-box">
+        <p class="support-strip">Υποστήριξη: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+        <button type="button" class="btn btn-outline support-open" onclick="toggleSupportForm()">Γράψε μήνυμα</button>
+        <form id="supportForm" hidden onsubmit="sendSupportMessage(event)">
+          <textarea class="field" id="supportMessage" rows="3" maxlength="2000" required placeholder="Τι χρειάζεσαι;"></textarea>
+          <button class="btn" type="submit">Αποστολή</button>
+          <p id="supportNote" hidden></p>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -613,7 +621,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260929a"></script>
+<script src="manager.js?v=20260929b"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
