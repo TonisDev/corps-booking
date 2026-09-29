@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260929c">
+    <link rel="stylesheet" href="manager_style.css?v=20260929d">
 </head>
 <body data-theme="light">
 
@@ -369,6 +369,16 @@
           </div>
         </div>
 
+        <div class="help-box" id="billingBox" hidden>
+          <h3>Συνδρομή</h3>
+          <p id="billingText" style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;"></p>
+          <div class="billing-actions" id="billingStart">
+            <button type="button" class="btn" onclick="startBilling('month')">Μηνιαία</button>
+            <button type="button" class="btn btn-outline" onclick="startBilling('year')">Ετήσια</button>
+          </div>
+          <button type="button" class="btn btn-outline" id="billingPortal" hidden onclick="openBillingPortal()">Διαχείριση συνδρομής</button>
+        </div>
+
         <div class="help-box">
           <h3>Αλλαγή κωδικού</h3>
           <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Αλλάζεις τον κωδικό σου. Αν τον χάσεις, στην είσοδο πάτα «Ξέχασα τον κωδικό». Ο σύνδεσμος πάει στο email της επιχείρησης. Μπορεί και ο super admin να βάλει νέο κωδικό.</p>
@@ -621,7 +631,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260929b"></script>
+<script src="manager.js?v=20260929c"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
