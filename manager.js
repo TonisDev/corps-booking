@@ -429,6 +429,11 @@ async function loadDashboard(code) {
       sessionStorage.setItem('email_nudge_' + code, '1');
       showToast('Βάλε email επιχείρησης στις ρυθμίσεις. Χωρίς αυτό δεν γίνεται ανάκτηση κωδικού.', true);
     }
+    const billingFlag = new URLSearchParams(location.search).get('billing');
+    if (billingFlag) {
+      history.replaceState({}, '', location.pathname);
+      showToast(billingFlag === 'ok' ? 'Η πληρωμή καταχωρήθηκε.' : 'Η πληρωμή ακυρώθηκε.', billingFlag !== 'ok');
+    }
 
     populateServicesDropdown();
   } catch (e) {
@@ -1603,6 +1608,59 @@ async function handleBlockSlot(e) {
   }
 }
 
+function billingStatusText(data) {
+  const end = data.billing_period_end ? new Date(data.billing_period_end) : null;
+  const until = end && !Number.isNaN(end.getTime())
+    ? end.toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+  const plan = data.billing_plan === 'year' ? 'ετήσια' : (data.billing_plan === 'month' ? 'μηνιαία' : '');
+  if (data.billing_status === 'active' || data.billing_status === 'trialing') {
+    return `Η συνδρομή είναι ενεργή${plan ? ' (' + plan + ')' : ''}${until ? '. Ισχύει ως ' + until : ''}.`;
+  }
+  if (data.billing_status === 'past_due') return 'Η πληρωμή εκκρεμεί. Η σελίδα κρατήσεων μένει ανοιχτή.';
+  if (data.billing_status === 'unpaid') return 'Η συνδρομή είναι απλήρωτη. Η σελίδα κρατήσεων είναι κλειστή.';
+  if (data.billing_status === 'canceled') return 'Η συνδρομή ακυρώθηκε. Η σελίδα κρατήσεων είναι κλειστή.';
+  return 'Διάλεξε μηνιαία ή ετήσια συνδρομή. Η τιμή φαίνεται στη σελίδα πληρωμής.';
+}
+
+function renderBillingBox() {
+  const box = document.getElementById('billingBox');
+  if (!box || !currentTenantData) return;
+  const on = currentTenantData.billing_enabled === true;
+  box.hidden = !on;
+  if (!on) return;
+  document.getElementById('billingText').textContent = billingStatusText(currentTenantData);
+  const live = currentTenantData.billing_status === 'active' || currentTenantData.billing_status === 'past_due' || currentTenantData.billing_status === 'trialing';
+  document.getElementById('billingStart').hidden = live;
+  document.getElementById('billingPortal').hidden = !live;
+}
+
+async function startBilling(plan) {
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/billing/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.url) throw new Error(data.error || 'Η πληρωμή δεν ξεκίνησε.');
+    location.href = data.url;
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message, true);
+  }
+}
+
+async function openBillingPortal() {
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/billing/portal`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.url) throw new Error(data.error || 'Η διαχείριση δεν άνοιξε.');
+    location.href = data.url;
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message, true);
+  }
+}
+
 // [SECTION: JS-SETTINGS]
 function openSettingsModal() {
   if (!currentTenantData) return;
@@ -1624,6 +1682,7 @@ function openSettingsModal() {
     r.checked = r.value === savedTheme;
   });
   document.getElementById('setBuffer').value = currentTenantData.buffer_minutes || 0;
+  renderBillingBox();
   const fields = formFieldsFromTenant(currentTenantData);
   document.getElementById('formFieldPhone').checked = fields.phone;
   document.getElementById('formFieldEmail').checked = fields.email;
