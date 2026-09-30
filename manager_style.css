@@ -206,6 +206,40 @@ button, input, select, textarea { font-family: inherit; }
 .billing-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 #billingBox[hidden], .billing-actions[hidden], #billingPortal[hidden] { display: none !important; }
 .support-box { margin-top: 0.35rem; }
+.platform-notice {
+  margin: 0 0 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #c7d2fe;
+  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+  color: #1e293b;
+}
+.platform-notice[hidden], .billing-warn-banner[hidden] { display: none !important; }
+.platform-notice-body {
+  white-space: pre-wrap;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+.platform-notice-meta {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #c7d2fe;
+  font-size: 0.8rem;
+  color: #475569;
+}
+.platform-notice-sign { font-weight: 700; color: #312e81; }
+.platform-notice-contact { margin-top: 0.15rem; }
+.billing-warn-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #78350f;
+}
+.billing-warn-banner strong { display: block; margin-bottom: 0.25rem; }
+.billing-warn-banner p { margin: 0; font-size: 0.86rem; line-height: 1.45; }
 .support-open { margin-top: 0.55rem; }
 #supportForm { display: grid; gap: 0.55rem; max-width: 28rem; margin-top: 0.7rem; }
 #supportForm[hidden] { display: none; }
