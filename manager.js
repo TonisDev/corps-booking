@@ -1397,7 +1397,7 @@ function openAppointmentDetails(item) {
       <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
       <div class="detail-row"><span class="detail-k">Ώρα</span> <strong class="detail-v">${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
       <div class="detail-row"><span class="detail-k">Κατάσταση</span> <strong class="detail-v">${statusLabel(item.status)}</strong></div>
-      ${holdLabel(item.hold_status) ? `<div class="detail-row"><span class="detail-k">Κάρτα</span> <strong class="detail-v">${escapeHtml(holdLabel(item.hold_status))}${item.hold_cents ? ` · ${(Number(item.hold_cents) / 100).toFixed(2)}€` : ''}</strong></div>` : ''}
+      ${holdLabel(item.hold_status, item) ? `<div class="detail-row"><span class="detail-k">Κάρτα</span> <strong class="detail-v">${escapeHtml(holdLabel(item.hold_status, item))}${item.hold_cents ? ` · ${(Number(item.hold_cents) / 100).toFixed(2)}€` : ''}</strong></div>` : ''}
       ${pastNote}
       ${waitlistNote}
       ${requestNote}
@@ -1490,12 +1490,13 @@ async function updateStatus(status, extra) {
   });
 }
 
-function holdLabel(status) {
+function holdLabel(status, item) {
+  if (status === 'captured' && item && item.pay_mode === 'online') return 'Πληρωμένη online';
   return {
     awaiting_card: 'Αναμονή κάρτας',
-    authorized: 'Δεσμευμένη',
+    authorized: 'Δέσμευση φερεγγυότητας',
     card_saved: 'Κάρτα αποθηκευμένη, η δέσμευση μπαίνει λίγες μέρες πριν',
-    captured: 'Χρεωμένη',
+    captured: 'Χρεωμένη δέσμευση',
     released: 'Αποδεσμευμένη',
     refunded: 'Επιστράφηκε',
     failed: 'Η δέσμευση απέτυχε'
@@ -1789,6 +1790,12 @@ function openSettingsModal() {
   if (emailNotify) emailNotify.checked = currentTenantData.email_notify !== false;
   const clientHold = document.getElementById('setClientHold');
   if (clientHold) clientHold.checked = currentTenantData.client_hold_enabled === true;
+  const payOnline = document.getElementById('setPayOnline');
+  if (payOnline) payOnline.checked = currentTenantData.pay_online_enabled !== false;
+  const payShop = document.getElementById('setPayShop');
+  if (payShop) payShop.checked = currentTenantData.pay_shop_enabled !== false;
+  const depositPct = document.getElementById('setDepositPercent');
+  if (depositPct) depositPct.value = currentTenantData.deposit_percent || 50;
   const cancelHours = document.getElementById('setCancelHours');
   if (cancelHours) cancelHours.value = currentTenantData.cancel_hours === 0 ? 0 : (currentTenantData.cancel_hours || 24);
   renderConnectStatus();
@@ -2230,6 +2237,9 @@ async function saveSettings(e) {
         buffer_minutes, telegram_chat_id, form_fields,
         email_notify: document.getElementById('setEmailNotify').checked,
         client_hold_enabled: document.getElementById('setClientHold') ? document.getElementById('setClientHold').checked : false,
+        pay_online_enabled: document.getElementById('setPayOnline') ? document.getElementById('setPayOnline').checked : true,
+        pay_shop_enabled: document.getElementById('setPayShop') ? document.getElementById('setPayShop').checked : true,
+        deposit_percent: document.getElementById('setDepositPercent') ? Number(document.getElementById('setDepositPercent').value) : 50,
         cancel_hours: document.getElementById('setCancelHours') ? Number(document.getElementById('setCancelHours').value) : 24
       })
     });
