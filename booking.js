@@ -333,9 +333,9 @@
             shopBtn.hidden = !shopOn;
             document.getElementById('payOptOnlineTitle').textContent = `Πληρωμή online · ${euros}€`;
             document.getElementById('payOptOnlineDesc').textContent = 'Χρεώνεται τώρα ολόκληρο το ποσό στην κάρτα σου.';
-            document.getElementById('payOptShopTitle').textContent = `Πληρωμή στο κατάστημα · δέσμευση ${hold}€`;
+            document.getElementById('payOptShopTitle').textContent = `Εγγύηση Κράτησης · ${hold}€`;
             document.getElementById('payOptShopDesc').textContent =
-                `Πράξη φερεγγυότητας (${pct}%): δεν πληρώνεις την υπηρεσία τώρα. Κρατιέται προσωρινά ποσό στην κάρτα και το υπόλοιπο στο μαγαζί.`;
+                `Ως απαραίτητο μέτρο για τις online κρατήσεις, ζητάμε κάρτα εγγύησης. Μηδενική χρέωση σήμερα (${pct}% της τιμής)! Η κάρτα χρεώνεται μόνο σε ακύρωση τελευταίας στιγμής ή απουσία χωρίς προειδοποίηση. Το υπόλοιπο πληρώνεται στο κατάστημα.`;
             document.getElementById('payModal').classList.remove('hidden');
         }
 
@@ -430,12 +430,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: apt })
                 }).catch(() => {});
-                showSuccessDialog('Η δέσμευση ακυρώθηκε. Δεν κρατήθηκε κάρτα.');
+                showSuccessDialog('Η εγγύηση ακυρώθηκε. Δεν κρατήθηκε κάρτα.');
             } else if (hold === 'ok') {
                 const mode = urlParams.get('mode');
                 showSuccessDialog(mode === 'online'
                     ? 'Η online πληρωμή καταχωρήθηκε.'
-                    : 'Η δέσμευση φερεγγυότητας καταχωρήθηκε. Δεν χρεώθηκες για την υπηρεσία· μόνο κρατήθηκε ποσό στην κάρτα.');
+                    : 'Εγγύηση Κράτησης καταχωρήθηκε. Μηδενική χρέωση σήμερα! Η κάρτα χρεώνεται μόνο σε ακύρωση τελευταίας στιγμής ή απουσία χωρίς προειδοποίηση.');
             }
             urlParams.delete('hold');
             urlParams.delete('apt');
