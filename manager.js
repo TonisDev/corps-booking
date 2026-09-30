@@ -439,6 +439,9 @@ async function loadDashboard(code) {
     if (connectFlag === 'return') refreshStripeConnect();
 
     populateServicesDropdown();
+    renderPlatformBanners();
+    renderBillingBox();
+    renderConnectStatus();
   } catch (e) {
     console.error(e);
   }
@@ -481,6 +484,9 @@ async function refreshDashboard(silent) {
       const title = document.getElementById('storeTitle');
       if (title) title.innerText = currentTenantData.name || '';
       populateServicesDropdown();
+      renderPlatformBanners();
+      renderBillingBox();
+      renderConnectStatus();
     }
     await fetchAppointments();
     const pending = Number(document.getElementById('statPending').dataset.open) || 0;
@@ -1774,10 +1780,65 @@ function billingStatusText(data) {
   if (data.billing_status === 'active' || data.billing_status === 'trialing') {
     return `Η συνδρομή είναι ενεργή${plan ? ' (' + plan + ')' : ''}${until ? '. Ισχύει ως ' + until : ''}.`;
   }
-  if (data.billing_status === 'past_due') return 'Η πληρωμή εκκρεμεί. Η σελίδα κρατήσεων μένει ανοιχτή.';
-  if (data.billing_status === 'unpaid') return 'Η συνδρομή είναι απλήρωτη. Η σελίδα κρατήσεων είναι κλειστή.';
-  if (data.billing_status === 'canceled') return 'Η συνδρομή ακυρώθηκε. Η σελίδα κρατήσεων είναι κλειστή.';
+  if (data.billing_status === 'past_due') {
+    const warn = data.billing_warning;
+    if (warn && warn.days_left != null && warn.days_left > 0) {
+      return `Η πληρωμή εκκρεμεί. Η σελίδα κρατήσεων μένει ανοιχτή για ${warn.days_left} ακόμη μέρες.`;
+    }
+    return 'Η πληρωμή εκκρεμεί. Η σελίδα κρατήσεων μένει ανοιχτή για λίγο ακόμα.';
+  }
+  if (data.billing_status === 'unpaid') {
+    return data.billing_hold
+      ? 'Η συνδρομή είναι απλήρωτη. Η σελίδα κρατήσεων είναι κλειστή.'
+      : 'Η συνδρομή είναι απλήρωτη. Τακτοποίησε την πληρωμή πριν κλείσει η φόρμα.';
+  }
+  if (data.billing_status === 'canceled') {
+    return data.billing_hold
+      ? 'Η συνδρομή ακυρώθηκε. Η σελίδα κρατήσεων είναι κλειστή.'
+      : 'Η συνδρομή ακυρώθηκε. Υπάρχει ακόμα περίοδος χάριτος πριν κλείσει η φόρμα.';
+  }
   return 'Διάλεξε μηνιαία ή ετήσια συνδρομή. Η τιμή φαίνεται στη σελίδα πληρωμής.';
+}
+
+function renderPlatformBanners() {
+  const noticeEl = document.getElementById('platformNotice');
+  const warnEl = document.getElementById('billingWarnBanner');
+  if (!currentTenantData) {
+    if (noticeEl) noticeEl.hidden = true;
+    if (warnEl) warnEl.hidden = true;
+    return;
+  }
+  const notice = currentTenantData.admin_notice;
+  if (noticeEl) {
+    if (notice && notice.body) {
+      document.getElementById('platformNoticeBody').textContent = notice.body;
+      document.getElementById('platformNoticeSign').textContent = notice.signature || 'QuickBook';
+      document.getElementById('platformNoticeContact').textContent = notice.contact || '';
+      noticeEl.hidden = false;
+    } else {
+      noticeEl.hidden = true;
+    }
+  }
+  if (warnEl) {
+    const warn = currentTenantData.billing_warning;
+    if (currentTenantData.billing_enabled && warn) {
+      const title = document.getElementById('billingWarnTitle');
+      const text = document.getElementById('billingWarnText');
+      if (warn.held) {
+        title.textContent = 'Η δημόσια φόρμα κρατήσεων είναι κλειστή';
+        text.textContent = 'Η συνδρομή δεν είναι πληρωμένη. Τακτοποίησε την πληρωμή από τις ρυθμίσεις ή επικοινώνησε με την υποστήριξη.';
+      } else if (warn.days_left != null && warn.days_left > 0) {
+        title.textContent = 'Προσοχή: πρόβλημα πληρωμής συνδρομής';
+        text.textContent = `Έχεις ακόμη περίπου ${warn.days_left} μέρες. Μετά η δημόσια σελίδα κρατήσεων θα κλείσει αυτόματα μέχρι να τακτοποιηθεί η πληρωμή.`;
+      } else {
+        title.textContent = 'Προσοχή: πρόβλημα πληρωμής συνδρομής';
+        text.textContent = 'Η περίοδος χάριτος τελειώνει. Τακτοποίησε την πληρωμή για να μην κλείσει η φόρμα.';
+      }
+      warnEl.hidden = false;
+    } else {
+      warnEl.hidden = true;
+    }
+  }
 }
 
 function renderBillingBox() {
