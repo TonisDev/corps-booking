@@ -298,51 +298,128 @@
               .sort((a, b) => a.start - b.start);
         }
 
-        // [SECTION: JS-INIT] — GET /info, εμφάνιση επιχείρησης, ημερολόγιο
-        function setupPayModeBox(paymentsOn) {
-            const box = document.getElementById('payModeBox');
-            if (!box) return;
-            if (!paymentsOn) {
-                box.classList.add('hidden');
-                return;
-            }
+        function paymentsAvailable() {
+            return !!(businessData && businessData.client_hold_enabled && businessData.connect_ready
+                && (businessData.pay_online_enabled !== false || businessData.pay_shop_enabled !== false));
+        }
+
+        function selectedServicePrice() {
+            const name = serviceSelect.value;
+            const service = (businessData.services || []).find((s) => s.name === name);
+            return parseOptionalPrice(service && service.price);
+        }
+
+        function needsPaymentChoice() {
+            return paymentsAvailable() && !waitlistMode && selectedServicePrice() !== null;
+        }
+
+        function closePayModal() {
+            document.getElementById('payModal')?.classList.add('hidden');
+        }
+
+        function openPayModal() {
             const onlineOn = businessData.pay_online_enabled !== false;
             const shopOn = businessData.pay_shop_enabled !== false;
+            const price = selectedServicePrice();
             const pct = Number(businessData.deposit_percent) || 50;
-            const hours = Number(businessData.cancel_hours);
-            const until = hours === 0 ? 'μέχρι την ώρα του ραντεβού' : `μέχρι ${hours || 24} ώρες πριν`;
-            const onlineLabel = document.getElementById('payModeOnlineText');
-            const shopLabel = document.getElementById('payModeShopText');
-            const help = document.getElementById('payModeHelp');
-            const onlineRadio = document.getElementById('payModeOnline');
-            const shopRadio = document.getElementById('payModeShop');
-            if (onlineRadio && onlineRadio.parentElement) {
-                onlineRadio.parentElement.style.display = onlineOn ? '' : 'none';
-            }
-            if (shopRadio && shopRadio.parentElement) {
-                shopRadio.parentElement.style.display = shopOn ? '' : 'none';
-            }
-            if (onlineLabel) onlineLabel.textContent = 'Πληρωμή online — ολόκληρο το ποσό τώρα';
-            if (shopLabel) {
-                shopLabel.textContent = `Πληρωμή στο κατάστημα — δέσμευση φερεγγυότητας ${pct}% (όχι χρέωση υπηρεσίας)`;
-            }
-            if (help) {
-                help.textContent = shopOn
-                    ? `Η δέσμευση είναι προσωρινή κράτηση στην κάρτα για να επιβεβαιωθεί ότι θα έρθεις. Δεν πληρώνεις την υπηρεσία τώρα· το υπόλοιπο στο κατάστημα. Ακύρωση ${until}: η δέσμευση φεύγει. Αν δεν ακυρώσεις εγκαίρως και δεν έρθεις, το κατάστημα μπορεί να κρατήσει το ποσοστό.`
-                    : `Πληρώνεις online ολόκληρο το ποσό. Ακύρωση ${until}: γίνεται επιστροφή.`;
-            }
-            if (onlineOn && !shopOn && onlineRadio) onlineRadio.checked = true;
-            else if (shopOn && shopRadio) shopRadio.checked = true;
-            box.classList.remove('hidden');
+            const hold = price !== null ? (price * pct / 100).toFixed(2) : '';
+            const euros = price !== null ? Number(price).toFixed(2) : '';
+            document.getElementById('paySubtitle').textContent = euros
+                ? `Υπηρεσία ${euros}€`
+                : '';
+            const onlineBtn = document.getElementById('payOptOnline');
+            const shopBtn = document.getElementById('payOptShop');
+            onlineBtn.hidden = !onlineOn;
+            shopBtn.hidden = !shopOn;
+            document.getElementById('payOptOnlineTitle').textContent = `Πληρωμή online · ${euros}€`;
+            document.getElementById('payOptOnlineDesc').textContent = 'Χρεώνεται τώρα ολόκληρο το ποσό στην κάρτα σου.';
+            document.getElementById('payOptShopTitle').textContent = `Πληρωμή στο κατάστημα · δέσμευση ${hold}€`;
+            document.getElementById('payOptShopDesc').textContent =
+                `Πράξη φερεγγυότητας (${pct}%): δεν πληρώνεις την υπηρεσία τώρα. Κρατιέται προσωρινά ποσό στην κάρτα και το υπόλοιπο στο μαγαζί.`;
+            document.getElementById('payModal').classList.remove('hidden');
         }
 
-        function selectedPayMode() {
-            const box = document.getElementById('payModeBox');
-            if (!box || box.classList.contains('hidden')) return '';
-            const picked = document.querySelector('input[name="payMode"]:checked');
-            return picked ? picked.value : '';
+        function buildBookingPayload(payMode) {
+            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+            const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
+            const fields = (businessData && businessData.form_fields) || {};
+            const notesVal = fields.notes === false ? '' : (document.getElementById('notes').value || '').trim();
+            const waitlistNote = 'Λίστα αναμονής — χωρίς συγκεκριμένη ώρα';
+            return {
+                name: document.getElementById('name').value.trim(),
+                phone: fields.phone === false ? '' : document.getElementById('phone').value.trim(),
+                email: fields.email === false ? '' : document.getElementById('email').value.trim(),
+                instagram: fields.instagram === false ? '' : document.getElementById('instagram').value.trim(),
+                service_name: serviceSelect.value,
+                duration,
+                date: dateInput.value,
+                time: waitlistMode ? '' : selectedTimeValue(),
+                notes: waitlistMode
+                    ? (notesVal && !notesVal.includes(waitlistNote) ? `${notesVal}\n${waitlistNote}` : (notesVal || waitlistNote))
+                    : notesVal,
+                waitlist: waitlistMode,
+                pay_mode: payMode || ''
+            };
         }
 
+        async function sendBooking(payload) {
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            submitBtn.disabled = true;
+            submitBtnText.textContent = 'Αποστολή...';
+            submitSpinner.classList.remove('hidden');
+            responseContainer.classList.add('hidden');
+            responseContainer.closest('.booking-card')?.classList.remove('is-answered');
+            gcalBtn.classList.add('hidden');
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/${business_code}/bookings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.checkout_url) {
+                    window.location.href = data.checkout_url;
+                    return;
+                }
+                if (res.ok) {
+                    const successText = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
+                    let calendarUrl = '';
+                    if (data.status !== 'WAITLIST' && !isRequestMode()) {
+                        calendarUrl = generateGoogleCalendarUrl(payload.service_name, payload.date, payload.time, payload.duration);
+                    }
+                    bookingForm.reset();
+                    resetTimePickers();
+                    hideWaitlistBox();
+                    slotHint.textContent = isRequestMode()
+                        ? 'Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.'
+                        : 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
+                    slotHint.className = 'field-help';
+                    document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης';
+                    fp.clear();
+                    responseContainer.classList.add('hidden');
+                    gcalBtn.classList.add('hidden');
+                    showSuccessDialog(successText, calendarUrl);
+                } else {
+                    responseMessage.className = 'text-red-600';
+                    responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
+                    revealBookingResponse();
+                }
+            } catch (err) {
+                responseMessage.className = 'text-red-600';
+                responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
+                revealBookingResponse();
+            } finally {
+                submitBtn.disabled = false;
+                submitSpinner.classList.add('hidden');
+                submitBtnText.textContent = waitlistMode
+                    ? 'Ναι, ενημερώστε με'
+                    : (isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης');
+            }
+        }
+
+        // [SECTION: JS-INIT] — GET /info, εμφάνιση επιχείρησης, ημερολόγιο
         function handleHoldReturn() {
             const hold = urlParams.get('hold');
             const apt = urlParams.get('apt');
@@ -423,11 +500,8 @@
                 fp.set('disableMobile', true);
                 fp.set('disable', [(date) => isShopClosedOn(date)]);
                 const fields = { ...(businessData.form_fields || {}) };
-                const paymentsOn = businessData.client_hold_enabled && businessData.connect_ready
-                    && (businessData.pay_online_enabled !== false || businessData.pay_shop_enabled !== false);
-                if (paymentsOn) fields.email = true;
+                if (paymentsAvailable()) fields.email = true;
                 applyPublicFormFields(fields);
-                setupPayModeBox(paymentsOn);
 
                 businessHeader.classList.remove('hidden');
 
@@ -757,9 +831,7 @@
         // [SECTION: JS-SUBMIT] — POST /bookings (slots | request | waitlist)
         bookingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             if (document.getElementById('website').value !== '') return;
-
             if (!waitlistMode && (!selectedTimeValue() || !availableSlots.includes(selectedTimeValue()))) {
                 gcalBtn.classList.add('hidden');
                 responseMessage.className = 'text-red-600';
@@ -767,90 +839,31 @@
                 revealBookingResponse();
                 return;
             }
-
-            const submitBtn = document.getElementById('submitBtn');
-            const submitBtnText = document.getElementById('submitBtnText');
-            const submitSpinner = document.getElementById('submitSpinner');
-
-            submitBtn.disabled = true;
-            submitBtnText.textContent = 'Αποστολή...';
-            submitSpinner.classList.remove('hidden');
-            responseContainer.classList.add('hidden');
-            responseContainer.closest('.booking-card')?.classList.remove('is-answered');
-            gcalBtn.classList.add('hidden');
-
-            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-            const duration = parseInt(selectedOption.getAttribute('data-duration')) || 60;
-            const dateVal = dateInput.value;
-            const timeVal = selectedTimeValue();
-            const serviceNameVal = serviceSelect.value;
-            const fields = (businessData && businessData.form_fields) || {};
-            const customerName = document.getElementById('name').value.trim();
-            const notesVal = fields.notes === false ? '' : (document.getElementById('notes').value || '').trim();
-            const waitlistNote = 'Λίστα αναμονής — χωρίς συγκεκριμένη ώρα';
-
-            const payload = {
-                name: customerName,
-                phone: fields.phone === false ? '' : document.getElementById('phone').value.trim(),
-                email: fields.email === false ? '' : document.getElementById('email').value.trim(),
-                instagram: fields.instagram === false ? '' : document.getElementById('instagram').value.trim(),
-                service_name: serviceNameVal,
-                duration: duration,
-                date: dateVal,
-                time: waitlistMode ? '' : timeVal,
-                notes: waitlistMode
-                    ? (notesVal && !notesVal.includes(waitlistNote) ? `${notesVal}\n${waitlistNote}` : (notesVal || waitlistNote))
-                    : notesVal,
-                waitlist: waitlistMode,
-                pay_mode: selectedPayMode()
-            };
-
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/${business_code}/bookings`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json().catch(() => ({}));
-
-                if (res.ok && data.checkout_url) {
-                    window.location.href = data.checkout_url;
-                    return;
-                }
-                if (res.ok) {
-                    const successText = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
-                    let calendarUrl = '';
-                    if (data.status !== 'WAITLIST' && !isRequestMode()) {
-                        calendarUrl = generateGoogleCalendarUrl(serviceNameVal, dateVal, timeVal, duration);
-                    }
-                    bookingForm.reset();
-                    resetTimePickers();
-                    hideWaitlistBox();
-                    slotHint.textContent = isRequestMode()
-                        ? 'Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.'
-                        : 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
-                    slotHint.className = 'field-help';
-                    document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης';
-                    fp.clear();
-                    responseContainer.classList.add('hidden');
-                    gcalBtn.classList.add('hidden');
-                    showSuccessDialog(successText, calendarUrl);
-                } else {
-                    responseMessage.className = 'text-red-600';
-                    responseMessage.textContent = data.error || 'Προέκυψε σφάλμα.';
-                    revealBookingResponse();
-                }
-            } catch (err) {
-                responseMessage.className = 'text-red-600';
-                responseMessage.textContent = 'Σφάλμα σύνδεσης με τον διακομιστή.';
-                revealBookingResponse();
-            } finally {
-                submitBtn.disabled = false;
-                submitSpinner.classList.add('hidden');
-                submitBtnText.textContent = waitlistMode
-                    ? 'Ναι, ενημερώστε με'
-                    : (isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης');
+            if (!needsPaymentChoice()) {
+                await sendBooking(buildBookingPayload(''));
+                return;
             }
+            const onlineOn = businessData.pay_online_enabled !== false;
+            const shopOn = businessData.pay_shop_enabled !== false;
+            if (onlineOn && !shopOn) {
+                await sendBooking(buildBookingPayload('online'));
+                return;
+            }
+            if (shopOn && !onlineOn) {
+                await sendBooking(buildBookingPayload('shop'));
+                return;
+            }
+            openPayModal();
+        });
+
+        document.getElementById('payCancel')?.addEventListener('click', closePayModal);
+        document.getElementById('payOptOnline')?.addEventListener('click', async () => {
+            closePayModal();
+            await sendBooking(buildBookingPayload('online'));
+        });
+        document.getElementById('payOptShop')?.addEventListener('click', async () => {
+            closePayModal();
+            await sendBooking(buildBookingPayload('shop'));
         });
 
         document.getElementById('leadForm')?.addEventListener('submit', async (event) => {
