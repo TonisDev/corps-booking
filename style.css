@@ -662,6 +662,70 @@ select:disabled, .time-dropdown-btn:disabled {
   font-size: 1rem;
   cursor: pointer;
 }
+.pay-card {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 1.2rem;
+  padding: 1.35rem 1.2rem 1.1rem;
+  width: min(24rem, 100%);
+  text-align: left;
+  box-shadow: 0 0 60px color-mix(in srgb, var(--brand-color) 18%, transparent), 0 24px 48px rgba(0,0,0,0.18);
+}
+.pay-card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  text-align: center;
+}
+.pay-subtitle {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-muted, #64748b);
+}
+.pay-options {
+  display: grid;
+  gap: 0.65rem;
+}
+.pay-option {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.95rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--card-bg) 88%, var(--brand-color) 12%);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+.pay-option:hover,
+.pay-option:focus-visible {
+  border-color: var(--brand-color);
+  outline: none;
+  transform: translateY(-1px);
+}
+.pay-option strong {
+  font-size: 0.98rem;
+}
+.pay-option span {
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--text-muted, #64748b);
+}
+.pay-cancel {
+  width: 100%;
+  margin-top: 0.75rem;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 0.8rem;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  cursor: pointer;
+}
 .shop-info-card {
   background: var(--card-bg);
   color: var(--text-color);
