@@ -299,6 +299,50 @@
         }
 
         // [SECTION: JS-INIT] — GET /info, εμφάνιση επιχείρησης, ημερολόγιο
+        function setupPayModeBox(paymentsOn) {
+            const box = document.getElementById('payModeBox');
+            if (!box) return;
+            if (!paymentsOn) {
+                box.classList.add('hidden');
+                return;
+            }
+            const onlineOn = businessData.pay_online_enabled !== false;
+            const shopOn = businessData.pay_shop_enabled !== false;
+            const pct = Number(businessData.deposit_percent) || 50;
+            const hours = Number(businessData.cancel_hours);
+            const until = hours === 0 ? 'μέχρι την ώρα του ραντεβού' : `μέχρι ${hours || 24} ώρες πριν`;
+            const onlineLabel = document.getElementById('payModeOnlineText');
+            const shopLabel = document.getElementById('payModeShopText');
+            const help = document.getElementById('payModeHelp');
+            const onlineRadio = document.getElementById('payModeOnline');
+            const shopRadio = document.getElementById('payModeShop');
+            if (onlineRadio && onlineRadio.parentElement) {
+                onlineRadio.parentElement.style.display = onlineOn ? '' : 'none';
+            }
+            if (shopRadio && shopRadio.parentElement) {
+                shopRadio.parentElement.style.display = shopOn ? '' : 'none';
+            }
+            if (onlineLabel) onlineLabel.textContent = 'Πληρωμή online — ολόκληρο το ποσό τώρα';
+            if (shopLabel) {
+                shopLabel.textContent = `Πληρωμή στο κατάστημα — δέσμευση φερεγγυότητας ${pct}% (όχι χρέωση υπηρεσίας)`;
+            }
+            if (help) {
+                help.textContent = shopOn
+                    ? `Η δέσμευση είναι προσωρινή κράτηση στην κάρτα για να επιβεβαιωθεί ότι θα έρθεις. Δεν πληρώνεις την υπηρεσία τώρα· το υπόλοιπο στο κατάστημα. Ακύρωση ${until}: η δέσμευση φεύγει. Αν δεν ακυρώσεις εγκαίρως και δεν έρθεις, το κατάστημα μπορεί να κρατήσει το ποσοστό.`
+                    : `Πληρώνεις online ολόκληρο το ποσό. Ακύρωση ${until}: γίνεται επιστροφή.`;
+            }
+            if (onlineOn && !shopOn && onlineRadio) onlineRadio.checked = true;
+            else if (shopOn && shopRadio) shopRadio.checked = true;
+            box.classList.remove('hidden');
+        }
+
+        function selectedPayMode() {
+            const box = document.getElementById('payModeBox');
+            if (!box || box.classList.contains('hidden')) return '';
+            const picked = document.querySelector('input[name="payMode"]:checked');
+            return picked ? picked.value : '';
+        }
+
         function handleHoldReturn() {
             const hold = urlParams.get('hold');
             const apt = urlParams.get('apt');
@@ -311,10 +355,14 @@
                 }).catch(() => {});
                 showSuccessDialog('Η δέσμευση ακυρώθηκε. Δεν κρατήθηκε κάρτα.');
             } else if (hold === 'ok') {
-                showSuccessDialog('Η κάρτα δεσμεύτηκε. Το αίτημα καταχωρήθηκε.');
+                const mode = urlParams.get('mode');
+                showSuccessDialog(mode === 'online'
+                    ? 'Η online πληρωμή καταχωρήθηκε.'
+                    : 'Η δέσμευση φερεγγυότητας καταχωρήθηκε. Δεν χρεώθηκες για την υπηρεσία· μόνο κρατήθηκε ποσό στην κάρτα.');
             }
             urlParams.delete('hold');
             urlParams.delete('apt');
+            urlParams.delete('mode');
             const query = urlParams.toString();
             history.replaceState({}, '', `${location.pathname}${query ? `?${query}` : ''}`);
         }
@@ -375,16 +423,11 @@
                 fp.set('disableMobile', true);
                 fp.set('disable', [(date) => isShopClosedOn(date)]);
                 const fields = { ...(businessData.form_fields || {}) };
-                if (businessData.client_hold_enabled && businessData.connect_ready) fields.email = true;
+                const paymentsOn = businessData.client_hold_enabled && businessData.connect_ready
+                    && (businessData.pay_online_enabled !== false || businessData.pay_shop_enabled !== false);
+                if (paymentsOn) fields.email = true;
                 applyPublicFormFields(fields);
-                if (businessData.client_hold_enabled && businessData.connect_ready) {
-                    const hours = Number(businessData.cancel_hours);
-                    const until = hours === 0 ? 'μέχρι την ώρα του ραντεβού' : `μέχρι ${hours || 24} ώρες πριν`;
-                    const note = document.createElement('p');
-                    note.className = 'field-help';
-                    note.textContent = `Για υπηρεσίες με τιμή η κάρτα δεσμεύεται και δεν χρεώνεται. Ακύρωση ${until}: η δέσμευση φεύγει αμέσως. Μετά το όριο η online ακύρωση κλείνει. Αν δεν έρθεις, το κατάστημα μπορεί να κρατήσει το ποσό. Αν έρθεις, η δέσμευση φεύγει μετά τα μεσάνυχτα.`;
-                    serviceSelect.parentElement.appendChild(note);
-                }
+                setupPayModeBox(paymentsOn);
 
                 businessHeader.classList.remove('hidden');
 
@@ -758,7 +801,8 @@
                 notes: waitlistMode
                     ? (notesVal && !notesVal.includes(waitlistNote) ? `${notesVal}\n${waitlistNote}` : (notesVal || waitlistNote))
                     : notesVal,
-                waitlist: waitlistMode
+                waitlist: waitlistMode,
+                pay_mode: selectedPayMode()
             };
 
             try {
