@@ -204,14 +204,25 @@
             <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Ένα email το πρωί, με τις συνεδρίες της επόμενης μέρας. Ο πελάτης παίρνει το δικό του 24 ώρες πριν το ραντεβού.</p>
             <label class="remember-me" style="margin-top:0.65rem;">
               <input type="checkbox" id="setClientHold">
-              Δέσμευση κάρτας
+              Πληρωμές με κάρτα
             </label>
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Μόνο για υπηρεσίες με τιμή. Τα χρήματα πηγαίνουν στον δικό σου λογαριασμό Stripe, όχι στην πλατφόρμα. Ο πελάτης βλέπει το όριο ακύρωσης στη φόρμα και στα email.</p>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Μόνο για υπηρεσίες με τιμή. Τα χρήματα πηγαίνουν στον δικό σου λογαριασμό Stripe.</p>
             <p id="connectStatus" style="margin:0.45rem 0 0; color:var(--text-muted); font-size:0.78rem;"></p>
             <button type="button" class="btn btn-outline" id="connectStripeBtn" onclick="startStripeConnect()" style="margin-top:0.45rem;">Σύνδεση Stripe</button>
+            <label class="remember-me" style="margin-top:0.7rem;">
+              <input type="checkbox" id="setPayOnline" checked>
+              Πληρωμή online (ολόκληρο ποσό)
+            </label>
+            <label class="remember-me" style="margin-top:0.45rem;">
+              <input type="checkbox" id="setPayShop" checked>
+              Πληρωμή στο κατάστημα (δέσμευση ποσοστού)
+            </label>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Στο κατάστημα: δεσμεύεται ποσοστό στην κάρτα ως φερεγγυότητα, όχι ως πληρωμή. Το υπόλοιπο πληρώνεται στο μαγαζί. Αν δεν ακυρώσει εγκαίρως και δεν έρθει, μπορείς να κρατήσεις τη δέσμευση.</p>
+            <label for="setDepositPercent" style="display:block; margin-top:0.55rem;">Ποσοστό δέσμευσης (%)</label>
+            <input class="field" type="number" id="setDepositPercent" min="1" max="100" value="50" style="max-width:6rem;">
             <label for="setCancelHours" style="display:block; margin-top:0.7rem;">Ακύρωση online, ώρες πριν</label>
             <input class="field" type="number" id="setCancelHours" min="0" max="168" value="24" style="max-width:6rem;">
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">0 σημαίνει μέχρι την ώρα του ραντεβού. Μέσα στο όριο η κάρτα ελευθερώνεται. Μετά, ο πελάτης δεν ακυρώνει από το email.</p>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">0 σημαίνει μέχρι την ώρα του ραντεβού. Μέσα στο όριο η δέσμευση/πληρωμή επιστρέφεται. Μετά, ο πελάτης δεν ακυρώνει από το email.</p>
           </div>
           <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
         </div>
@@ -643,7 +654,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260930b"></script>
+<script src="manager.js?v=20260930c"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
