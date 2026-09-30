@@ -201,6 +201,20 @@ button, input, select, textarea { font-family: inherit; }
 .overlap-box { margin: 0 0 1rem; padding: 0.85rem; border-radius: 0.7rem; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
 .overlap-suggestions { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom: 0.65rem; }
 .settings-save-bar { position: sticky; bottom: 0; display:flex; justify-content:flex-end; gap: 0.75rem; margin-top: 1.5rem; padding: 0.85rem 0 0; background: var(--card-bg); }
+.settings-modal-content { max-width: min(980px, 96vw) !important; padding: 1rem 1rem 0.75rem !important; }
+.settings-head { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.75rem; }
+.settings-shell { display:grid; grid-template-columns: 11.5rem 1fr; gap: 0; min-height: min(70vh, 640px); border: 1px solid var(--border-color, #e2e8f0); border-radius: 0.75rem; overflow: hidden; }
+.settings-nav { display:flex; flex-direction:column; gap:0.2rem; padding:0.55rem; background: var(--bg-muted, #f8fafc); border-right: 1px solid var(--border-color, #e2e8f0); }
+.settings-nav-btn { text-align:left; border:0; background:transparent; color: var(--text-muted, #64748b); border-radius:0.5rem; padding:0.55rem 0.65rem; font-size:0.82rem; font-weight:600; cursor:pointer; }
+.settings-nav-btn:hover { background: rgba(79,70,229,0.08); color: var(--text-color, #0f172a); }
+.settings-nav-btn.active { background:#4f46e5; color:#fff; }
+.settings-main { display:flex; flex-direction:column; min-width:0; max-height: min(70vh, 640px); overflow:auto; padding: 0.85rem 1rem 0.5rem; }
+.settings-panel { display:none; }
+.settings-panel.active { display:block; }
+.settings-panel-title { margin:0 0 0.85rem; font-size:1.05rem; }
+.settings-hint { margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.45; }
+.deposit-fieldset { margin:0.85rem 0 0; border:1px solid var(--border-color, #e2e8f0); border-radius:0.65rem; padding:0.75rem 0.85rem; }
+.deposit-fieldset legend { padding:0 0.35rem; font-size:0.82rem; font-weight:600; }
 .support-strip { margin: 1.25rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .support-strip a { color: inherit; font-weight: 600; user-select: all; }
 .billing-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -230,6 +244,27 @@ button, input, select, textarea { font-family: inherit; }
 }
 .platform-notice-sign { font-weight: 700; color: #312e81; }
 .platform-notice-contact { margin-top: 0.15rem; }
+.platform-notice-actions {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  justify-content: space-between;
+}
+.platform-notice-hint {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: 0.78rem;
+  color: #4338ca;
+  line-height: 1.4;
+}
+.platform-notice-actions .btn { min-width: 5.5rem; }
+.platform-notice.confirming {
+  border-color: #fbbf24;
+  background: linear-gradient(180deg, #fffbeb 0%, #f8fafc 100%);
+}
+.platform-notice.confirming .platform-notice-hint { color: #92400e; font-weight: 600; }
 .billing-warn-banner {
   margin: 0 0 0.75rem;
   padding: 0.85rem 1.1rem;
@@ -300,7 +335,7 @@ button, input, select, textarea { font-family: inherit; }
 /* [SECTION: CSS-MODALS] */
 .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 2rem 0; }
 .modal-content { background: var(--card-bg, #ffffff); color: var(--text-color, #1e293b); padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color, #e2e8f0); }
-#settingsModal .modal-content { max-width: 920px; }
+#settingsModal .modal-content { max-width: 980px; }
 .remember-row { margin: 0.15rem 0 0.85rem; }
 .remember-me {
   display: flex;
@@ -538,6 +573,10 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 
 /* [SECTION: CSS-MOBILE] */
 @media (max-width: 760px) {
+  .settings-shell { grid-template-columns: 1fr; min-height: 0; }
+  .settings-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border-color, #e2e8f0); }
+  .settings-nav-btn { flex: 1 1 auto; text-align: center; font-size: 0.75rem; padding: 0.45rem 0.5rem; }
+  .settings-main { max-height: min(62vh, 560px); }
   html, body { overflow-x: hidden; }
   body { padding-bottom: calc(2.5rem + env(safe-area-inset-bottom)); }
   #loginScreen {
