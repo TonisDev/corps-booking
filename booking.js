@@ -299,8 +299,29 @@
         }
 
         // [SECTION: JS-INIT] — GET /info, εμφάνιση επιχείρησης, ημερολόγιο
+        function handleHoldReturn() {
+            const hold = urlParams.get('hold');
+            const apt = urlParams.get('apt');
+            if (!hold) return;
+            if (hold === 'cancel' && apt && business_code) {
+                fetch(`${API_BASE_URL}/api/${business_code}/bookings/abandon`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: apt })
+                }).catch(() => {});
+                showSuccessDialog('Η δέσμευση ακυρώθηκε. Δεν κρατήθηκε κάρτα.');
+            } else if (hold === 'ok') {
+                showSuccessDialog('Η κάρτα δεσμεύτηκε. Το αίτημα καταχωρήθηκε.');
+            }
+            urlParams.delete('hold');
+            urlParams.delete('apt');
+            const query = urlParams.toString();
+            history.replaceState({}, '', `${location.pathname}${query ? `?${query}` : ''}`);
+        }
+
         async function initPage() {
             if (!business_code) return;
+            handleHoldReturn();
 
             try {
                 const res = await fetch(`${API_BASE_URL}/api/${business_code}/info`, { cache: 'no-store' });
@@ -353,7 +374,17 @@
 
                 fp.set('disableMobile', true);
                 fp.set('disable', [(date) => isShopClosedOn(date)]);
-                applyPublicFormFields(businessData.form_fields);
+                const fields = { ...(businessData.form_fields || {}) };
+                if (businessData.client_hold_enabled && businessData.connect_ready) fields.email = true;
+                applyPublicFormFields(fields);
+                if (businessData.client_hold_enabled && businessData.connect_ready) {
+                    const hours = Number(businessData.cancel_hours);
+                    const until = hours === 0 ? 'μέχρι την ώρα του ραντεβού' : `μέχρι ${hours || 24} ώρες πριν`;
+                    const note = document.createElement('p');
+                    note.className = 'field-help';
+                    note.textContent = `Για υπηρεσίες με τιμή η κάρτα δεσμεύεται και δεν χρεώνεται. Ακύρωση ${until}: η δέσμευση φεύγει αμέσως. Μετά το όριο η online ακύρωση κλείνει. Αν δεν έρθεις, το κατάστημα μπορεί να κρατήσει το ποσό. Αν έρθεις, η δέσμευση φεύγει μετά τα μεσάνυχτα.`;
+                    serviceSelect.parentElement.appendChild(note);
+                }
 
                 businessHeader.classList.remove('hidden');
 
@@ -738,6 +769,10 @@
                 });
                 const data = await res.json().catch(() => ({}));
 
+                if (res.ok && data.checkout_url) {
+                    window.location.href = data.checkout_url;
+                    return;
+                }
                 if (res.ok) {
                     const successText = data.message || businessData?.success_message || 'Η κράτηση ολοκληρώθηκε επιτυχώς!';
                     let calendarUrl = '';
