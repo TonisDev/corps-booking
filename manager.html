@@ -216,14 +216,14 @@
             </label>
             <label class="remember-me" style="margin-top:0.45rem;">
               <input type="checkbox" id="setPayShop" checked>
-              Πληρωμή στο κατάστημα (δέσμευση ποσοστού)
+              Πληρωμή στο κατάστημα (εγγύηση κράτησης)
             </label>
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Στο κατάστημα: δεσμεύεται ποσοστό στην κάρτα ως φερεγγυότητα, όχι ως πληρωμή. Το υπόλοιπο πληρώνεται στο μαγαζί. Αν δεν ακυρώσει εγκαίρως και δεν έρθει, μπορείς να κρατήσεις τη δέσμευση.</p>
-            <label for="setDepositPercent" style="display:block; margin-top:0.55rem;">Ποσοστό δέσμευσης (%)</label>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Εγγύηση Κράτησης: δεσμεύεται ποσοστό στην κάρτα. Μηδενική χρέωση σήμερα! Χρέωση μόνο σε ακύρωση τελευταίας στιγμής ή απουσία χωρίς προειδοποίηση. Το υπόλοιπο πληρώνεται στο μαγαζί.</p>
+            <label for="setDepositPercent" style="display:block; margin-top:0.55rem;">Ποσοστό εγγύησης (%)</label>
             <input class="field" type="number" id="setDepositPercent" min="1" max="100" value="50" style="max-width:6rem;">
             <label for="setCancelHours" style="display:block; margin-top:0.7rem;">Ακύρωση online, ώρες πριν</label>
             <input class="field" type="number" id="setCancelHours" min="0" max="168" value="24" style="max-width:6rem;">
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">0 σημαίνει μέχρι την ώρα του ραντεβού. Μέσα στο όριο η δέσμευση/πληρωμή επιστρέφεται. Μετά, ο πελάτης δεν ακυρώνει από το email.</p>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">0 = μέχρι την ώρα του ραντεβού. Μέσα στο όριο η εγγύηση/πληρωμή επιστρέφεται. Μετά, ο πελάτης δεν ακυρώνει από το email· χρέωση μόνο σε late cancel ή απουσία.</p>
           </div>
           <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
         </div>
@@ -679,7 +679,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260930d"></script>
+<script src="manager.js?v=20260930e"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
