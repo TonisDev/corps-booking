@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260929d">
+    <link rel="stylesheet" href="manager_style.css?v=20260930d">
 </head>
 <body data-theme="light">
 
@@ -88,6 +88,7 @@
         <span id="storeCodeSpan"></span>
       </div>
       <div class="header-actions">
+        <button class="btn btn-outline" onclick="openPaymentsModal()"><i data-lucide="wallet" size="16"></i> <span class="btn-label">Πληρωμές</span></button>
         <button class="btn btn-outline" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> <span class="btn-label">Ιστορικό</span></button>
         <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> <span class="btn-label">Σελίδα Πελάτη</span></button>
         <button class="btn btn-outline" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> <span class="btn-label">Κλείδωσε ώρες</span></button>
@@ -603,6 +604,30 @@
     </div>
   </div>
 
+  <div class="modal" id="paymentsModal">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+        <div>
+          <h3 style="margin:0;">Πληρωμές</h3>
+          <p style="margin:0.35rem 0 0; color: var(--text-muted); font-size: 0.85rem;">Δεσμεύσεις και χρεώσεις καρτών αυτού του καταστήματος.</p>
+        </div>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('paymentsModal')">Κλείσιμο</button>
+      </div>
+      <div class="list-filters" style="margin-top:0.85rem;">
+        <select class="field" id="paymentsFilter" onchange="renderPaymentsList()">
+          <option value="all">Όλες</option>
+          <option value="authorized">Δεσμεύσεις</option>
+          <option value="captured">Χρεωμένες</option>
+          <option value="refunded">Επιστροφές</option>
+          <option value="released">Αποδεσμευμένες</option>
+        </select>
+        <button type="button" class="btn btn-outline" onclick="exportPaymentsCsv()">Εξαγωγή CSV</button>
+      </div>
+      <div id="paymentsList" class="apt-list"></div>
+      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('paymentsModal')">Κλείσιμο</button>
+    </div>
+  </div>
+
   <!-- Modal: Διαχείριση/Επισκόπηση Υπάρχοντος Ραντεβού -->
   <div class="modal" id="actionModal">
     <div class="modal-content">
@@ -654,7 +679,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260930c"></script>
+<script src="manager.js?v=20260930d"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
