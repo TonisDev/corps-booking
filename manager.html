@@ -201,7 +201,17 @@
               <input type="checkbox" id="setEmailNotify" checked>
               Email ενημερώσεις
             </label>
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Ένα email την προηγούμενη μέρα, με όλες τις συνεδρίες εκείνης της ημέρας. Τίποτα άλλο. Ξετσέκαρέ το αν δεν το θες.</p>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Ένα email το πρωί, με τις συνεδρίες της επόμενης μέρας. Ο πελάτης παίρνει το δικό του 24 ώρες πριν το ραντεβού.</p>
+            <label class="remember-me" style="margin-top:0.65rem;">
+              <input type="checkbox" id="setClientHold">
+              Δέσμευση κάρτας
+            </label>
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Μόνο για υπηρεσίες με τιμή. Τα χρήματα πηγαίνουν στον δικό σου λογαριασμό Stripe, όχι στην πλατφόρμα. Ο πελάτης βλέπει το όριο ακύρωσης στη φόρμα και στα email.</p>
+            <p id="connectStatus" style="margin:0.45rem 0 0; color:var(--text-muted); font-size:0.78rem;"></p>
+            <button type="button" class="btn btn-outline" id="connectStripeBtn" onclick="startStripeConnect()" style="margin-top:0.45rem;">Σύνδεση Stripe</button>
+            <label for="setCancelHours" style="display:block; margin-top:0.7rem;">Ακύρωση online, ώρες πριν</label>
+            <input class="field" type="number" id="setCancelHours" min="0" max="168" value="24" style="max-width:6rem;">
+            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">0 σημαίνει μέχρι την ώρα του ραντεβού. Μέσα στο όριο η κάρτα ελευθερώνεται. Μετά, ο πελάτης δεν ακυρώνει από το email.</p>
           </div>
           <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
         </div>
@@ -613,6 +623,8 @@
           <button type="button" class="btn btn-outline" id="btnReschedule" onclick="toggleRescheduleEditor()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
           <button type="button" class="btn btn-outline" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
           <button type="button" class="btn btn-warning" id="btnCancelAppt" onclick="updateStatus('CANCELLED')" style="display:none;">Ακύρωση ραντεβού</button>
+          <button type="button" class="btn btn-warning" id="btnHoldCapture" onclick="settleHold('capture')" style="display:none;">Δεν ήρθε</button>
+          <button type="button" class="btn btn-outline" id="btnHoldRefund" onclick="settleHold('refund')" style="display:none;">Επιστροφή</button>
         </div>
         <button type="button" class="btn btn-quiet-danger" id="btnDeleteAppt" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή οριστικά</button>
         <button type="button" class="btn btn-outline btn-sheet-close" onclick="closeModal('actionModal')">Κλείσιμο</button>
@@ -631,7 +643,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260929e"></script>
+<script src="manager.js?v=20260930b"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
