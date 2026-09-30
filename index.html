@@ -223,6 +223,19 @@
                 </div>
             </div>
 
+            <div class="field-block hidden" id="payModeBox">
+                <span class="field-label">Τρόπος πληρωμής</span>
+                <label class="remember-me" style="display:flex; gap:0.45rem; align-items:flex-start; margin-top:0.4rem;">
+                    <input type="radio" name="payMode" id="payModeOnline" value="online">
+                    <span id="payModeOnlineText">Πληρωμή online (ολόκληρο ποσό)</span>
+                </label>
+                <label class="remember-me" style="display:flex; gap:0.45rem; align-items:flex-start; margin-top:0.35rem;">
+                    <input type="radio" name="payMode" id="payModeShop" value="shop" checked>
+                    <span id="payModeShopText">Πληρωμή στο κατάστημα (δέσμευση φερεγγυότητας)</span>
+                </label>
+                <p class="field-help" id="payModeHelp"></p>
+            </div>
+
             <div class="field-block">
                 <label class="field-label" for="date">Ημερομηνία</label>
                 <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly>
@@ -302,6 +315,6 @@
             <button type="button" class="shop-info-close">Κλείσιμο</button>
         </div>
     </div>
-    <script src="booking.js?v=20260930b"></script>
+    <script src="booking.js?v=20260930c"></script>
 </body>
 </html>
