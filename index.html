@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260929a">
+    <link rel="stylesheet" href="style.css?v=20260930d">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -223,19 +223,6 @@
                 </div>
             </div>
 
-            <div class="field-block hidden" id="payModeBox">
-                <span class="field-label">Τρόπος πληρωμής</span>
-                <label class="remember-me" style="display:flex; gap:0.45rem; align-items:flex-start; margin-top:0.4rem;">
-                    <input type="radio" name="payMode" id="payModeOnline" value="online">
-                    <span id="payModeOnlineText">Πληρωμή online (ολόκληρο ποσό)</span>
-                </label>
-                <label class="remember-me" style="display:flex; gap:0.45rem; align-items:flex-start; margin-top:0.35rem;">
-                    <input type="radio" name="payMode" id="payModeShop" value="shop" checked>
-                    <span id="payModeShopText">Πληρωμή στο κατάστημα (δέσμευση φερεγγυότητας)</span>
-                </label>
-                <p class="field-help" id="payModeHelp"></p>
-            </div>
-
             <div class="field-block">
                 <label class="field-label" for="date">Ημερομηνία</label>
                 <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly>
@@ -298,6 +285,23 @@
     <script src="https://npmcdn.com/flatpickr/dist/l10n/gr.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+    <div id="payModal" class="success-modal hidden">
+        <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+            <h2 id="payTitle">Πώς θέλεις να πληρώσεις;</h2>
+            <p id="paySubtitle" class="pay-subtitle"></p>
+            <div class="pay-options" id="payOptions">
+                <button type="button" class="pay-option" id="payOptOnline" data-mode="online">
+                    <strong id="payOptOnlineTitle">Online</strong>
+                    <span id="payOptOnlineDesc"></span>
+                </button>
+                <button type="button" class="pay-option" id="payOptShop" data-mode="shop">
+                    <strong id="payOptShopTitle">Στο κατάστημα</strong>
+                    <span id="payOptShopDesc"></span>
+                </button>
+            </div>
+            <button type="button" class="pay-cancel" id="payCancel">Πίσω</button>
+        </div>
+    </div>
     <div id="successModal" class="success-modal hidden">
         <div class="success-card" role="dialog" aria-modal="true" aria-labelledby="successTitle">
             <h2 id="successTitle">Επιτυχία</h2>
@@ -315,6 +319,6 @@
             <button type="button" class="shop-info-close">Κλείσιμο</button>
         </div>
     </div>
-    <script src="booking.js?v=20260930c"></script>
+    <script src="booking.js?v=20260930d"></script>
 </body>
 </html>
