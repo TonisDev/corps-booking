@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260930f">
+    <link rel="stylesheet" href="manager_style.css?v=20260930h">
 </head>
 <body data-theme="light">
 
@@ -87,6 +87,10 @@
       <div class="platform-notice-meta">
         <div class="platform-notice-sign" id="platformNoticeSign"></div>
         <div class="platform-notice-contact" id="platformNoticeContact"></div>
+      </div>
+      <div class="platform-notice-actions">
+        <p class="platform-notice-hint" id="platformNoticeHint">Πάτα ΟΚ δύο φορές για να επιβεβαιώσεις ότι διάβασες το μήνυμα.</p>
+        <button type="button" class="btn" id="platformNoticeOk" onclick="confirmPlatformNotice()">ΟΚ</button>
       </div>
     </div>
     <div id="billingWarnBanner" class="billing-warn-banner" hidden>
@@ -195,33 +199,61 @@
   </div>
 
   <!-- Settings Modal -->
-  <!-- [SECTION: HTML-SETTINGS] — το κουμπί Αποθήκευση είναι στο τέλος της φόρμας -->
+  <!-- [SECTION: HTML-SETTINGS] — sidebar + ένα θέμα στο κέντρο -->
   <div id="settingsModal" class="modal">
-    <div class="modal-content">
-      <h2 style="margin-top:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="settings" size="22"></i> Ρυθμίσεις επιχείρησης</h2>
-      <form id="settingsForm" onsubmit="saveSettings(event)">
-        <div class="form-group">
-          <label>Όνομα Επιχείρησης</label>
-          <input class="field" type="text" id="setName" required>
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Email επιχείρησης</label>
-            <input class="field" type="email" id="setEmail" required placeholder="info@domain.gr" autocomplete="email">
-            <p style="margin:0.35rem 0 0; color:var(--text-muted); font-size:0.78rem;">Υποχρεωτικό. Εδώ έρχεται ο σύνδεσμος αν ξεχάσεις τον κωδικό.</p>
-            <label class="remember-me" style="margin-top:0.65rem;">
-              <input type="checkbox" id="setEmailNotify" checked>
-              Email ενημερώσεις
-            </label>
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Ένα email το πρωί, με τις συνεδρίες της επόμενης μέρας. Ο πελάτης παίρνει το δικό του 24 ώρες πριν το ραντεβού.</p>
-            <label class="remember-me" style="margin-top:0.65rem;">
+    <div class="modal-content settings-modal-content">
+      <div class="settings-head">
+        <h2 style="margin:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="settings" size="22"></i> Ρυθμίσεις</h2>
+        <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Κλείσιμο</button>
+      </div>
+      <form id="settingsForm" class="settings-shell" onsubmit="saveSettings(event)">
+        <nav class="settings-nav" aria-label="Θέματα ρυθμίσεων">
+          <button type="button" class="settings-nav-btn active" data-settings-panel="profile" onclick="showSettingsPanel('profile')">Επιχείρηση</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="payments" onclick="showSettingsPanel('payments')">Πληρωμές / Εγγύηση</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="appearance" onclick="showSettingsPanel('appearance')">Εμφάνιση</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="hours" onclick="showSettingsPanel('hours')">Ωράριο</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="services" onclick="showSettingsPanel('services')">Υπηρεσίες</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="form" onclick="showSettingsPanel('form')">Φόρμα πελάτη</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="integrations" onclick="showSettingsPanel('integrations')">Telegram / Calendar</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="billing" id="settingsNavBilling" onclick="showSettingsPanel('billing')" hidden>Συνδρομή</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="security" onclick="showSettingsPanel('security')">Κωδικός / Κινητό</button>
+        </nav>
+        <div class="settings-main">
+          <div class="settings-panel active" id="settingsPanel-profile">
+            <h3 class="settings-panel-title">Επιχείρηση</h3>
+            <div class="form-group">
+              <label>Όνομα Επιχείρησης</label>
+              <input class="field" type="text" id="setName" required>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Email επιχείρησης</label>
+                <input class="field" type="email" id="setEmail" required placeholder="info@domain.gr" autocomplete="email">
+                <p class="settings-hint">Υποχρεωτικό. Εδώ έρχεται ο σύνδεσμος αν ξεχάσεις τον κωδικό.</p>
+                <label class="remember-me" style="margin-top:0.65rem;">
+                  <input type="checkbox" id="setEmailNotify" checked>
+                  Email ενημερώσεις
+                </label>
+                <p class="settings-hint">Ένα email το πρωί με τις συνεδρίες της επόμενης μέρας. Ο πελάτης παίρνει το δικό του 24 ώρες πριν.</p>
+              </div>
+              <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
+            </div>
+            <div class="form-group">
+              <label>Διεύθυνση</label>
+              <input class="field" type="text" id="setAddress">
+            </div>
+          </div>
+
+          <div class="settings-panel" id="settingsPanel-payments">
+            <h3 class="settings-panel-title">Πληρωμές / Εγγύηση Κράτησης</h3>
+            <label class="remember-me">
               <input type="checkbox" id="setClientHold">
               Πληρωμές με κάρτα
             </label>
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Μόνο για υπηρεσίες με τιμή. Τα χρήματα πηγαίνουν στον δικό σου λογαριασμό Stripe.</p>
-            <p id="connectStatus" style="margin:0.45rem 0 0; color:var(--text-muted); font-size:0.78rem;"></p>
+            <p class="settings-hint">Μόνο για υπηρεσίες με τιμή. Τα χρήματα πηγαίνουν στον δικό σου λογαριασμό Stripe.</p>
+            <p id="connectStatus" class="settings-hint"></p>
             <button type="button" class="btn btn-outline" id="connectStripeBtn" onclick="startStripeConnect()" style="margin-top:0.45rem;">Σύνδεση Stripe</button>
-            <label class="remember-me" style="margin-top:0.7rem;">
+            <label class="remember-me" style="margin-top:0.85rem;">
               <input type="checkbox" id="setPayOnline" checked>
               Πληρωμή online (ολόκληρο ποσό)
             </label>
@@ -229,212 +261,223 @@
               <input type="checkbox" id="setPayShop" checked>
               Πληρωμή στο κατάστημα (εγγύηση κράτησης)
             </label>
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">Εγγύηση Κράτησης: δεσμεύεται ποσοστό στην κάρτα. Μηδενική χρέωση σήμερα! Χρέωση μόνο σε ακύρωση τελευταίας στιγμής ή απουσία χωρίς προειδοποίηση. Το υπόλοιπο πληρώνεται στο μαγαζί.</p>
-            <label for="setDepositPercent" style="display:block; margin-top:0.55rem;">Ποσοστό εγγύησης (%)</label>
-            <input class="field" type="number" id="setDepositPercent" min="1" max="100" value="50" style="max-width:6rem;">
-            <label for="setCancelHours" style="display:block; margin-top:0.7rem;">Ακύρωση online, ώρες πριν</label>
-            <input class="field" type="number" id="setCancelHours" min="0" max="168" value="24" style="max-width:6rem;">
-            <p style="margin:0.3rem 0 0; color:var(--text-muted); font-size:0.78rem;">0 = μέχρι την ώρα του ραντεβού. Μέσα στο όριο η εγγύηση/πληρωμή επιστρέφεται. Μετά, ο πελάτης δεν ακυρώνει από το email· χρέωση μόνο σε late cancel ή απουσία.</p>
+            <p class="settings-hint">Εγγύηση: μηδενική χρέωση σήμερα. Χρέωση μόνο σε ακύρωση τελευταίας στιγμής ή απουσία. Το υπόλοιπο πληρώνεται στο μαγαζί.</p>
+            <fieldset class="deposit-fieldset">
+              <legend>Ποσό εγγύησης</legend>
+              <label class="remember-me"><input type="radio" name="depositMode" id="depositModePercent" value="percent" checked onchange="syncDepositModeUi()"> Ποσοστό της τιμής υπηρεσίας</label>
+              <label class="remember-me" style="margin-top:0.35rem;"><input type="radio" name="depositMode" id="depositModeFixed" value="fixed" onchange="syncDepositModeUi()"> Σταθερό ποσό (€)</label>
+              <div id="depositPercentWrap" style="margin-top:0.55rem;">
+                <label for="setDepositPercent">Ποσοστό (%)</label>
+                <input class="field" type="number" id="setDepositPercent" min="1" max="100" value="50" style="max-width:7rem;">
+              </div>
+              <div id="depositFixedWrap" style="margin-top:0.55rem; display:none;">
+                <label for="setDepositFixed">Ποσό (€)</label>
+                <input class="field" type="number" id="setDepositFixed" min="0.5" step="0.5" value="1" style="max-width:7rem;">
+                <p class="settings-hint">Ελάχ. 0,50€. Αν η υπηρεσία είναι φθηνότερη, δεσμεύεται όλο το ποσό.</p>
+              </div>
+            </fieldset>
+            <label for="setCancelHours" style="display:block; margin-top:0.85rem;">Ακύρωση online, ώρες πριν</label>
+            <input class="field" type="number" id="setCancelHours" min="0" max="168" value="24" style="max-width:7rem;">
+            <p class="settings-hint">0 = μέχρι την ώρα του ραντεβού. Μέσα στο όριο η εγγύηση επιστρέφεται.</p>
           </div>
-          <div class="form-group"><label>Τηλέφωνο</label><input class="field" type="text" id="setPhone"></div>
-        </div>
-        <div class="form-group">
-          <label>Διεύθυνση</label>
-          <input class="field" type="text" id="setAddress">
-        </div>
-        <div class="appearance-layout">
-          <div>
-            <div class="settings-two-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-              <div class="form-group"><label>URL Logo</label><input class="field appearance-input" type="url" id="setLogo" placeholder="Κενό = demo logo"></div>
-              <div class="form-group"><label>Κύριο Χρώμα Φόρμας</label><input class="field appearance-input" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
-            </div>
 
-            <div class="form-group">
-              <label>Υπότιτλος Σελίδας</label>
-              <input class="field appearance-input" type="text" id="setBookingSubtitle" maxlength="120" placeholder="Κλείστε το ραντεβού σας εύκολα και γρήγορα">
+          <div class="settings-panel" id="settingsPanel-appearance">
+            <h3 class="settings-panel-title">Εμφάνιση σελίδας πελάτη</h3>
+            <div class="appearance-layout">
+              <div>
+                <div class="settings-two-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div class="form-group"><label>URL Logo</label><input class="field appearance-input" type="url" id="setLogo" placeholder="Κενό = demo logo"></div>
+                  <div class="form-group"><label>Κύριο Χρώμα Φόρμας</label><input class="field appearance-input" type="color" id="setColor" style="height: 38px; padding: 0.25rem;"></div>
+                </div>
+                <div class="form-group">
+                  <label>Υπότιτλος Σελίδας</label>
+                  <input class="field appearance-input" type="text" id="setBookingSubtitle" maxlength="120" placeholder="Κλείστε το ραντεβού σας εύκολα και γρήγορα">
+                </div>
+                <div class="form-group">
+                  <label>Μήνυμα Καλωσορίσματος</label>
+                  <textarea class="field appearance-input" id="setWelcomeText" rows="2" maxlength="240" placeholder="Προαιρετικό σύντομο μήνυμα"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Μήνυμα Επιτυχούς Κράτησης</label>
+                  <input class="field appearance-input" type="text" id="setSuccessMessage" maxlength="160" placeholder="Η κράτησή σας καταχωρήθηκε!">
+                </div>
+                <div class="form-group">
+                  <label>Θέμα Σελίδας Πελάτη</label>
+                  <div class="theme-picker" id="setClientTheme">
+                    <label class="theme-option">
+                      <input type="radio" name="clientTheme" value="light" checked>
+                      <span class="theme-card">
+                        <span class="theme-preview theme-preview-light"><span class="theme-preview-card"></span></span>
+                        <span class="theme-label">Φωτεινό</span>
+                      </span>
+                    </label>
+                    <label class="theme-option">
+                      <input type="radio" name="clientTheme" value="dark">
+                      <span class="theme-card">
+                        <span class="theme-preview theme-preview-dark"><span class="theme-preview-card"></span></span>
+                        <span class="theme-label">Σκοτεινό</span>
+                      </span>
+                    </label>
+                    <label class="theme-option">
+                      <input type="radio" name="clientTheme" value="warm">
+                      <span class="theme-card">
+                        <span class="theme-preview theme-preview-warm"><span class="theme-preview-card"></span></span>
+                        <span class="theme-label">Warm / Spa</span>
+                      </span>
+                    </label>
+                    <label class="theme-option">
+                      <input type="radio" name="clientTheme" value="ocean">
+                      <span class="theme-card">
+                        <span class="theme-preview theme-preview-ocean"><span class="theme-preview-card"></span></span>
+                        <span class="theme-label">Ocean</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <aside class="client-preview" id="clientAppearancePreview" data-preview-theme="light" style="--preview-brand:#4f46e5;">
+                <p class="preview-title">Live Preview</p>
+                <div class="preview-phone">
+                  <img id="previewLogo" class="preview-logo" src="demo-logo.svg" alt="Προεπισκόπηση logo">
+                  <h3 id="previewName" class="preview-business-name">Η επιχείρησή σας</h3>
+                  <p id="previewSubtitle" class="preview-copy">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
+                  <span class="preview-info">Πληροφορίες καταστήματος</span>
+                  <p id="previewWelcome" class="preview-welcome">Καλώς ήρθατε!</p>
+                  <div class="preview-block"><span class="preview-label">Ονοματεπώνυμο</span><div class="preview-input">Το όνομά σας</div></div>
+                  <div class="preview-block"><span class="preview-label">Υπηρεσία</span><div class="preview-input is-select">Επιλέξτε υπηρεσία</div></div>
+                  <div class="preview-block"><span class="preview-label">Ημερομηνία</span><div class="preview-input">Επιλέξτε ημερομηνία</div></div>
+                  <div class="preview-block"><span class="preview-label">Ώρα</span><div class="preview-input is-select">Επιλέξτε ώρα</div></div>
+                  <div class="preview-button">Υποβολή Αιτήματος Κράτησης</div>
+                  <p id="previewSuccess" class="preview-success">Η κράτησή σας καταχωρήθηκε!</p>
+                </div>
+              </aside>
             </div>
-            <div class="form-group">
-              <label>Μήνυμα Καλωσορίσματος</label>
-              <textarea class="field appearance-input" id="setWelcomeText" rows="2" maxlength="240" placeholder="Προαιρετικό σύντομο μήνυμα"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Μήνυμα Επιτυχούς Κράτησης</label>
-              <input class="field appearance-input" type="text" id="setSuccessMessage" maxlength="160" placeholder="Η κράτησή σας καταχωρήθηκε!">
-            </div>
+          </div>
 
+          <div class="settings-panel" id="settingsPanel-hours">
+            <h3 class="settings-panel-title">Ωράριο</h3>
             <div class="form-group">
-              <label>Θέμα Σελίδας Πελάτη</label>
-              <div class="theme-picker" id="setClientTheme">
-                <label class="theme-option">
-                  <input type="radio" name="clientTheme" value="light" checked>
-                  <span class="theme-card">
-                    <span class="theme-preview theme-preview-light"><span class="theme-preview-card"></span></span>
-                    <span class="theme-label">Φωτεινό</span>
-                  </span>
-                </label>
-                <label class="theme-option">
-                  <input type="radio" name="clientTheme" value="dark">
-                  <span class="theme-card">
-                    <span class="theme-preview theme-preview-dark"><span class="theme-preview-card"></span></span>
-                    <span class="theme-label">Σκοτεινό</span>
-                  </span>
-                </label>
-                <label class="theme-option">
-                  <input type="radio" name="clientTheme" value="warm">
-                  <span class="theme-card">
-                    <span class="theme-preview theme-preview-warm"><span class="theme-preview-card"></span></span>
-                    <span class="theme-label">Warm / Spa</span>
-                  </span>
-                </label>
-                <label class="theme-option">
-                  <input type="radio" name="clientTheme" value="ocean">
-                  <span class="theme-card">
-                    <span class="theme-preview theme-preview-ocean"><span class="theme-preview-card"></span></span>
-                    <span class="theme-label">Ocean</span>
-                  </span>
-                </label>
+              <label>Ημέρες Λειτουργίας</label>
+              <div class="checkbox-group" id="setWorkDays">
+                <label><input type="checkbox" id="selectAllDays" onchange="toggleNamedChecks('w_day', this.checked)"> Επιλογή όλων</label>
+                <label><input type="checkbox" name="w_day" value="1" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Δευτ</label>
+                <label><input type="checkbox" name="w_day" value="2" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τρί</label>
+                <label><input type="checkbox" name="w_day" value="3" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τετ</label>
+                <label><input type="checkbox" name="w_day" value="4" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Πέμ</label>
+                <label><input type="checkbox" name="w_day" value="5" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Παρ</label>
+                <label><input type="checkbox" name="w_day" value="6" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Σάβ</label>
+                <label><input type="checkbox" name="w_day" value="0" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Κυρ</label>
+              </div>
+              <label style="margin-top: 0.85rem; display:flex; align-items:center; gap:0.45rem; font-weight:500; color: var(--text-color);">
+                <input type="checkbox" id="perDayHoursToggle" onchange="syncHoursEditors()">
+                Διαφορετικό ωράριο ανά ημέρα
+              </label>
+            </div>
+            <div class="form-group" id="sharedHoursEditor">
+              <label>Βάρδιες / Διαστήματα (ίδιο για όλες τις εργάσιμες)</label>
+              <div id="setShiftsList"></div>
+              <button type="button" class="btn" onclick="addShiftRow('setShiftsList')" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Βάρδιας</button>
+            </div>
+            <div class="form-group" style="display:none;" id="perDayHoursEditor"></div>
+            <div class="form-group" style="max-width: 280px;">
+              <label>Buffer Time (λεπτά)</label>
+              <input class="field" type="number" id="setBuffer" min="0" step="5">
+            </div>
+          </div>
+
+          <div class="settings-panel" id="settingsPanel-services">
+            <h3 class="settings-panel-title">Υπηρεσίες & τιμές</h3>
+            <div id="setServicesList"></div>
+            <button type="button" class="btn" onclick="addModalService()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Υπηρεσίας</button>
+          </div>
+
+          <div class="settings-panel" id="settingsPanel-form">
+            <h3 class="settings-panel-title">Φόρμα πελάτη</h3>
+            <p class="settings-hint">Ξετσεκάρισε ό,τι δεν θέλεις. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong>.</p>
+            <div class="form-field-toggles">
+              <label><input type="checkbox" id="selectAllFormFields" onchange="toggleFormFields(this.checked)"> Επιλογή όλων</label>
+              <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone'); syncFormFieldSelect()"> Τηλέφωνο</label>
+              <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email'); syncFormFieldSelect()"> Email</label>
+              <label><input type="checkbox" id="formFieldNotes" checked onchange="syncFormFieldSelect()"> Σημειώσεις</label>
+              <label class="extra-field-toggle"><input type="checkbox" id="formFieldInstagram" checked onchange="syncExtraField(); syncFormFieldSelect()"> Επιπλέον πεδίο</label>
+              <input class="field extra-field-title" type="text" id="formFieldExtraLabel" maxlength="40" placeholder="Τίτλος, π.χ. Instagram ή Telegram" oninput="syncExtraField()">
+            </div>
+          </div>
+
+          <div class="settings-panel" id="settingsPanel-integrations">
+            <h3 class="settings-panel-title">Telegram / Calendar</h3>
+            <div class="help-box" style="margin-top:0;">
+              <h3>Telegram</h3>
+              <p class="settings-hint">1) Άνοιξε το bot · 2) Έναρξη / Start · 3) Αντίγραψε το Chat ID εδώ. Κενό = χωρίς ειδοποιήσεις.</p>
+              <p id="telegramBotLinkWrap" style="margin:0 0 0.7rem; display:none;">
+                <a id="telegramBotLink" href="#" target="_blank" rel="noopener">Άνοιξε το bot στο Telegram</a>
+              </p>
+              <div class="form-group" style="margin:0; max-width: 280px;">
+                <label>Chat ID</label>
+                <input class="field" type="text" id="setTelegramChatId" inputmode="numeric" placeholder="123456789" autocomplete="off">
+              </div>
+            </div>
+            <div class="help-box">
+              <h3>Google Calendar</h3>
+              <p class="settings-hint">Τα εγκεκριμένα ραντεβού μπαίνουν σε αυτό το ημερολόγιο. Στο Google βάλε ειδοποίηση 1 ημέρα πριν αν θέλεις.</p>
+              <p id="calendarMissing" style="display:none; margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Χρειάζεται ενημέρωση της βάσης για να βγει ο σύνδεσμος.</p>
+              <input class="field readonly-url" id="calendarUrl" readonly>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
+                <a class="btn btn-outline" id="calendarGoogleLink" href="#" target="_blank" rel="noopener">Προσθήκη στο Google Calendar</a>
+                <button type="button" class="btn btn-outline" onclick="copyCalendarLink()">Αντιγραφή συνδέσμου</button>
               </div>
             </div>
           </div>
 
-          <aside class="client-preview" id="clientAppearancePreview" data-preview-theme="light" style="--preview-brand:#4f46e5;">
-            <p class="preview-title">Live Preview</p>
-            <div class="preview-phone">
-              <img id="previewLogo" class="preview-logo" src="demo-logo.svg" alt="Προεπισκόπηση logo">
-              <h3 id="previewName" class="preview-business-name">Η επιχείρησή σας</h3>
-              <p id="previewSubtitle" class="preview-copy">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
-              <span class="preview-info">Πληροφορίες καταστήματος</span>
-              <p id="previewWelcome" class="preview-welcome">Καλώς ήρθατε!</p>
-              <div class="preview-block"><span class="preview-label">Ονοματεπώνυμο</span><div class="preview-input">Το όνομά σας</div></div>
-              <div class="preview-block"><span class="preview-label">Υπηρεσία</span><div class="preview-input is-select">Επιλέξτε υπηρεσία</div></div>
-              <div class="preview-block"><span class="preview-label">Ημερομηνία</span><div class="preview-input">Επιλέξτε ημερομηνία</div></div>
-              <div class="preview-block"><span class="preview-label">Ώρα</span><div class="preview-input is-select">Επιλέξτε ώρα</div></div>
-              <div class="preview-button">Υποβολή Αιτήματος Κράτησης</div>
-              <p id="previewSuccess" class="preview-success">Η κράτησή σας καταχωρήθηκε!</p>
+          <div class="settings-panel" id="settingsPanel-billing">
+            <h3 class="settings-panel-title">Συνδρομή</h3>
+            <div class="help-box" id="billingBox" hidden style="margin-top:0;">
+              <p id="billingText" style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;"></p>
+              <div class="billing-actions" id="billingStart">
+                <button type="button" class="btn" onclick="startBilling('month')">Μηνιαία</button>
+                <button type="button" class="btn btn-outline" onclick="startBilling('year')">Ετήσια</button>
+              </div>
+              <button type="button" class="btn btn-outline" id="billingPortal" hidden onclick="openBillingPortal()">Διαχείριση συνδρομής</button>
             </div>
-          </aside>
-        </div>
-
-        <div class="form-group" style="margin-top: 1rem;">
-          <label>Ημέρες Λειτουργίας</label>
-          <div class="checkbox-group" id="setWorkDays">
-            <label><input type="checkbox" id="selectAllDays" onchange="toggleNamedChecks('w_day', this.checked)"> Επιλογή όλων</label>
-            <label><input type="checkbox" name="w_day" value="1" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Δευτ</label>
-            <label><input type="checkbox" name="w_day" value="2" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τρί</label>
-            <label><input type="checkbox" name="w_day" value="3" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τετ</label>
-            <label><input type="checkbox" name="w_day" value="4" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Πέμ</label>
-            <label><input type="checkbox" name="w_day" value="5" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Παρ</label>
-            <label><input type="checkbox" name="w_day" value="6" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Σάβ</label>
-            <label><input type="checkbox" name="w_day" value="0" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Κυρ</label>
+            <p id="billingOffNote" class="settings-hint">Οι συνδρομές πλατφόρμας δεν είναι ενεργές ακόμα.</p>
           </div>
-          <label style="margin-top: 0.85rem; display:flex; align-items:center; gap:0.45rem; font-weight:500; color: var(--text-color);">
-            <input type="checkbox" id="perDayHoursToggle" onchange="syncHoursEditors()">
-            Διαφορετικό ωράριο ανά ημέρα
-          </label>
-        </div>
 
-        <div class="form-group" style="margin-top: 1rem;" id="sharedHoursEditor">
-          <label>Βάρδιες / Διαστήματα (ίδιο για όλες τις εργάσιμες)</label>
-          <div id="setShiftsList"></div>
-          <button type="button" class="btn" onclick="addShiftRow('setShiftsList')" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Βάρδιας</button>
-        </div>
-        <div class="form-group" style="margin-top: 1rem; display:none;" id="perDayHoursEditor"></div>
-
-        <div class="form-group" style="margin-top: 1rem;">
-          <label>Υπηρεσίες & Τιμές</label>
-          <div id="setServicesList"></div>
-          <button type="button" class="btn" onclick="addModalService()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Υπηρεσίας</button>
-        </div>
-
-        <div class="form-group" style="margin-top: 1rem; max-width: 280px;">
-          <label>Buffer Time (λεπτά)</label>
-          <input class="field" type="number" id="setBuffer" min="0" step="5">
-        </div>
-
-        <div class="help-box">
-          <h3>Πεδία φόρμας πελάτη</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Ξετσεκάρισε ό,τι δεν θέλεις να εμφανίζεται. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong>. Το επιπλέον πεδίο δεν μετράει ως επικοινωνία.</p>
-          <div class="form-field-toggles">
-            <label><input type="checkbox" id="selectAllFormFields" onchange="toggleFormFields(this.checked)"> Επιλογή όλων</label>
-            <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone'); syncFormFieldSelect()"> Τηλέφωνο</label>
-            <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email'); syncFormFieldSelect()"> Email</label>
-            <label><input type="checkbox" id="formFieldNotes" checked onchange="syncFormFieldSelect()"> Σημειώσεις</label>
-            <label class="extra-field-toggle"><input type="checkbox" id="formFieldInstagram" checked onchange="syncExtraField(); syncFormFieldSelect()"> Επιπλέον πεδίο</label>
-            <input class="field extra-field-title" type="text" id="formFieldExtraLabel" maxlength="40" placeholder="Τίτλος, π.χ. Instagram ή Telegram" oninput="syncExtraField()">
-          </div>
-        </div>
-
-        <div class="help-box">
-          <h3>Telegram</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">
-            1) Άνοιξε το bot (δεν χρειάζεσαι token).<br>
-            2) Πάτα <strong>Έναρξη / Start</strong>.<br>
-            3) Αντίγραψε το Chat ID που σου στέλνει και αποθήκευσε το εδώ.
-            Κενό = χωρίς ειδοποιήσεις.
-          </p>
-          <p id="telegramBotLinkWrap" style="margin:0 0 0.7rem; display:none;">
-            <a id="telegramBotLink" href="#" target="_blank" rel="noopener">Άνοιξε το bot στο Telegram</a>
-          </p>
-          <div class="form-group" style="margin:0; max-width: 280px;">
-            <label>Chat ID</label>
-            <input class="field" type="text" id="setTelegramChatId" inputmode="numeric" placeholder="123456789" autocomplete="off">
-          </div>
-        </div>
-
-        <div class="help-box">
-          <h3>Google Calendar</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Τα εγκεκριμένα ραντεβού μπαίνουν σε αυτό το ημερολόγιο. Η ειδοποίηση 24 ωρών δεν μπαίνει μόνη της στο συμβάν. Στο Google, άνοιξε τις ρυθμίσεις αυτού του ημερολογίου και βάλε ειδοποίηση 1 ημέρα πριν. Ισχύει για όλα τα συμβάντα του.</p>
-          <p id="calendarMissing" style="display:none; margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Χρειάζεται ενημέρωση της βάσης για να βγει ο σύνδεσμος.</p>
-          <input class="field readonly-url" id="calendarUrl" readonly>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
-            <a class="btn btn-outline" id="calendarGoogleLink" href="#" target="_blank" rel="noopener">Προσθήκη στο Google Calendar</a>
-            <button type="button" class="btn btn-outline" onclick="copyCalendarLink()">Αντιγραφή συνδέσμου</button>
-          </div>
-        </div>
-
-        <div class="help-box">
-          <h3>Κινητό</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Στείλε αυτό το link στο κινητό. Μετά πρόσθεσέ το στην αρχική οθόνη.</p>
-          <input class="field readonly-url" id="managerMobileUrl" readonly>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
-            <button type="button" class="btn btn-outline" onclick="copyManagerLink()">Αντιγραφή συνδέσμου</button>
-            <button type="button" class="btn btn-outline" onclick="shareManagerLink()">Κοινοποίηση</button>
-          </div>
-        </div>
-
-        <div class="help-box" id="billingBox" hidden>
-          <h3>Συνδρομή</h3>
-          <p id="billingText" style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;"></p>
-          <div class="billing-actions" id="billingStart">
-            <button type="button" class="btn" onclick="startBilling('month')">Μηνιαία</button>
-            <button type="button" class="btn btn-outline" onclick="startBilling('year')">Ετήσια</button>
-          </div>
-          <button type="button" class="btn btn-outline" id="billingPortal" hidden onclick="openBillingPortal()">Διαχείριση συνδρομής</button>
-        </div>
-
-        <div class="help-box">
-          <h3>Αλλαγή κωδικού</h3>
-          <p style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Αλλάζεις τον κωδικό σου. Αν τον χάσεις, στην είσοδο πάτα «Ξέχασα τον κωδικό». Ο σύνδεσμος πάει στο email της επιχείρησης. Μπορεί και ο super admin να βάλει νέο κωδικό.</p>
-          <div class="form-group">
-            <label>Τρέχων κωδικός</label>
-            <input class="field" type="password" id="currentPassword" autocomplete="current-password">
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Νέος κωδικός</label>
-              <input class="field" type="password" id="newPassword" autocomplete="new-password" minlength="8">
+          <div class="settings-panel" id="settingsPanel-security">
+            <h3 class="settings-panel-title">Κωδικός / Κινητό</h3>
+            <div class="help-box" style="margin-top:0;">
+              <h3>Κινητό</h3>
+              <p class="settings-hint">Στείλε αυτό το link στο κινητό και πρόσθεσέ το στην αρχική οθόνη.</p>
+              <input class="field readonly-url" id="managerMobileUrl" readonly>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
+                <button type="button" class="btn btn-outline" onclick="copyManagerLink()">Αντιγραφή συνδέσμου</button>
+                <button type="button" class="btn btn-outline" onclick="shareManagerLink()">Κοινοποίηση</button>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Επιβεβαίωση</label>
-              <input class="field" type="password" id="newPassword2" autocomplete="new-password" minlength="8">
+            <div class="help-box">
+              <h3>Αλλαγή κωδικού</h3>
+              <p class="settings-hint">Αν τον χάσεις, στην είσοδο πάτα «Ξέχασα τον κωδικό». Ο σύνδεσμος πάει στο email της επιχείρησης.</p>
+              <div class="form-group">
+                <label>Τρέχων κωδικός</label>
+                <input class="field" type="password" id="currentPassword" autocomplete="current-password">
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Νέος κωδικός</label>
+                  <input class="field" type="password" id="newPassword" autocomplete="new-password" minlength="8">
+                </div>
+                <div class="form-group">
+                  <label>Επιβεβαίωση</label>
+                  <input class="field" type="password" id="newPassword2" autocomplete="new-password" minlength="8">
+                </div>
+              </div>
+              <button type="button" class="btn" onclick="changeOwnPassword()">Αποθήκευση κωδικού</button>
             </div>
           </div>
-          <button type="button" class="btn" onclick="changeOwnPassword()">Αποθήκευση κωδικού</button>
-        </div>
 
-        <div class="settings-save-bar">
-          <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Ακύρωση</button>
-          <button type="submit" class="btn" id="saveSettingsBtn" style="background: #059669;">Αποθήκευση Αλλαγών</button>
+          <div class="settings-save-bar">
+            <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Ακύρωση</button>
+            <button type="submit" class="btn" id="saveSettingsBtn" style="background: #059669;">Αποθήκευση</button>
+          </div>
         </div>
       </form>
     </div>
@@ -690,7 +733,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260930f"></script>
+<script src="manager.js?v=20260930h"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
