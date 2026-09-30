@@ -430,10 +430,13 @@ async function loadDashboard(code) {
       showToast('Βάλε email επιχείρησης στις ρυθμίσεις. Χωρίς αυτό δεν γίνεται ανάκτηση κωδικού.', true);
     }
     const billingFlag = new URLSearchParams(location.search).get('billing');
+    const connectFlag = new URLSearchParams(location.search).get('connect');
+    if (billingFlag || connectFlag) history.replaceState({}, '', location.pathname);
     if (billingFlag) {
-      history.replaceState({}, '', location.pathname);
       showToast(billingFlag === 'ok' ? 'Η πληρωμή καταχωρήθηκε.' : 'Η πληρωμή ακυρώθηκε.', billingFlag !== 'ok');
     }
+    if (connectFlag === 'refresh') startStripeConnect();
+    if (connectFlag === 'return') refreshStripeConnect();
 
     populateServicesDropdown();
   } catch (e) {
@@ -1394,6 +1397,7 @@ function openAppointmentDetails(item) {
       <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
       <div class="detail-row"><span class="detail-k">Ώρα</span> <strong class="detail-v">${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
       <div class="detail-row"><span class="detail-k">Κατάσταση</span> <strong class="detail-v">${statusLabel(item.status)}</strong></div>
+      ${holdLabel(item.hold_status) ? `<div class="detail-row"><span class="detail-k">Κάρτα</span> <strong class="detail-v">${escapeHtml(holdLabel(item.hold_status))}${item.hold_cents ? ` · ${(Number(item.hold_cents) / 100).toFixed(2)}€` : ''}</strong></div>` : ''}
       ${pastNote}
       ${waitlistNote}
       ${requestNote}
@@ -1414,6 +1418,11 @@ function openAppointmentDetails(item) {
   document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || item.status === 'CANCELLED' || item.status === 'REJECTED') ? 'none' : 'inline-flex';
   document.getElementById('btnReject').style.display = actionable && !past ? 'inline-flex' : 'none';
   document.getElementById('btnCancelAppt').style.display = approved && !past ? 'inline-flex' : 'none';
+  const hold = item.hold_status || '';
+  const captureBtn = document.getElementById('btnHoldCapture');
+  const refundBtn = document.getElementById('btnHoldRefund');
+  if (captureBtn) captureBtn.style.display = hold === 'authorized' ? 'inline-flex' : 'none';
+  if (refundBtn) refundBtn.style.display = hold === 'captured' ? 'inline-flex' : 'none';
   const deleteBtn = document.getElementById('btnDeleteAppt');
   deleteBtn.style.display = canDeleteAppointment(item) ? 'inline-flex' : 'none';
   deleteBtn.innerHTML = historyItem
@@ -1477,6 +1486,38 @@ async function updateStatus(status, extra) {
       fetchAppointments();
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα ενημέρωσης.', true);
+    }
+  });
+}
+
+function holdLabel(status) {
+  return {
+    awaiting_card: 'Αναμονή κάρτας',
+    authorized: 'Δεσμευμένη',
+    card_saved: 'Κάρτα αποθηκευμένη, η δέσμευση μπαίνει λίγες μέρες πριν',
+    captured: 'Χρεωμένη',
+    released: 'Αποδεσμευμένη',
+    refunded: 'Επιστράφηκε',
+    failed: 'Η δέσμευση απέτυχε'
+  }[status] || '';
+}
+
+async function settleHold(action) {
+  await withLock(async () => {
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/hold`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedEventId, action })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Η κάρτα δεν ενημερώθηκε.');
+      closeModal('actionModal');
+      const text = action === 'refund' ? 'Η επιστροφή καταχωρήθηκε.' : (action === 'capture' ? 'Η δέσμευση χρεώθηκε.' : 'Η κάρτα αποδεσμεύτηκε.');
+      showToast(text);
+      fetchAppointments();
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message || 'Η κάρτα δεν ενημερώθηκε.', true);
     }
   });
 }
@@ -1691,6 +1732,43 @@ async function startBilling(plan) {
   }
 }
 
+function renderConnectStatus() {
+  const el = document.getElementById('connectStatus');
+  if (!el || !currentTenantData) return;
+  if (currentTenantData.connect_ready) {
+    el.textContent = 'Το Stripe είναι συνδεδεμένο. Οι δεσμεύσεις καρτών πηγαίνουν στο κατάστημα.';
+  } else if (currentTenantData.connect_started) {
+    el.textContent = 'Η σύνδεση Stripe δεν έχει ολοκληρωθεί. Πάτα ξανά το κουμπί και τελείωσε τη φόρμα.';
+  } else {
+    el.textContent = 'Χωρίς σύνδεση Stripe, η δέσμευση κάρτας δεν ανοίγει.';
+  }
+}
+
+async function startStripeConnect() {
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/connect/start`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.url) throw new Error(data.error || 'Η σύνδεση Stripe δεν άνοιξε.');
+    location.href = data.url;
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message, true);
+  }
+}
+
+async function refreshStripeConnect() {
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/connect/status`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Ο λογαριασμός Stripe δεν διαβάστηκε.');
+    currentTenantData.connect_ready = data.connect_ready === true;
+    currentTenantData.connect_started = data.connect_started === true;
+    renderConnectStatus();
+    showToast(data.connect_ready ? 'Το Stripe συνδέθηκε.' : 'Η φόρμα Stripe δεν ολοκληρώθηκε.', !data.connect_ready);
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message, true);
+  }
+}
+
 async function openBillingPortal() {
   try {
     const res = await adminFetch(`/api/${currentBusinessCode}/admin/billing/portal`, { method: 'POST' });
@@ -1709,6 +1787,11 @@ function openSettingsModal() {
   document.getElementById('setEmail').value = currentTenantData.email || '';
   const emailNotify = document.getElementById('setEmailNotify');
   if (emailNotify) emailNotify.checked = currentTenantData.email_notify !== false;
+  const clientHold = document.getElementById('setClientHold');
+  if (clientHold) clientHold.checked = currentTenantData.client_hold_enabled === true;
+  const cancelHours = document.getElementById('setCancelHours');
+  if (cancelHours) cancelHours.value = currentTenantData.cancel_hours === 0 ? 0 : (currentTenantData.cancel_hours || 24);
+  renderConnectStatus();
   document.getElementById('setPhone').value = currentTenantData.phone || '';
   document.getElementById('setAddress').value = currentTenantData.address || '';
   document.getElementById('setLogo').value = currentTenantData.logo_url || '';
@@ -2145,7 +2228,9 @@ async function saveSettings(e) {
         client_theme, booking_subtitle, welcome_text, success_message,
         work_days, working_hours, services,
         buffer_minutes, telegram_chat_id, form_fields,
-        email_notify: document.getElementById('setEmailNotify').checked
+        email_notify: document.getElementById('setEmailNotify').checked,
+        client_hold_enabled: document.getElementById('setClientHold') ? document.getElementById('setClientHold').checked : false,
+        cancel_hours: document.getElementById('setCancelHours') ? Number(document.getElementById('setCancelHours').value) : 24
       })
     });
 
