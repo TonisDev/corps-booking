@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260930d">
+    <link rel="stylesheet" href="manager_style.css?v=20260930f">
 </head>
 <body data-theme="light">
 
@@ -82,6 +82,17 @@
 
   <!-- [SECTION: HTML-DASH] στατιστικά: εκκρεμή / μελλοντικά εγκεκριμένα / ιστορικό -->
   <div id="dashboardScreen" style="display: none;">
+    <div id="platformNotice" class="platform-notice" hidden>
+      <div class="platform-notice-body" id="platformNoticeBody"></div>
+      <div class="platform-notice-meta">
+        <div class="platform-notice-sign" id="platformNoticeSign"></div>
+        <div class="platform-notice-contact" id="platformNoticeContact"></div>
+      </div>
+    </div>
+    <div id="billingWarnBanner" class="billing-warn-banner" hidden>
+      <strong id="billingWarnTitle">Πρόβλημα συνδρομής</strong>
+      <p id="billingWarnText"></p>
+    </div>
     <div class="header">
       <div class="header-brand">
         <h2 id="storeTitle">Διαχείριση Καταστήματος</h2>
@@ -679,7 +690,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260930e"></script>
+<script src="manager.js?v=20260930f"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
