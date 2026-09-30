@@ -1494,12 +1494,12 @@ function holdLabel(status, item) {
   if (status === 'captured' && item && item.pay_mode === 'online') return 'Πληρωμένη online';
   return {
     awaiting_card: 'Αναμονή κάρτας',
-    authorized: 'Δέσμευση φερεγγυότητας',
-    card_saved: 'Κάρτα αποθηκευμένη, η δέσμευση μπαίνει λίγες μέρες πριν',
-    captured: 'Χρεωμένη δέσμευση',
-    released: 'Αποδεσμευμένη',
+    authorized: 'Εγγύηση κράτησης',
+    card_saved: 'Κάρτα εγγύησης αποθηκευμένη',
+    captured: 'Εγγύηση χρεωμένη',
+    released: 'Εγγύηση αποδεσμευμένη',
     refunded: 'Επιστράφηκε',
-    failed: 'Η δέσμευση απέτυχε'
+    failed: 'Η εγγύηση απέτυχε'
   }[status] || '';
 }
 
@@ -1514,7 +1514,7 @@ async function settleHold(action) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Η κάρτα δεν ενημερώθηκε.');
       closeModal('actionModal');
-      const text = action === 'refund' ? 'Η επιστροφή καταχωρήθηκε.' : (action === 'capture' ? 'Η δέσμευση χρεώθηκε.' : 'Η κάρτα αποδεσμεύτηκε.');
+      const text = action === 'refund' ? 'Η επιστροφή καταχωρήθηκε.' : (action === 'capture' ? 'Η εγγύηση χρεώθηκε.' : 'Η εγγύηση αποδεσμεύτηκε.');
       showToast(text);
       fetchAppointments();
     } catch (err) {
@@ -1815,7 +1815,7 @@ function renderConnectStatus() {
   } else if (currentTenantData.connect_started) {
     el.textContent = 'Η σύνδεση Stripe δεν έχει ολοκληρωθεί. Πάτα ξανά το κουμπί και τελείωσε τη φόρμα.';
   } else {
-    el.textContent = 'Χωρίς σύνδεση Stripe, η δέσμευση κάρτας δεν ανοίγει.';
+    el.textContent = 'Χωρίς σύνδεση Stripe, η Εγγύηση Κράτησης δεν ανοίγει.';
   }
 }
 
