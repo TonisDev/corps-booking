@@ -1523,6 +1523,80 @@ async function settleHold(action) {
   });
 }
 
+function paymentRows() {
+  return (allAppointments || []).filter((item) => {
+    const hold = String(item.hold_status || '');
+    return hold && hold !== 'none' && hold !== 'awaiting_card';
+  }).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.start_time || '').localeCompare(String(a.start_time || '')));
+}
+
+function openPaymentsModal() {
+  const filter = document.getElementById('paymentsFilter');
+  if (filter) filter.value = 'all';
+  renderPaymentsList();
+  openModal('paymentsModal');
+  lucide.createIcons();
+}
+
+function renderPaymentsList() {
+  const wrap = document.getElementById('paymentsList');
+  if (!wrap) return;
+  const filter = (document.getElementById('paymentsFilter') || {}).value || 'all';
+  let rows = paymentRows();
+  if (filter !== 'all') rows = rows.filter((item) => item.hold_status === filter);
+  if (!rows.length) {
+    wrap.innerHTML = '<p class="guide-note">Δεν υπάρχουν ακόμη κινήσεις κάρτας.</p>';
+    return;
+  }
+  wrap.innerHTML = rows.map((item) => {
+    const amount = item.hold_cents ? `${(Number(item.hold_cents) / 100).toFixed(2)}€` : '—';
+    const mode = item.pay_mode === 'online' ? 'Online' : (item.pay_mode === 'shop' ? 'Κατάστημα' : '');
+    return `<button type="button" class="apt-row payment-row" onclick="openPaymentAppointment('${jsString(item.id)}')">
+      <div>
+        <strong>${escapeHtml(item.customer_name || 'Πελάτης')}</strong>
+        <div style="color:var(--text-muted);font-size:0.82rem;margin-top:0.15rem;">${escapeHtml(formatGreekDate(item.date))} · ${escapeHtml(item.start_time || '')} · ${escapeHtml(item.service_name || '')}</div>
+      </div>
+      <div class="payment-meta">
+        <span>${escapeHtml(holdLabel(item.hold_status, item))}</span>
+        <strong>${escapeHtml(amount)}</strong>
+        ${mode ? `<span class="payment-mode">${escapeHtml(mode)}</span>` : ''}
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function openPaymentAppointment(id) {
+  closeModal('paymentsModal');
+  const item = (allAppointments || []).find((row) => row.id === id);
+  if (item) openAppointmentDetails(item);
+}
+
+function exportPaymentsCsv() {
+  const filter = (document.getElementById('paymentsFilter') || {}).value || 'all';
+  let rows = paymentRows();
+  if (filter !== 'all') rows = rows.filter((item) => item.hold_status === filter);
+  const lines = [['date', 'time', 'customer', 'service', 'amount_eur', 'status', 'pay_mode'].join(',')];
+  rows.forEach((item) => {
+    const amount = item.hold_cents ? (Number(item.hold_cents) / 100).toFixed(2) : '';
+    lines.push([
+      item.date || '',
+      item.start_time || '',
+      `"${String(item.customer_name || '').replace(/"/g, '""')}"`,
+      `"${String(item.service_name || '').replace(/"/g, '""')}"`,
+      amount,
+      item.hold_status || '',
+      item.pay_mode || ''
+    ].join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `payments-${currentBusinessCode || 'shop'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function forceApprove() {
   hideOverlapBox();
   updateStatus('BOOKED', { force: true });
