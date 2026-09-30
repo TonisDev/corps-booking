@@ -1800,6 +1800,8 @@ function billingStatusText(data) {
   return 'Διάλεξε μηνιαία ή ετήσια συνδρομή. Η τιμή φαίνεται στη σελίδα πληρωμής.';
 }
 
+let platformNoticeOkStep = 0;
+
 function renderPlatformBanners() {
   const noticeEl = document.getElementById('platformNotice');
   const warnEl = document.getElementById('billingWarnBanner');
@@ -1814,9 +1816,19 @@ function renderPlatformBanners() {
       document.getElementById('platformNoticeBody').textContent = notice.body;
       document.getElementById('platformNoticeSign').textContent = notice.signature || 'QuickBook';
       document.getElementById('platformNoticeContact').textContent = notice.contact || '';
+      platformNoticeOkStep = 0;
+      noticeEl.classList.remove('confirming');
+      const hint = document.getElementById('platformNoticeHint');
+      const btn = document.getElementById('platformNoticeOk');
+      if (hint) hint.textContent = 'Πάτα ΟΚ δύο φορές για να επιβεβαιώσεις ότι διάβασες το μήνυμα.';
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'ΟΚ';
+      }
       noticeEl.hidden = false;
     } else {
       noticeEl.hidden = true;
+      platformNoticeOkStep = 0;
     }
   }
   if (warnEl) {
@@ -1841,10 +1853,44 @@ function renderPlatformBanners() {
   }
 }
 
+async function confirmPlatformNotice() {
+  const noticeEl = document.getElementById('platformNotice');
+  const hint = document.getElementById('platformNoticeHint');
+  const btn = document.getElementById('platformNoticeOk');
+  if (!currentBusinessCode || !noticeEl || noticeEl.hidden) return;
+
+  if (platformNoticeOkStep < 1) {
+    platformNoticeOkStep = 1;
+    noticeEl.classList.add('confirming');
+    if (hint) hint.textContent = 'Επιβεβαίωση: πάτα ΟΚ ξανά για να δηλώσεις ότι διάβασες το μήνυμα.';
+    if (btn) btn.textContent = 'ΟΚ — διάβασα';
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/notice/ack`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Η επιβεβαίωση δεν καταχωρήθηκε.');
+    currentTenantData.admin_notice = null;
+    noticeEl.hidden = true;
+    platformNoticeOkStep = 0;
+    showToast('Επιβεβαιώθηκε ότι διάβασες το μήνυμα.');
+  } catch (err) {
+    if (btn) btn.disabled = false;
+    if (err.message !== 'Unauthorized') showToast(err.message || 'Η επιβεβαίωση απέτυχε.', true);
+  }
+}
+
 function renderBillingBox() {
   const box = document.getElementById('billingBox');
-  if (!box || !currentTenantData) return;
+  const nav = document.getElementById('settingsNavBilling');
+  const offNote = document.getElementById('billingOffNote');
+  if (!currentTenantData) return;
   const on = currentTenantData.billing_enabled === true;
+  if (nav) nav.hidden = !on;
+  if (offNote) offNote.hidden = on;
+  if (!box) return;
   box.hidden = !on;
   if (!on) return;
   document.getElementById('billingText').textContent = billingStatusText(currentTenantData);
@@ -1917,8 +1963,26 @@ async function openBillingPortal() {
 }
 
 // [SECTION: JS-SETTINGS]
+function showSettingsPanel(name) {
+  document.querySelectorAll('.settings-panel').forEach((el) => {
+    el.classList.toggle('active', el.id === `settingsPanel-${name}`);
+  });
+  document.querySelectorAll('.settings-nav-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-settings-panel') === name);
+  });
+}
+
+function syncDepositModeUi() {
+  const fixed = document.getElementById('depositModeFixed')?.checked === true;
+  const pctWrap = document.getElementById('depositPercentWrap');
+  const fixedWrap = document.getElementById('depositFixedWrap');
+  if (pctWrap) pctWrap.style.display = fixed ? 'none' : 'block';
+  if (fixedWrap) fixedWrap.style.display = fixed ? 'block' : 'none';
+}
+
 function openSettingsModal() {
   if (!currentTenantData) return;
+  showSettingsPanel('profile');
   document.getElementById('setName').value = currentTenantData.name || '';
   document.getElementById('setEmail').value = currentTenantData.email || '';
   const emailNotify = document.getElementById('setEmailNotify');
@@ -1931,6 +1995,14 @@ function openSettingsModal() {
   if (payShop) payShop.checked = currentTenantData.pay_shop_enabled !== false;
   const depositPct = document.getElementById('setDepositPercent');
   if (depositPct) depositPct.value = currentTenantData.deposit_percent || 50;
+  const depositFixed = document.getElementById('setDepositFixed');
+  if (depositFixed) depositFixed.value = currentTenantData.deposit_fixed_euros || 1;
+  const modeFixed = currentTenantData.deposit_mode === 'fixed';
+  const modePct = document.getElementById('depositModePercent');
+  const modeFix = document.getElementById('depositModeFixed');
+  if (modePct) modePct.checked = !modeFixed;
+  if (modeFix) modeFix.checked = modeFixed;
+  syncDepositModeUi();
   const cancelHours = document.getElementById('setCancelHours');
   if (cancelHours) cancelHours.value = currentTenantData.cancel_hours === 0 ? 0 : (currentTenantData.cancel_hours || 24);
   renderConnectStatus();
@@ -2374,7 +2446,9 @@ async function saveSettings(e) {
         client_hold_enabled: document.getElementById('setClientHold') ? document.getElementById('setClientHold').checked : false,
         pay_online_enabled: document.getElementById('setPayOnline') ? document.getElementById('setPayOnline').checked : true,
         pay_shop_enabled: document.getElementById('setPayShop') ? document.getElementById('setPayShop').checked : true,
+        deposit_mode: document.getElementById('depositModeFixed')?.checked ? 'fixed' : 'percent',
         deposit_percent: document.getElementById('setDepositPercent') ? Number(document.getElementById('setDepositPercent').value) : 50,
+        deposit_fixed_euros: document.getElementById('setDepositFixed') ? Number(document.getElementById('setDepositFixed').value) : 1,
         cancel_hours: document.getElementById('setCancelHours') ? Number(document.getElementById('setCancelHours').value) : 24
       })
     });
