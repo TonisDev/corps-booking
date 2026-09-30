@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260930d">
+    <link rel="stylesheet" href="style.css?v=20260930i">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -108,12 +108,13 @@
     <div class="home">
         <header class="home-nav">
             <span class="home-mark">QuickBook</span>
-            <a href="manager.html">Είσοδος</a>
+            <a class="home-nav-link" href="manager.html">Είσοδος</a>
         </header>
 
         <section class="home-hero">
-            <h1>Ραντεβού για το κατάστημα, από έναν σύνδεσμο</h1>
-            <p>Ο πελάτης ανοίγει τη σελίδα και ζητάει ώρα. Το αίτημα φαίνεται στον πίνακα. Από εκεί εγκρίνεται, απορρίπτεται ή αλλάζει ώρα. Η θέση κλείνει μόνο μετά την έγκριση. Χωρίς εφαρμογή και χωρίς λογαριασμό για τον πελάτη.</p>
+            <p class="home-kicker">Online κρατήσεις για επαγγελματίες</p>
+            <h1>Ραντεβού για το κατάστημα, <span class="home-hero-accent">από έναν σύνδεσμο</span></h1>
+            <p class="home-hero-lead">Ο πελάτης ανοίγει τη σελίδα και ζητάει ώρα. Το αίτημα φαίνεται στον πίνακα. Από εκεί εγκρίνεται, απορρίπτεται ή αλλάζει ώρα. Η θέση κλείνει μόνο μετά την έγκριση. Χωρίς εφαρμογή και χωρίς λογαριασμό για τον πελάτη.</p>
         </section>
 
         <section class="home-samples" aria-label="Παράδειγμα">
@@ -131,9 +132,9 @@
             <figure class="home-sample">
                 <figcaption>Αυτό φαίνεται στον πίνακα</figcaption>
                 <div class="home-sample-card home-sample-desk">
-                    <div class="home-sample-row"><span>19:30 · Μαρία Παπαδοπούλου</span><em class="is-wait">Εκκρεμεί</em></div>
-                    <div class="home-sample-row"><span>18:00 · Νίκος Αλεξίου</span><em class="is-ok">Εγκρίθηκε</em></div>
-                    <div class="home-sample-row"><span>20:15 · Ελένη Δημητρίου</span><em class="is-move">Αλλαγή ώρας</em></div>
+                    <div class="home-sample-row"><span>19:30 · Μαρία Παπαδοπούλου</span><em class="home-badge is-wait">Εκκρεμεί</em></div>
+                    <div class="home-sample-row"><span>18:00 · Νίκος Αλεξίου</span><em class="home-badge is-ok">Εγκρίθηκε</em></div>
+                    <div class="home-sample-row"><span>20:15 · Ελένη Δημητρίου</span><em class="home-badge is-move">Αλλαγή ώρας</em></div>
                     <p>Η ώρα μένει ελεύθερη μέχρι την έγκριση.</p>
                 </div>
             </figure>
@@ -141,7 +142,7 @@
 
         <section class="home-close" id="aitima">
             <div class="home-request">
-                <div>
+                <div class="home-request-inner">
                     <h2>Θέλεις κι εσύ αυτό το σύστημα;</h2>
                     <p>Συμπλήρωσε τη φόρμα.</p>
                     <form id="leadForm" class="home-lead">
@@ -319,6 +320,6 @@
             <button type="button" class="shop-info-close">Κλείσιμο</button>
         </div>
     </div>
-    <script src="booking.js?v=20260930e"></script>
+    <script src="booking.js?v=20260930h"></script>
 </body>
 </html>
