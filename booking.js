@@ -321,8 +321,17 @@
             const onlineOn = businessData.pay_online_enabled !== false;
             const shopOn = businessData.pay_shop_enabled !== false;
             const price = selectedServicePrice();
+            const mode = businessData.deposit_mode === 'fixed' ? 'fixed' : 'percent';
             const pct = Number(businessData.deposit_percent) || 50;
-            const hold = price !== null ? (price * pct / 100).toFixed(2) : '';
+            const fixed = Number(businessData.deposit_fixed_euros);
+            const fixedEuros = Number.isFinite(fixed) && fixed > 0 ? fixed : 1;
+            let holdNum = null;
+            if (price !== null) {
+                holdNum = mode === 'fixed'
+                    ? Math.min(price, Math.max(0.5, fixedEuros))
+                    : (price * pct / 100);
+            }
+            const hold = holdNum !== null ? holdNum.toFixed(2) : '';
             const euros = price !== null ? Number(price).toFixed(2) : '';
             document.getElementById('paySubtitle').textContent = euros
                 ? `Υπηρεσία ${euros}€`
@@ -334,8 +343,21 @@
             document.getElementById('payOptOnlineTitle').textContent = `Πληρωμή online · ${euros}€`;
             document.getElementById('payOptOnlineDesc').textContent = 'Χρεώνεται τώρα ολόκληρο το ποσό στην κάρτα σου.';
             document.getElementById('payOptShopTitle').textContent = `Εγγύηση Κράτησης · ${hold}€`;
+            const how = mode === 'fixed'
+                ? `σταθερό ποσό ${hold}€`
+                : `${hold}€ (${pct}% της τιμής)`;
+            const holdDays = Number(businessData.hold_days_before);
+            const days = Number.isFinite(holdDays) ? Math.min(14, Math.max(0, Math.floor(holdDays))) : 2;
+            const holdWhen = days === 0
+                ? 'αμέσως μετά την κράτηση'
+                : days === 1
+                    ? 'έως 1 ημέρα πριν το ραντεβού'
+                    : `έως ${days} ημέρες πριν το ραντεβού`;
+            const holdTiming = days === 0
+                ? `Η δέσμευση γίνεται ${holdWhen}.`
+                : `Η προσωρινή δέσμευση ποσού γίνεται ${holdWhen}· μέχρι τότε μόνο αποθηκεύεται η κάρτα.`;
             document.getElementById('payOptShopDesc').textContent =
-                `Ως απαραίτητο μέτρο για τις online κρατήσεις, ζητάμε κάρτα εγγύησης. Μηδενική χρέωση σήμερα (${pct}% της τιμής)! Η κάρτα χρεώνεται μόνο σε ακύρωση τελευταίας στιγμής ή απουσία χωρίς προειδοποίηση. Το υπόλοιπο πληρώνεται στο κατάστημα.`;
+                `Ως απαραίτητο μέτρο για τις online κρατήσεις, ζητάμε κάρτα εγγύησης. Μηδενική χρέωση σήμερα (${how})! ${holdTiming} Η κάρτα χρεώνεται μόνο σε ακύρωση τελευταίας στιγμής ή απουσία χωρίς προειδοποίηση. Το υπόλοιπο πληρώνεται στο κατάστημα.`;
             document.getElementById('payModal').classList.remove('hidden');
         }
 
