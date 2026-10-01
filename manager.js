@@ -1186,6 +1186,9 @@ function statusBadge(item) {
   if (item.status === 'CANCELLED') cls = 'badge-cancelled';
   const bits = [`<span class="badge ${cls}">${statusLabel(item.status)}</span>`];
   if (past) bits.push('<span class="badge badge-past">Παρελθόν</span>');
+  if (item.proposed_date && item.propose_token) {
+    bits.push(`<span class="badge badge-pending">Πρόταση ${escapeHtml(formatGreekDate(item.proposed_date))} ${escapeHtml((item.proposed_start_time || '').slice(0, 5))}</span>`);
+  }
   return bits.join(' ');
 }
 
@@ -1402,6 +1405,7 @@ function openAppointmentDetails(item) {
       ${item.instagram ? `<div class="detail-row"><span class="detail-k">${escapeHtml(extraFieldTitle())}</span> <strong class="detail-v">${escapeHtml(item.instagram)}</strong></div>` : ''}
       <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
       <div class="detail-row"><span class="detail-k">Ώρα</span> <strong class="detail-v">${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
+      ${item.proposed_date && item.propose_token ? `<div class="detail-row"><span class="detail-k">Πρόταση</span> <strong class="detail-v">${formatGreekDate(item.proposed_date)} · ${escapeHtml((item.proposed_start_time || '').slice(0, 5))} (εκκρεμεί αποδοχή)</strong></div>` : ''}
       <div class="detail-row"><span class="detail-k">Κατάσταση</span> <strong class="detail-v">${statusLabel(item.status)}</strong></div>
       ${holdLabel(item.hold_status, item) ? `<div class="detail-row"><span class="detail-k">Κάρτα</span> <strong class="detail-v">${escapeHtml(holdLabel(item.hold_status, item))}${item.hold_cents ? ` · ${(Number(item.hold_cents) / 100).toFixed(2)}€` : ''}</strong></div>` : ''}
       ${pastNote}
@@ -1413,10 +1417,12 @@ function openAppointmentDetails(item) {
   if (rescheduleHint) {
     rescheduleHint.textContent = waitlistNeedsTime(item)
       ? 'Διάλεξε σε ποια μέρα και ώρα θα μπει αυτή η δήλωση.'
-      : 'Διάλεξε νέα ημερομηνία και ώρα για αυτό το ραντεβού.';
+      : 'Διάλεξε νέα ημερομηνία και ώρα. Θα σταλεί πρόταση στον πελάτη με σύνδεσμο αποδοχής (ή εφάρμοσε άμεσα αν συμφωνήσατε στο τηλέφωνο).';
   }
-  document.getElementById('rescheduleDate').value = item.date || '';
-  document.getElementById('rescheduleTime').value = item.start_time || '';
+  document.getElementById('rescheduleDate').value = item.proposed_date || item.date || '';
+  document.getElementById('rescheduleTime').value = item.proposed_start_time || item.start_time || '';
+  const immediateBox = document.getElementById('rescheduleImmediate');
+  if (immediateBox) immediateBox.checked = false;
   const past = isPastAppointment(item);
   const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
   const approved = item.status === 'BOOKED' || item.status === 'CONFIRMED';
@@ -1577,30 +1583,29 @@ function openPaymentAppointment(id) {
   if (item) openAppointmentDetails(item);
 }
 
-function exportPaymentsCsv() {
-  const filter = (document.getElementById('paymentsFilter') || {}).value || 'all';
-  let rows = paymentRows();
-  if (filter !== 'all') rows = rows.filter((item) => item.hold_status === filter);
-  const lines = [['date', 'time', 'customer', 'service', 'amount_eur', 'status', 'pay_mode'].join(',')];
-  rows.forEach((item) => {
-    const amount = item.hold_cents ? (Number(item.hold_cents) / 100).toFixed(2) : '';
-    lines.push([
-      item.date || '',
-      item.start_time || '',
-      `"${String(item.customer_name || '').replace(/"/g, '""')}"`,
-      `"${String(item.service_name || '').replace(/"/g, '""')}"`,
-      amount,
-      item.hold_status || '',
-      item.pay_mode || ''
-    ].join(','));
-  });
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `payments-${currentBusinessCode || 'shop'}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+async function exportPaymentsCsv() {
+  const from = (document.getElementById('paymentsExportFrom') || {}).value || '';
+  const to = (document.getElementById('paymentsExportTo') || {}).value || '';
+  const params = new URLSearchParams({ format: 'csv', mode: 'accountant', by: 'settled' });
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/payments/export?${params.toString()}`);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Η εξαγωγή απέτυχε');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payments-${currentBusinessCode || 'shop'}-${from || 'all'}-${to || 'all'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Η εξαγωγή για λογιστή κατέβηκε.');
+  } catch (e) {
+    if (e.message !== 'Unauthorized') showToast(e.message || 'Η εξαγωγή απέτυχε.', true);
+  }
 }
 
 function forceApprove() {
@@ -1615,7 +1620,7 @@ function toggleRescheduleEditor() {
     return;
   }
   group.style.display = 'grid';
-  document.getElementById('btnReschedule').innerHTML = '<i data-lucide="check" size="16"></i> Αποθήκευση ώρας';
+  document.getElementById('btnReschedule').innerHTML = '<i data-lucide="check" size="16"></i> Αποστολή πρότασης';
   lucide.createIcons();
 }
 
@@ -1627,11 +1632,19 @@ async function rescheduleAppointment(forcedTime) {
       showToast('Συμπληρώστε ημερομηνία και ώρα.', true);
       return;
     }
+    const current = allAppointments.find((a) => a.id === selectedEventId);
+    const immediate = document.getElementById('rescheduleImmediate')?.checked === true
+      || waitlistNeedsTime(current);
     try {
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/reschedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedEventId, date, time: time.length === 5 ? time : time.slice(0, 5) })
+        body: JSON.stringify({
+          id: selectedEventId,
+          date,
+          time: time.length === 5 ? time : time.slice(0, 5),
+          immediate
+        })
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 409 && data.overlap) {
@@ -1643,15 +1656,24 @@ async function rescheduleAppointment(forcedTime) {
       }
       if (!res.ok) throw new Error(data.error || 'Σφάλμα αλλαγής ώρας');
       hideOverlapBox();
-      showToast('Η ώρα ενημερώθηκε.');
+      if (data.mode === 'proposed') {
+        showToast(data.email_sent
+          ? 'Στάλθηκε πρόταση στον πελάτη για αποδοχή.'
+          : 'Η πρόταση αποθηκεύτηκε (το email δεν στάλθηκε).');
+      } else {
+        showToast('Η ώρα ενημερώθηκε.');
+      }
       document.getElementById('rescheduleGroup').style.display = 'none';
       document.getElementById('btnReschedule').innerHTML = '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
       lucide.createIcons();
-      fetchAppointments();
+      await fetchAppointments();
       const found = (allAppointments || []).find((a) => a.id === selectedEventId);
-      if (found) {
+      if (found && data.mode === 'applied') {
         found.date = date;
         found.start_time = time.length === 5 ? time : time.slice(0, 5);
+        found.proposed_date = null;
+        found.proposed_start_time = null;
+        found.propose_token = null;
       }
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα αλλαγής ώρας.', true);
@@ -2005,6 +2027,8 @@ function openSettingsModal() {
   syncDepositModeUi();
   const cancelHours = document.getElementById('setCancelHours');
   if (cancelHours) cancelHours.value = currentTenantData.cancel_hours === 0 ? 0 : (currentTenantData.cancel_hours || 24);
+  const holdDays = document.getElementById('setHoldDays');
+  if (holdDays) holdDays.value = currentTenantData.hold_days_before === 0 ? 0 : (currentTenantData.hold_days_before ?? 2);
   renderConnectStatus();
   document.getElementById('setPhone').value = currentTenantData.phone || '';
   document.getElementById('setAddress').value = currentTenantData.address || '';
@@ -2449,7 +2473,8 @@ async function saveSettings(e) {
         deposit_mode: document.getElementById('depositModeFixed')?.checked ? 'fixed' : 'percent',
         deposit_percent: document.getElementById('setDepositPercent') ? Number(document.getElementById('setDepositPercent').value) : 50,
         deposit_fixed_euros: document.getElementById('setDepositFixed') ? Number(document.getElementById('setDepositFixed').value) : 1,
-        cancel_hours: document.getElementById('setCancelHours') ? Number(document.getElementById('setCancelHours').value) : 24
+        cancel_hours: document.getElementById('setCancelHours') ? Number(document.getElementById('setCancelHours').value) : 24,
+        hold_days_before: document.getElementById('setHoldDays') ? Number(document.getElementById('setHoldDays').value) : 2
       })
     });
 
