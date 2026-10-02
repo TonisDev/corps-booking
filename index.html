@@ -129,15 +129,102 @@
                     <span class="home-sample-btn">Αίτημα ραντεβού</span>
                 </div>
             </figure>
-            <figure class="home-sample">
-                <figcaption>Αυτό φαίνεται στον πίνακα</figcaption>
-                <div class="home-sample-card home-sample-desk">
-                    <div class="home-sample-row"><span>19:30 · Μαρία Παπαδοπούλου</span><em class="home-badge is-wait">Εκκρεμεί</em></div>
-                    <div class="home-sample-row"><span>18:00 · Νίκος Αλεξίου</span><em class="home-badge is-ok">Εγκρίθηκε</em></div>
-                    <div class="home-sample-row"><span>20:15 · Ελένη Δημητρίου</span><em class="home-badge is-move">Αλλαγή ώρας</em></div>
-                    <p>Η ώρα μένει ελεύθερη μέχρι την έγκριση.</p>
+            <figure class="home-sample home-sample-cal">
+                <figcaption>Αυτό διαχειρίζεσαι εσύ — ημερολόγιο εβδομάδας</figcaption>
+                <div class="home-sample-card home-cal" aria-hidden="true">
+                    <div class="home-cal-top">
+                        <div>
+                            <strong>Οκτώβριος 2026</strong>
+                            <span class="home-cal-range">Δευ 5 – Κυρ 11</span>
+                        </div>
+                        <div class="home-cal-tabs">
+                            <span>Μήνας</span>
+                            <span class="is-on">Εβδομάδα</span>
+                            <span>Ημέρα</span>
+                        </div>
+                    </div>
+                    <div class="home-cal-head">
+                        <span></span>
+                        <span>Δευ <b>5</b></span>
+                        <span>Τρι <b>6</b></span>
+                        <span class="is-today">Τετ <b>7</b></span>
+                        <span>Πεμ <b>8</b></span>
+                        <span>Παρ <b>9</b></span>
+                    </div>
+                    <div class="home-cal-body">
+                        <div class="home-cal-times">
+                            <span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span><span>17:00</span><span>19:00</span>
+                        </div>
+                        <div class="home-cal-cols">
+                            <div class="home-cal-col">
+                                <div class="home-cal-event is-ok" style="top:12%;height:18%;">09:30 · Νίκος<br>Κούρεμα</div>
+                                <div class="home-cal-event is-wait" style="top:62%;height:16%;">17:00 · Ελένη<br>Εκκρεμεί</div>
+                            </div>
+                            <div class="home-cal-col">
+                                <div class="home-cal-event is-ok" style="top:28%;height:20%;">11:00 · Άννα<br>Βαφή</div>
+                            </div>
+                            <div class="home-cal-col is-today">
+                                <div class="home-cal-event is-ok" style="top:8%;height:16%;">09:00 · Γιώργος</div>
+                                <div class="home-cal-event is-move" style="top:48%;height:18%;">15:00 · Μαρία<br>Αλλαγή ώρας</div>
+                                <div class="home-cal-event is-ok" style="top:72%;height:16%;">18:30 · Σοφία</div>
+                            </div>
+                            <div class="home-cal-col">
+                                <div class="home-cal-event is-ok" style="top:36%;height:22%;">12:00 · Δημήτρης<br>Θεραπεία</div>
+                            </div>
+                            <div class="home-cal-col">
+                                <div class="home-cal-event is-wait" style="top:20%;height:16%;">10:30 · Κατερίνα<br>Αίτημα</div>
+                                <div class="home-cal-event is-ok" style="top:58%;height:18%;">16:00 · Πέτρος</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="home-cal-caption">Έγκριση, απόρριψη ή αλλαγή ώρας με ένα κλικ — σαν πραγματικό ημερολόγιο.</p>
                 </div>
             </figure>
+        </section>
+
+        <section class="home-pricing" id="times" aria-label="Τιμές">
+            <p class="home-pricing-kicker">Χωρίς προμήθεια ανά ραντεβού</p>
+            <h2 class="home-pricing-title">Πόσο κοστίζει</h2>
+            <p class="home-pricing-lead">Δεν πληρώνεις για κάθε κράτηση. Πληρώνεις το εργαλείο — σαν το ρεύμα του μαγαζιού, όχι σαν μεσάζοντα. Στήσιμο δικό μας, δοκιμή χωρίς κάρτα.</p>
+
+            <div class="home-pricing-plans home-pricing-plans-3">
+                <article class="home-pricing-plan">
+                    <span class="home-pricing-label">Ευελιξία</span>
+                    <h3 class="home-pricing-name">Μηνιαία</h3>
+                    <p class="home-pricing-amount"><strong>22,50</strong><span>€</span></p>
+                    <p class="home-pricing-per">τον μήνα · ακυρώνεις όταν θέλεις</p>
+                    <p class="home-pricing-pitch">Για να δοκιμάσεις με ηρεμία, χωρίς δέσμευση χρόνου.</p>
+                    <a class="home-pricing-pick" href="#aitima">Ξεκίνα με δοκιμή</a>
+                </article>
+
+                <article class="home-pricing-plan is-featured">
+                    <span class="home-pricing-badge">Πιο συμφέρει</span>
+                    <span class="home-pricing-label">Κανονική επιλογή</span>
+                    <h3 class="home-pricing-name">Ετήσια</h3>
+                    <p class="home-pricing-amount"><strong>19,99</strong><span>€</span></p>
+                    <p class="home-pricing-per">τον μήνα · πληρώνεις <strong>239,99€</strong> μία φορά / έτος</p>
+                    <p class="home-pricing-save">Κερδίζεις ~30€ έναντι του μηνιαίου (270€/έτος)</p>
+                    <p class="home-pricing-pitch">Λιγότερο από ένα καφέ τη μέρα — σταθερό κόστος για όλη τη χρονιά.</p>
+                    <a class="home-pricing-pick is-primary" href="#aitima">Θέλω αυτή</a>
+                </article>
+
+                <article class="home-pricing-plan">
+                    <span class="home-pricing-label">Κλείσε το θέμα</span>
+                    <h3 class="home-pricing-name">Μία φορά</h3>
+                    <p class="home-pricing-amount"><strong>360</strong><span>€</span></p>
+                    <p class="home-pricing-per">ισόβια άδεια · χωρίς μηνιαία ποτέ</p>
+                    <p class="home-pricing-save">Αποσβένεται σε ~16 μήνες μηνιαίου</p>
+                    <p class="home-pricing-pitch">Αν ξέρεις ότι θα το κρατήσεις: πληρώνεις μία φορά και τελειώνει.</p>
+                    <a class="home-pricing-pick" href="#aitima">Ρώτα για εφάπαξ</a>
+                </article>
+            </div>
+
+            <ul class="home-pricing-points">
+                <li>14 ημέρες δοκιμή · στήσιμο ωραρίου, υπηρεσιών, εμφάνισης από εμάς</li>
+                <li>Δικό σου link (bio / QR) · οι πελάτες χωρίς εφαρμογή και χωρίς λογαριασμό</li>
+                <li>Ημερολόγιο έγκρισης + email / Telegram — όχι χαμένα μηνύματα στο Instagram</li>
+            </ul>
+            <p class="home-pricing-fine">Τιμές σε ευρώ. ΦΠΑ όπου εφαρμόζεται. Η τελική χρέωση επιβεβαιώνεται στο Stripe Checkout. <a href="oroi-epicheiriseis.html">Όροι επιχειρήσεων</a> · <a href="aporrito.html">Απόρρητο</a>.</p>
         </section>
 
         <section class="home-close" id="aitima">
@@ -162,7 +249,9 @@
         </section>
 
         <footer class="home-foot">
-            <a href="oroi.html">Όροι χρήσης</a>
+            <a href="oroi.html">Όροι φόρμας</a>
+            <a href="oroi-epicheiriseis.html">Όροι επιχειρήσεων</a>
+            <a href="aporrito.html">Απόρρητο</a>
         </footer>
     </div>
 
