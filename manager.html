@@ -75,7 +75,11 @@
       <strong>Κοινοποίηση → Προσθήκη στην οθόνη Αφετηρίας</strong>.
     </p>
     <p style="color: var(--text-muted); font-size: 0.72rem; margin: 0.85rem 0 0; opacity: 0.8;">
-      <a href="oroi.html" target="_blank" rel="noopener" style="color: inherit;">Όροι χρήσης</a>
+      <a href="oroi.html" target="_blank" rel="noopener" style="color: inherit;">Όροι</a>
+      ·
+      <a href="oroi-epicheiriseis.html" target="_blank" rel="noopener" style="color: inherit;">B2B</a>
+      ·
+      <a href="aporrito.html" target="_blank" rel="noopener" style="color: inherit;">Απόρρητο</a>
     </p>
     <p class="support-strip">Υποστήριξη: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
   </div>
@@ -437,12 +441,14 @@
             <div class="help-box" id="billingBox" hidden style="margin-top:0;">
               <p id="billingText" style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;"></p>
               <div class="billing-actions" id="billingStart">
-                <button type="button" class="btn" onclick="startBilling('month')">Μηνιαία</button>
-                <button type="button" class="btn btn-outline" onclick="startBilling('year')">Ετήσια</button>
+                <button type="button" class="btn btn-outline" onclick="startBilling('month')">Μηνιαία · 22,50€</button>
+                <button type="button" class="btn" onclick="startBilling('year')">Ετήσια · 19,99€/μήνα (239,99€)</button>
+                <button type="button" class="btn btn-outline" onclick="startBilling('lifetime')">Μία φορά · 360€</button>
               </div>
               <button type="button" class="btn btn-outline" id="billingPortal" hidden onclick="openBillingPortal()">Διαχείριση συνδρομής</button>
             </div>
             <p id="billingOffNote" class="settings-hint">Οι συνδρομές πλατφόρμας δεν είναι ενεργές ακόμα.</p>
+            <p class="settings-hint">Πριν πληρώσεις: <a href="oroi-epicheiriseis.html" target="_blank" rel="noopener">όροι επιχειρήσεων</a>, <a href="aporrito.html" target="_blank" rel="noopener">απόρρητο</a>. Για κάρτες πελατών απαιτείται αποδοχή όρων Stripe Connect στο onboarding.</p>
           </div>
 
           <div class="settings-panel" id="settingsPanel-security">
