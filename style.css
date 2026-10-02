@@ -350,6 +350,51 @@ html[data-mode="home"] .page-bg::before {
   color: #fff;
 }
 .home-pricing-pick.is-primary:hover { filter: brightness(1.05); }
+.home-pricing-trial {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-top: 1.15rem;
+  padding: 1.05rem 1.15rem;
+  border-radius: 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--brand-color) 28%, #cbd5e1);
+  background: color-mix(in srgb, var(--brand-color) 5%, #fff);
+}
+.home-pricing-trial-copy { min-width: 0; flex: 1; }
+.home-pricing-trial-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+.home-pricing-trial-title {
+  margin: 0.3rem 0 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+.home-pricing-trial-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.5;
+  max-width: 34rem;
+}
+.home-pricing-trial-cta {
+  margin-top: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .home-pricing-trial {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .home-pricing-trial-cta { width: 100%; }
+}
 .home-pricing-points {
   margin: 0;
   padding: 0;
