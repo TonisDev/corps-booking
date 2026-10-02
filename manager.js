@@ -1798,7 +1798,14 @@ function billingStatusText(data) {
   const until = end && !Number.isNaN(end.getTime())
     ? end.toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
     : '';
-  const plan = data.billing_plan === 'year' ? 'ετήσια' : (data.billing_plan === 'month' ? 'μηνιαία' : '');
+  const plan = data.billing_plan === 'year'
+    ? 'ετήσια'
+    : (data.billing_plan === 'month'
+      ? 'μηνιαία'
+      : (data.billing_plan === 'lifetime' ? 'εφάπαξ' : ''));
+  if (data.billing_plan === 'lifetime' && (data.billing_status === 'active' || data.billing_exempt === true)) {
+    return 'Έχεις εφάπαξ άδεια (μία φορά). Δεν χρειάζεται μηνιαία συνδρομή.';
+  }
   if (data.billing_status === 'active' || data.billing_status === 'trialing') {
     return `Η συνδρομή είναι ενεργή${plan ? ' (' + plan + ')' : ''}${until ? '. Ισχύει ως ' + until : ''}.`;
   }
@@ -1916,9 +1923,12 @@ function renderBillingBox() {
   box.hidden = !on;
   if (!on) return;
   document.getElementById('billingText').textContent = billingStatusText(currentTenantData);
-  const live = currentTenantData.billing_status === 'active' || currentTenantData.billing_status === 'past_due' || currentTenantData.billing_status === 'trialing';
+  const live = currentTenantData.billing_plan === 'lifetime'
+    || currentTenantData.billing_status === 'active'
+    || currentTenantData.billing_status === 'past_due'
+    || currentTenantData.billing_status === 'trialing';
   document.getElementById('billingStart').hidden = live;
-  document.getElementById('billingPortal').hidden = !live;
+  document.getElementById('billingPortal').hidden = !live || currentTenantData.billing_plan === 'lifetime';
 }
 
 async function startBilling(plan) {
