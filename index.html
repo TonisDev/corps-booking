@@ -195,7 +195,7 @@
                     <p class="home-pricing-per">/ μήνα · Ακύρωση ανά πάσα στιγμή</p>
                     <p class="home-pricing-compare">Σύνολο για ένα έτος: <strong>270 €</strong></p>
                     <p class="home-pricing-pitch">Πλήρης ευελιξία, χωρίς μακροχρόνιες δεσμεύσεις — πληρώνετε μήνα με τον μήνα.</p>
-                    <a class="home-pricing-pick" href="#aitima">Απόκτησέ το</a>
+                    <a class="home-pricing-pick" href="#aitima" data-interest="month">Απόκτησέ το</a>
                 </article>
 
                 <article class="home-pricing-plan is-featured">
@@ -206,7 +206,7 @@
                     <p class="home-pricing-per">/ μήνα · Εφάπαξ χρέωση <strong>239,99 €</strong> / έτος</p>
                     <p class="home-pricing-save">Κέρδος σε σχέση με τη μηνιαία συνδρομή (270 € / έτος)</p>
                     <p class="home-pricing-pitch">Σταθερό και χαμηλότερο κόστος για όλο τον χρόνο.</p>
-                    <a class="home-pricing-pick is-primary" href="#aitima">Απόκτησέ το</a>
+                    <a class="home-pricing-pick is-primary" href="#aitima" data-interest="year">Απόκτησέ το</a>
                 </article>
 
                 <article class="home-pricing-plan">
@@ -216,7 +216,7 @@
                     <p class="home-pricing-per">Εφάπαξ πληρωμή · Χωρίς συνδρομές ποτέ</p>
                     <p class="home-pricing-save">Απόσβεση σε μόλις ~16 μήνες</p>
                     <p class="home-pricing-pitch">Πληρώνετε μία μόνο φορά και έχετε το σύστημα για πάντα.</p>
-                    <a class="home-pricing-pick" href="#aitima">Απόκτησέ το</a>
+                    <a class="home-pricing-pick" href="#aitima" data-interest="lifetime">Απόκτησέ το</a>
                 </article>
             </div>
 
@@ -226,7 +226,7 @@
                     <h3 class="home-pricing-trial-title">Δοκιμάστε το δωρεάν για 2 εβδομάδες</h3>
                     <p class="home-pricing-trial-text">Χωρίς πιστωτική κάρτα και χωρίς καμία δέσμευση. Αναλαμβάνουμε εμείς το αρχικό στήσιμο — μετά επιλέγετε πακέτο ή σταματάτε.</p>
                 </div>
-                <a class="home-pricing-pick home-pricing-trial-cta" href="#aitima">Ξεκίνα τη δωρεάν δοκιμή</a>
+                <a class="home-pricing-pick home-pricing-trial-cta" href="#aitima" data-interest="trial">Ξεκίνα τη δωρεάν δοκιμή</a>
             </aside>
 
             <div class="home-pricing-after">
@@ -243,11 +243,13 @@
             <div class="home-request">
                 <div class="home-request-inner">
                     <h2>Θέλετε το QuickBook στην επιχείρησή σας;</h2>
-                    <p>Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε μαζί σας για να αναλάβουμε το στήσιμο.</p>
+                    <p id="leadFormLead">Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε μαζί σας για να αναλάβουμε το στήσιμο.</p>
+                    <p id="leadInterestChip" class="home-lead-interest" hidden></p>
                     <form id="leadForm" class="home-lead">
                         <div class="home-honey" aria-hidden="true">
                             <input type="text" name="website" tabindex="-1" autocomplete="off">
                         </div>
+                        <input type="hidden" name="interest" id="leadInterest" value="">
                         <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
                         <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
                         <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>

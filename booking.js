@@ -888,6 +888,44 @@
             await sendBooking(buildBookingPayload('shop'));
         });
 
+        const LEAD_INTEREST_LABELS = {
+            month: 'Μηνιαία συνδρομή',
+            year: 'Ετήσια συνδρομή',
+            lifetime: 'Ισόβια άδεια',
+            trial: 'Δωρεάν δοκιμή 2 εβδομάδων'
+        };
+        const LEAD_INTEREST_LEADS = {
+            month: 'Επιλέξατε μηνιαία συνδρομή. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.',
+            year: 'Επιλέξατε ετήσια συνδρομή. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.',
+            lifetime: 'Επιλέξατε ισόβια άδεια. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.',
+            trial: 'Επιλέξατε δωρεάν δοκιμή. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.'
+        };
+        const DEFAULT_LEAD_COPY = 'Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε μαζί σας για να αναλάβουμε το στήσιμο.';
+
+        function setLeadInterest(interest) {
+            const key = LEAD_INTEREST_LABELS[interest] ? interest : '';
+            const input = document.getElementById('leadInterest');
+            const chip = document.getElementById('leadInterestChip');
+            const lead = document.getElementById('leadFormLead');
+            if (input) input.value = key;
+            if (chip) {
+                if (key) {
+                    chip.hidden = false;
+                    chip.textContent = `Επιλογή: ${LEAD_INTEREST_LABELS[key]}`;
+                } else {
+                    chip.hidden = true;
+                    chip.textContent = '';
+                }
+            }
+            if (lead) lead.textContent = key ? LEAD_INTEREST_LEADS[key] : DEFAULT_LEAD_COPY;
+        }
+
+        document.querySelectorAll('[data-interest]').forEach((el) => {
+            el.addEventListener('click', () => {
+                setLeadInterest(el.getAttribute('data-interest') || '');
+            });
+        });
+
         document.getElementById('leadForm')?.addEventListener('submit', async (event) => {
             event.preventDefault();
             const form = event.currentTarget;
@@ -906,6 +944,7 @@
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(data.error || 'Το αίτημα δεν στάλθηκε.');
                 form.reset();
+                setLeadInterest('');
                 status.classList.add('is-ok');
                 status.textContent = 'Το αίτημα καταχωρήθηκε.';
             } catch (err) {
