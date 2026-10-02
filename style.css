@@ -252,14 +252,29 @@ html[data-mode="home"] .page-bg::before {
 .home-pricing-badge {
   position: absolute;
   top: -0.55rem;
-  right: 0.85rem;
-  padding: 0.2rem 0.55rem;
+  right: 0.55rem;
+  max-width: calc(100% - 1.1rem);
+  padding: 0.22rem 0.55rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--brand-color) 88%, #0f172a);
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-align: center;
+}
+.home-pricing-compare {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+.home-pricing-after {
+  margin-top: 1.75rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+  max-width: 40rem;
 }
 .home-pricing-label {
   display: block;
@@ -336,7 +351,7 @@ html[data-mode="home"] .page-bg::before {
 }
 .home-pricing-pick.is-primary:hover { filter: brightness(1.05); }
 .home-pricing-points {
-  margin: 1.35rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
   color: #334155;

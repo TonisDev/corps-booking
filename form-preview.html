@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://cdn.jsdelivr.net https://npmcdn.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://corporate-bookings.tonisdevv.workers.dev">
+    <title id="pageTitle">Κράτηση Ραντεβού</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="form-preview.css?v=20260927a">
+</head>
+<body>
+    <div class="glow" aria-hidden="true"></div>
+
+    <header class="bar">
+        <span class="bar-mark">Νέα εμφάνιση</span>
+        <a id="classicLink" href="index.html">Τωρινή φόρμα</a>
+    </header>
+
+    <main>
+        <section class="layout">
+            <div class="hero">
+                <p class="eyebrow">Ραντεβού</p>
+                <h1>Κλείσε ώρα στο <span id="heroShop">κατάστημα</span>.</h1>
+                <p class="lede">Διαλέγεις υπηρεσία, μέρα και ώρα. Η θέση μένει ελεύθερη μέχρι να την εγκρίνει το κατάστημα.</p>
+                <a class="cta" href="#book">Κράτηση</a>
+                <ul class="trust">
+                    <li>Χωρίς λογαριασμό</li>
+                    <li>Έγκριση πριν κλειδώσει η ώρα</li>
+                    <li>Τηλέφωνο ή email</li>
+                </ul>
+                <div class="mock" aria-hidden="true">
+                    <div class="mock-head">
+                        <span>Ημέρα</span>
+                        <strong>19:00</strong>
+                    </div>
+                    <div class="mock-grid">
+                        <span></span><span></span><span class="is-on"></span><span></span><span></span>
+                        <span></span><span class="is-soft"></span><span></span><span></span><span></span>
+                    </div>
+                    <p>Η ώρα προτείνεται. Το κατάστημα την επιβεβαιώνει.</p>
+                </div>
+            </div>
+
+            <section class="widget" id="book">
+                <div class="booking-card">
+                    <div id="initialLoader" class="form-loader">
+                        <span class="form-loader-dot"></span>
+                        <p>Φόρτωση</p>
+                    </div>
+
+                    <div id="businessHeader" class="brand-block hidden">
+                        <img id="businessLogo" class="business-logo" src="demo-logo.svg" alt="Λογότυπο επιχείρησης">
+                        <h2 id="businessName"></h2>
+                        <p id="businessSubtitle">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
+                        <button type="button" id="shopInfoBtn">Πληροφορίες καταστήματος</button>
+                    </div>
+
+                    <p id="welcomeText" class="welcome-text hidden"></p>
+
+                    <form id="bookingForm" class="booking-fields hidden">
+                        <div class="hp" aria-hidden="true">
+                            <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+                        </div>
+
+                        <div class="field-block">
+                            <label class="field-label" for="name">Ονοματεπώνυμο</label>
+                            <input type="text" id="name" required maxlength="80" autocomplete="name" autocapitalize="words" placeholder="Το όνομά σας">
+                        </div>
+
+                        <div class="field-block" id="wrapPhone">
+                            <label class="field-label" for="phone">Τηλέφωνο</label>
+                            <input type="tel" id="phone" required maxlength="24" autocomplete="tel" inputmode="tel" placeholder="69XXXXXXXX">
+                        </div>
+
+                        <div class="field-block" id="wrapEmail">
+                            <label class="field-label" for="email">Email</label>
+                            <input type="email" id="email" required maxlength="120" autocomplete="email" inputmode="email" autocapitalize="none" placeholder="name@email.com">
+                            <p class="field-help">Θα ενημερωθείτε εδώ αν το ραντεβού εγκριθεί ή απορριφθεί.</p>
+                        </div>
+
+                        <div class="field-block" id="wrapInstagram">
+                            <label class="field-label" for="instagram"><span id="extraFieldLabel">Instagram</span> <span>προαιρετικό</span></label>
+                            <input type="text" id="instagram" maxlength="80" autocomplete="off" autocapitalize="none" placeholder="προαιρετικό">
+                        </div>
+
+                        <div class="field-block">
+                            <label class="field-label" for="service">Υπηρεσία</label>
+                            <div class="service-picker" id="servicePicker">
+                                <select id="service" required>
+                                    <option value="">Επιλέξτε υπηρεσία</option>
+                                </select>
+                                <button type="button" id="servicePickerBtn" class="time-dropdown-btn service-picker-btn" aria-haspopup="listbox" aria-expanded="false">Επιλέξτε υπηρεσία</button>
+                                <div id="servicePickerList" class="service-picker-list hidden" role="listbox"></div>
+                            </div>
+                        </div>
+
+                        <div class="field-block">
+                            <label class="field-label" for="date">Ημερομηνία</label>
+                            <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly>
+                        </div>
+
+                        <div class="field-block">
+                            <label class="field-label" id="timeLabel" for="timeDropdownBtn">Ώρα</label>
+                            <div id="timePickerWrap" class="time-picker-wrap">
+                                <button type="button" id="timeDropdownBtn" class="time-dropdown-btn" disabled>Επιλέξτε ώρα</button>
+                                <div id="timeRollers" class="time-rollers hidden">
+                                    <div class="time-col" id="timeHourCol"></div>
+                                    <span>:</span>
+                                    <div class="time-col" id="timeMinuteCol"></div>
+                                </div>
+                                <select id="timeHour" class="time-native" tabindex="-1" aria-hidden="true" disabled>
+                                    <option value="">Ώρα</option>
+                                </select>
+                                <select id="timeMinute" class="time-native" tabindex="-1" aria-hidden="true" disabled>
+                                    <option value="">--</option>
+                                </select>
+                            </div>
+                            <p id="slotHint" class="field-help">Διάλεξε ώρα από τις διαθέσιμες.</p>
+                            <div id="waitlistBox" class="hidden">
+                                <p id="waitlistCopy">Ουπς, φαίνεται ότι όλες οι ώρες είναι κατειλημμένες.</p>
+                                <p id="waitlistAsk" class="waitlist-ask">Θέλεις να είσαι ο πρώτος που θα ενημερωθεί εάν υπάρξει ακύρωση;</p>
+                                <button type="button" id="waitlistBtn" class="hidden">Ναι, ενημερώστε με</button>
+                            </div>
+                        </div>
+
+                        <div class="field-block" id="wrapNotes">
+                            <label class="field-label" for="notes">Σημειώσεις <span>προαιρετικό</span></label>
+                            <textarea id="notes" rows="2" placeholder="Οτιδήποτε θέλετε να γνωρίζουμε"></textarea>
+                        </div>
+
+                        <button type="submit" id="submitBtn">
+                            <span id="submitBtnText">Υποβολή Αιτήματος Κράτησης</span>
+                            <svg id="submitSpinner" class="submit-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                        <p class="legal-note">Με την αποστολή αποδέχεστε τους <a href="oroi.html" target="_blank" rel="noopener">όρους χρήσης</a>.</p>
+                    </form>
+
+                    <div id="responseContainer" class="response-box hidden" aria-live="polite">
+                        <div id="responseMessage" tabindex="-1"></div>
+                        <a id="gcalBtn" href="#" target="_blank" class="hidden">Προσθήκη στο Google Calendar</a>
+                    </div>
+                    <div id="loadingError" class="form-error hidden">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
+                </div>
+            </section>
+        </section>
+
+        <section class="features" aria-label="Γιατί έτσι">
+            <article>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
+                <h2>Ένας σύνδεσμος</h2>
+                <p>Ανοίγεις τη σελίδα από μήνυμα ή Instagram. Χωρίς εφαρμογή και χωρίς λογαριασμό.</p>
+            </article>
+            <article>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+                <h2>Αίτημα, όχι αυτόματο κλείσιμο</h2>
+                <p>Η ώρα μένει διαθέσιμη μέχρι να την αποδεχτεί το κατάστημα.</p>
+            </article>
+            <article>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 2"/></svg>
+                <h2>Το ωράριο του καταστήματος</h2>
+                <p>Βλέπεις μόνο μέρες και ώρες που δουλεύει. Οι κλειστές ώρες δεν εμφανίζονται.</p>
+            </article>
+        </section>
+
+        <footer class="foot">
+            <a class="foot-cta" href="#book">Συμπλήρωσε τη φόρμα</a>
+            <a href="oroi.html">Όροι χρήσης</a>
+        </footer>
+    </main>
+
+    <p class="powered-by rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/gr.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <div id="successModal" class="success-modal hidden">
+        <div class="success-card" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+            <h2 id="successTitle">Επιτυχία</h2>
+            <p id="successText"></p>
+            <a id="successCalendar" href="#" target="_blank" rel="noopener" class="hidden">Προσθήκη στο Google Calendar</a>
+            <button type="button" id="successOk">ΟΚ</button>
+        </div>
+    </div>
+    <div id="shopInfoModal" class="shop-info-modal hidden">
+        <div class="shop-info-card" role="dialog" aria-modal="true" aria-labelledby="shopInfoTitle">
+            <h2 id="shopInfoTitle">Πληροφορίες</h2>
+            <p id="shopInfoAddressRow" class="hidden"><span class="meta-label">Διεύθυνση</span> <a id="businessAddress" href="#" target="_blank"></a></p>
+            <p id="shopInfoPhoneRow" class="hidden"><span class="meta-label">Τηλέφωνο</span> <a id="businessPhone" href="#"></a></p>
+            <div id="clientQr"></div>
+            <button type="button" class="shop-info-close">Κλείσιμο</button>
+        </div>
+    </div>
+    <script src="form-preview.js?v=20260927a"></script>
+    <script src="booking.js?v=20260930b"></script>
+</body>
+</html>
