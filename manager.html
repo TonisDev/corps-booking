@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261004b">
+    <link rel="stylesheet" href="manager_style.css?v=20261004d">
 </head>
 <body data-theme="light">
 
@@ -87,31 +87,46 @@
   <!-- [SECTION: HTML-DASH] στατιστικά: εκκρεμή / μελλοντικά εγκεκριμένα / ιστορικό -->
   <div id="dashboardScreen" style="display: none;">
     <div id="platformNotice" class="platform-notice" hidden>
-      <div class="platform-notice-body" id="platformNoticeBody"></div>
-      <div class="platform-notice-meta">
-        <div class="platform-notice-sign" id="platformNoticeSign"></div>
-        <div class="platform-notice-contact" id="platformNoticeContact"></div>
-      </div>
-      <div class="platform-notice-actions">
-        <p class="platform-notice-hint" id="platformNoticeHint">Πάτα ΟΚ δύο φορές για να επιβεβαιώσεις ότι διάβασες το μήνυμα.</p>
-        <button type="button" class="btn" id="platformNoticeOk" onclick="confirmPlatformNotice()">ΟΚ</button>
+      <div class="platform-notice-box">
+        <div class="platform-notice-label">Μήνυμα πλατφόρμας</div>
+        <div class="platform-notice-body" id="platformNoticeBody"></div>
+        <div class="platform-notice-meta">
+          <span class="platform-notice-sign" id="platformNoticeSign"></span>
+          <span class="platform-notice-contact" id="platformNoticeContact"></span>
+        </div>
+        <div class="platform-notice-actions">
+          <p class="platform-notice-hint" id="platformNoticeHint">Πάτα ΟΚ δύο φορές για επιβεβαίωση.</p>
+          <button type="button" class="btn btn-outline" id="platformNoticeOk" onclick="confirmPlatformNotice()">ΟΚ</button>
+        </div>
       </div>
     </div>
     <div id="billingWarnBanner" class="billing-warn-banner" hidden>
       <strong id="billingWarnTitle">Πρόβλημα συνδρομής</strong>
       <p id="billingWarnText"></p>
     </div>
+
+    <div class="manager-shell">
+    <aside class="manager-side" aria-label="Μενού">
+      <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
+      <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
+      <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
+      <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
+      <button type="button" class="manager-side-btn" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
+    </aside>
+
+    <div class="manager-main">
     <div class="header">
       <div class="header-brand">
         <h2 id="storeTitle">Διαχείριση Καταστήματος</h2>
         <span id="storeCodeSpan"></span>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="16"></i> <span class="btn-label">Σημειώσεις</span></button>
-        <button class="btn btn-outline" onclick="openPaymentsModal()"><i data-lucide="wallet" size="16"></i> <span class="btn-label">Πληρωμές</span></button>
-        <button class="btn btn-outline" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> <span class="btn-label">Ιστορικό</span></button>
-        <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> <span class="btn-label">Σελίδα Πελάτη</span></button>
-        <button class="btn btn-outline" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> <span class="btn-label">Κλείδωσε ώρες</span></button>
+        <button class="btn btn-outline header-mobile-only" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="16"></i> <span class="btn-label">Σημειώσεις</span></button>
+        <button class="btn btn-outline header-mobile-only" onclick="openPaymentsModal()"><i data-lucide="wallet" size="16"></i> <span class="btn-label">Πληρωμές</span></button>
+        <button class="btn btn-outline header-mobile-only" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> <span class="btn-label">Ιστορικό</span></button>
+        <button class="btn btn-outline header-mobile-only" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> <span class="btn-label">Σελίδα Πελάτη</span></button>
+        <button class="btn btn-outline header-mobile-only" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> <span class="btn-label">Κλείδωσε ώρες</span></button>
+        <button class="btn btn-outline" onclick="openBookingToBucket()" title="Προσθήκη χωρίς μέρα"><i data-lucide="inbox" size="16"></i> <span class="btn-label">Στο bucket</span></button>
         <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
@@ -208,6 +223,8 @@
         </form>
       </div>
     </div>
+    </div><!-- /.manager-main -->
+    </div><!-- /.manager-shell -->
   </div>
 
   <!-- Settings Modal -->
@@ -647,7 +664,10 @@
           <h3 id="listTitle" style="margin:0;">Ραντεβού</h3>
           <p id="listSubtitle" style="margin:0.35rem 0 0; color: var(--text-muted); font-size: 0.85rem;"></p>
         </div>
-        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('listModal')">Κλείσιμο</button>
+        <div style="display:flex; gap:0.45rem; flex-wrap:wrap; justify-content:flex-end;">
+          <button type="button" class="btn" id="listAddBucketBtn" hidden onclick="openBookingToBucket()"><i data-lucide="inbox" size="16"></i> Προσθήκη στο bucket</button>
+          <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('listModal')">Κλείσιμο</button>
+        </div>
       </div>
       <div class="list-filters">
         <div class="list-search">
@@ -787,7 +807,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20261004b"></script>
+<script src="manager.js?v=20261004d"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

@@ -728,6 +728,16 @@ function openBookingFromToolbar() {
   openBookingModal();
 }
 
+function openBookingToBucket() {
+  pendingSlot = null;
+  openBookingModal();
+  const unscheduled = document.getElementById('bookUnscheduled');
+  if (unscheduled) {
+    unscheduled.checked = true;
+    syncBookUnscheduledFields();
+  }
+}
+
 function openBlockFromToolbar() {
   pendingSlot = null;
   openBlockModal();
@@ -1315,6 +1325,8 @@ function openAppointmentList(kind) {
   syncSearchModeBtn();
   document.getElementById('listStatusFilter').value = '';
   document.getElementById('listStatusFilter').style.display = kind === 'pending' || kind === 'booked' || kind === 'unscheduled' ? 'none' : 'block';
+  const addBucketBtn = document.getElementById('listAddBucketBtn');
+  if (addBucketBtn) addBucketBtn.hidden = kind !== 'unscheduled';
   openModal('listModal');
   renderAppointmentList();
 }
@@ -1361,7 +1373,7 @@ function renderAppointmentList() {
       ${group.items.map((item) => `
         <div class="apt-row" data-id="${escapeHtml(item.id)}">
           <input type="checkbox" class="bulk-check" data-id="${escapeHtml(item.id)}" onclick="event.stopPropagation(); syncBulkBar()">
-          <div class="apt-time">${escapeHtml(appointmentTimeLabel(item).slice(0, 5))}</div>
+          <div class="apt-time${isUnscheduled(item) ? ' is-bucket' : ''}">${escapeHtml(isUnscheduled(item) ? appointmentTimeLabel(item) : appointmentTimeLabel(item).slice(0, 5))}</div>
           <button type="button" class="apt-row-main">
             <div style="font-weight:650;">
               <span class="client-name-btn" data-phone="${escapeHtml(item.customer_phone || '')}">${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</span>
@@ -1904,7 +1916,7 @@ function renderPlatformBanners() {
       noticeEl.classList.remove('confirming');
       const hint = document.getElementById('platformNoticeHint');
       const btn = document.getElementById('platformNoticeOk');
-      if (hint) hint.textContent = 'Πάτα ΟΚ δύο φορές για να επιβεβαιώσεις ότι διάβασες το μήνυμα.';
+      if (hint) hint.textContent = 'Πάτα ΟΚ δύο φορές για επιβεβαίωση.';
       if (btn) {
         btn.disabled = false;
         btn.textContent = 'ΟΚ';
@@ -1946,7 +1958,7 @@ async function confirmPlatformNotice() {
   if (platformNoticeOkStep < 1) {
     platformNoticeOkStep = 1;
     noticeEl.classList.add('confirming');
-    if (hint) hint.textContent = 'Επιβεβαίωση: πάτα ΟΚ ξανά για να δηλώσεις ότι διάβασες το μήνυμα.';
+    if (hint) hint.textContent = 'Ξανά ΟΚ για επιβεβαίωση ανάγνωσης.';
     if (btn) btn.textContent = 'ΟΚ — διάβασα';
     return;
   }
@@ -2828,6 +2840,8 @@ async function loadStickyNotes() {
   }
 }
 
+const NOTE_COLORS = ['yellow', 'pink', 'mint', 'blue', 'lavender'];
+
 function renderStickyNotes() {
   const board = document.getElementById('notesBoard');
   if (!board) return;
@@ -2835,18 +2849,58 @@ function renderStickyNotes() {
     board.innerHTML = '<p class="muted" style="margin:0;">Δεν έχεις κολλήσει ακόμα σημείωση. Γράψε κάτι πάνω και πάτα «Κόλλησε».</p>';
     return;
   }
-  board.innerHTML = shopNotesCache.map((note) => `
-    <article class="sticky-note color-${escapeHtml(note.color || 'yellow')}${note.done ? ' is-done' : ''}" data-id="${escapeHtml(note.id)}">
+  board.innerHTML = shopNotesCache.map((note) => {
+    const color = note.color || 'yellow';
+    const colors = NOTE_COLORS.map((c) => `
+      <button type="button" class="note-color${c === color ? ' is-on' : ''}" data-color="${c}"
+        title="Χρώμα" aria-pressed="${c === color ? 'true' : 'false'}"
+        onclick="event.stopPropagation(); saveStickyNoteColor('${jsString(note.id)}', '${c}')"></button>
+    `).join('');
+    return `
+    <article class="sticky-note color-${escapeHtml(color)}${note.done ? ' is-done' : ''}" data-id="${escapeHtml(note.id)}"
+      onclick="focusStickyNote(event, '${jsString(note.id)}')">
       <div class="sticky-note-top">
-        <label class="sticky-note-done">
+        <label class="sticky-note-done" onclick="event.stopPropagation()">
           <input type="checkbox" ${note.done ? 'checked' : ''} onchange="toggleStickyNoteDone('${jsString(note.id)}', this.checked)">
           <span>${note.done ? 'Έγινε' : 'To-do'}</span>
         </label>
-        <button type="button" class="sticky-note-del" onclick="deleteStickyNote('${jsString(note.id)}')" title="Διαγραφή" aria-label="Διαγραφή">×</button>
+        <button type="button" class="sticky-note-del" onclick="event.stopPropagation(); deleteStickyNote('${jsString(note.id)}')" title="Διαγραφή" aria-label="Διαγραφή">×</button>
       </div>
-      <textarea class="sticky-note-body" maxlength="800" onchange="saveStickyNoteBody('${jsString(note.id)}', this.value)">${escapeHtml(note.body || '')}</textarea>
-    </article>
-  `).join('');
+      <div class="sticky-note-colors" onclick="event.stopPropagation()">${colors}</div>
+      <textarea class="sticky-note-body" maxlength="800"
+        onclick="event.stopPropagation()"
+        onfocus="this.dataset.orig = this.value"
+        onblur="saveStickyNoteBody('${jsString(note.id)}', this.value)">${escapeHtml(note.body || '')}</textarea>
+    </article>`;
+  }).join('');
+}
+
+function focusStickyNote(event, id) {
+  if (event.target.closest('textarea, button, label, input, .sticky-note-colors')) return;
+  const note = document.querySelector(`.sticky-note[data-id="${CSS.escape(id)}"] .sticky-note-body`);
+  if (note) {
+    note.focus();
+    const len = note.value.length;
+    try { note.setSelectionRange(len, len); } catch (_) { /* ignore */ }
+  }
+}
+
+async function saveStickyNoteColor(id, color) {
+  const next = NOTE_COLORS.includes(color) ? color : 'yellow';
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/notes`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, color: next })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Δεν ενημερώθηκε το χρώμα.');
+    const row = shopNotesCache.find((n) => n.id === id);
+    if (row) row.color = next;
+    renderStickyNotes();
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message || 'Σφάλμα', true);
+  }
 }
 
 async function createStickyNote(event) {
