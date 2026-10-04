@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20260930h">
+    <link rel="stylesheet" href="manager_style.css?v=20261004b">
 </head>
 <body data-theme="light">
 
@@ -107,6 +107,7 @@
         <span id="storeCodeSpan"></span>
       </div>
       <div class="header-actions">
+        <button class="btn btn-outline" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="16"></i> <span class="btn-label">Σημειώσεις</span></button>
         <button class="btn btn-outline" onclick="openPaymentsModal()"><i data-lucide="wallet" size="16"></i> <span class="btn-label">Πληρωμές</span></button>
         <button class="btn btn-outline" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> <span class="btn-label">Ιστορικό</span></button>
         <button class="btn btn-outline" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> <span class="btn-label">Σελίδα Πελάτη</span></button>
@@ -152,6 +153,13 @@
             <div class="stat-value" id="statHistory" style="color: #64748b;">0</div>
           </div>
           <div style="color: #64748b;"><i data-lucide="history" size="24"></i></div>
+        </button>
+        <button type="button" class="stat-card clickable" onclick="openAppointmentList('unscheduled')" title="Ραντεβού που δεν έχουν μπει ακόμα σε μέρα">
+          <div>
+            <div style="font-size: 0.875rem; color: var(--text-muted);">Χωρίς μέρα</div>
+            <div class="stat-value" id="statUnscheduled" style="color: #0ea5e9;">0</div>
+          </div>
+          <div style="color: #0ea5e9;"><i data-lucide="inbox" size="24"></i></div>
         </button>
       </div>
 
@@ -214,7 +222,6 @@
         <nav class="settings-nav" aria-label="Θέματα ρυθμίσεων">
           <button type="button" class="settings-nav-btn active" data-settings-panel="profile" onclick="showSettingsPanel('profile')">Επιχείρηση</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="payments" onclick="showSettingsPanel('payments')">Πληρωμές / Εγγύηση</button>
-          <button type="button" class="settings-nav-btn" data-settings-panel="appearance" onclick="showSettingsPanel('appearance')">Εμφάνιση</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="hours" onclick="showSettingsPanel('hours')">Ωράριο</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="services" onclick="showSettingsPanel('services')">Υπηρεσίες</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="form" onclick="showSettingsPanel('form')">Φόρμα πελάτη</button>
@@ -288,8 +295,57 @@
             <p class="settings-hint">Πότε μπαίνει προσωρινή δέσμευση στην κάρτα. 0 = αμέσως. Προεπιλογή 2. Μέχρι τότε μόνο αποθηκεύεται η κάρτα.</p>
           </div>
 
-          <div class="settings-panel" id="settingsPanel-appearance">
-            <h3 class="settings-panel-title">Εμφάνιση σελίδας πελάτη</h3>
+          <div class="settings-panel" id="settingsPanel-hours">
+            <h3 class="settings-panel-title">Ωράριο</h3>
+            <div class="form-group">
+              <label>Ημέρες Λειτουργίας</label>
+              <div class="checkbox-group" id="setWorkDays">
+                <label><input type="checkbox" id="selectAllDays" onchange="toggleNamedChecks('w_day', this.checked)"> Επιλογή όλων</label>
+                <label><input type="checkbox" name="w_day" value="1" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Δευτ</label>
+                <label><input type="checkbox" name="w_day" value="2" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τρί</label>
+                <label><input type="checkbox" name="w_day" value="3" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τετ</label>
+                <label><input type="checkbox" name="w_day" value="4" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Πέμ</label>
+                <label><input type="checkbox" name="w_day" value="5" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Παρ</label>
+                <label><input type="checkbox" name="w_day" value="6" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Σάβ</label>
+                <label><input type="checkbox" name="w_day" value="0" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Κυρ</label>
+              </div>
+              <label style="margin-top: 0.85rem; display:flex; align-items:center; gap:0.45rem; font-weight:500; color: var(--text-color);">
+                <input type="checkbox" id="perDayHoursToggle" onchange="syncHoursEditors()">
+                Διαφορετικό ωράριο ανά ημέρα
+              </label>
+            </div>
+            <div class="form-group" id="sharedHoursEditor">
+              <label>Βάρδιες / Διαστήματα (ίδιο για όλες τις εργάσιμες)</label>
+              <div id="setShiftsList"></div>
+              <button type="button" class="btn" onclick="addShiftRow('setShiftsList')" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Βάρδιας</button>
+            </div>
+            <div class="form-group" style="display:none;" id="perDayHoursEditor"></div>
+            <div class="form-group" style="max-width: 280px;">
+              <label>Buffer Time (λεπτά)</label>
+              <input class="field" type="number" id="setBuffer" min="0" step="5">
+            </div>
+          </div>
+
+          <div class="settings-panel" id="settingsPanel-services">
+            <h3 class="settings-panel-title">Υπηρεσίες & τιμές</h3>
+            <div id="setServicesList"></div>
+            <button type="button" class="btn" onclick="addModalService()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Υπηρεσίας</button>
+          </div>
+
+          <div class="settings-panel" id="settingsPanel-form">
+            <h3 class="settings-panel-title">Φόρμα πελάτη</h3>
+            <h4 class="settings-subhead">Πεδία φόρμας</h4>
+            <p class="settings-hint">Ξετσεκάρισε ό,τι δεν θέλεις. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong>.</p>
+            <div class="form-field-toggles">
+              <label><input type="checkbox" id="selectAllFormFields" onchange="toggleFormFields(this.checked)"> Επιλογή όλων</label>
+              <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone'); syncFormFieldSelect()"> Τηλέφωνο</label>
+              <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email'); syncFormFieldSelect()"> Email</label>
+              <label><input type="checkbox" id="formFieldNotes" checked onchange="syncFormFieldSelect()"> Σημειώσεις</label>
+              <label class="extra-field-toggle"><input type="checkbox" id="formFieldInstagram" checked onchange="syncExtraField(); syncFormFieldSelect()"> Επιπλέον πεδίο</label>
+              <input class="field extra-field-title" type="text" id="formFieldExtraLabel" maxlength="40" placeholder="Τίτλος, π.χ. Instagram ή Telegram" oninput="syncExtraField()">
+            </div>
+
+            <h4 class="settings-subhead" style="margin-top:1.35rem;">Εμφάνιση σελίδας πελάτη</h4>
             <div class="appearance-layout">
               <div>
                 <div class="settings-two-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -358,56 +414,6 @@
                   <p id="previewSuccess" class="preview-success">Η κράτησή σας καταχωρήθηκε!</p>
                 </div>
               </aside>
-            </div>
-          </div>
-
-          <div class="settings-panel" id="settingsPanel-hours">
-            <h3 class="settings-panel-title">Ωράριο</h3>
-            <div class="form-group">
-              <label>Ημέρες Λειτουργίας</label>
-              <div class="checkbox-group" id="setWorkDays">
-                <label><input type="checkbox" id="selectAllDays" onchange="toggleNamedChecks('w_day', this.checked)"> Επιλογή όλων</label>
-                <label><input type="checkbox" name="w_day" value="1" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Δευτ</label>
-                <label><input type="checkbox" name="w_day" value="2" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τρί</label>
-                <label><input type="checkbox" name="w_day" value="3" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Τετ</label>
-                <label><input type="checkbox" name="w_day" value="4" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Πέμ</label>
-                <label><input type="checkbox" name="w_day" value="5" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Παρ</label>
-                <label><input type="checkbox" name="w_day" value="6" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Σάβ</label>
-                <label><input type="checkbox" name="w_day" value="0" onchange="syncHoursEditors(); syncNamedChecks('w_day', 'selectAllDays')"> Κυρ</label>
-              </div>
-              <label style="margin-top: 0.85rem; display:flex; align-items:center; gap:0.45rem; font-weight:500; color: var(--text-color);">
-                <input type="checkbox" id="perDayHoursToggle" onchange="syncHoursEditors()">
-                Διαφορετικό ωράριο ανά ημέρα
-              </label>
-            </div>
-            <div class="form-group" id="sharedHoursEditor">
-              <label>Βάρδιες / Διαστήματα (ίδιο για όλες τις εργάσιμες)</label>
-              <div id="setShiftsList"></div>
-              <button type="button" class="btn" onclick="addShiftRow('setShiftsList')" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Βάρδιας</button>
-            </div>
-            <div class="form-group" style="display:none;" id="perDayHoursEditor"></div>
-            <div class="form-group" style="max-width: 280px;">
-              <label>Buffer Time (λεπτά)</label>
-              <input class="field" type="number" id="setBuffer" min="0" step="5">
-            </div>
-          </div>
-
-          <div class="settings-panel" id="settingsPanel-services">
-            <h3 class="settings-panel-title">Υπηρεσίες & τιμές</h3>
-            <div id="setServicesList"></div>
-            <button type="button" class="btn" onclick="addModalService()" style="background:#059669; margin-top: 0.5rem; font-size: 0.8rem;">+ Προσθήκη Υπηρεσίας</button>
-          </div>
-
-          <div class="settings-panel" id="settingsPanel-form">
-            <h3 class="settings-panel-title">Φόρμα πελάτη</h3>
-            <p class="settings-hint">Ξετσεκάρισε ό,τι δεν θέλεις. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong>.</p>
-            <div class="form-field-toggles">
-              <label><input type="checkbox" id="selectAllFormFields" onchange="toggleFormFields(this.checked)"> Επιλογή όλων</label>
-              <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone'); syncFormFieldSelect()"> Τηλέφωνο</label>
-              <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email'); syncFormFieldSelect()"> Email</label>
-              <label><input type="checkbox" id="formFieldNotes" checked onchange="syncFormFieldSelect()"> Σημειώσεις</label>
-              <label class="extra-field-toggle"><input type="checkbox" id="formFieldInstagram" checked onchange="syncExtraField(); syncFormFieldSelect()"> Επιπλέον πεδίο</label>
-              <input class="field extra-field-title" type="text" id="formFieldExtraLabel" maxlength="40" placeholder="Τίτλος, π.χ. Instagram ή Telegram" oninput="syncExtraField()">
             </div>
           </div>
 
@@ -524,7 +530,11 @@
           <label>Υπηρεσία</label>
           <select class="field" id="massageType" required></select>
         </div>
-        <div class="form-grid">
+        <label class="remember-me" style="margin:0 0 0.75rem;">
+          <input type="checkbox" id="bookUnscheduled" onchange="syncBookUnscheduledFields()">
+          Χωρίς μέρα ακόμα — μπαίνει στο bucket
+        </label>
+        <div class="form-grid" id="bookWhenFields">
           <div class="form-group">
             <label>Ημερομηνία</label>
             <input class="field" type="date" id="bookDate" required>
@@ -738,6 +748,34 @@
     </div>
   </div>
 
+  <!-- Sticky notes board -->
+  <div class="modal" id="notesModal">
+    <div class="modal-content notes-modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+        <div>
+          <h3 style="margin:0;">Πίνακας σημειώσεων</h3>
+          <p style="margin:0.35rem 0 0; color: var(--text-muted); font-size: 0.85rem;">Sticky notes για υπενθυμίσεις και to-do — μόνο για εσένα σε αυτή την επιχείρηση.</p>
+        </div>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('notesModal')">Κλείσιμο</button>
+      </div>
+      <form class="notes-compose" onsubmit="createStickyNote(event)">
+        <textarea class="field" id="noteBody" rows="3" maxlength="800" placeholder="π.χ. Να πάρω σαμπουάν · Να καλέσω τον Γιώργο για Τρίτη" required></textarea>
+        <div class="notes-compose-row">
+          <div class="note-colors" id="noteColorPicker" role="group" aria-label="Χρώμα">
+            <button type="button" class="note-color is-on" data-color="yellow" title="Κίτρινο" aria-pressed="true"></button>
+            <button type="button" class="note-color" data-color="pink" title="Ροζ" aria-pressed="false"></button>
+            <button type="button" class="note-color" data-color="mint" title="Μέντα" aria-pressed="false"></button>
+            <button type="button" class="note-color" data-color="blue" title="Μπλε" aria-pressed="false"></button>
+            <button type="button" class="note-color" data-color="lavender" title="Λιλά" aria-pressed="false"></button>
+          </div>
+          <button type="submit" class="btn"><i data-lucide="plus" size="16"></i> Κόλλησε</button>
+        </div>
+      </form>
+      <div id="notesBoard" class="notes-board"></div>
+      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('notesModal')">Κλείσιμο</button>
+    </div>
+  </div>
+
   <!-- [SECTION: HTML-CLIENT] πλευρικό ιστορικό πελάτη -->
 
   <aside id="clientDrawer" class="client-drawer">
@@ -749,7 +787,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20260930h"></script>
+<script src="manager.js?v=20261004b"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
