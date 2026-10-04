@@ -1154,7 +1154,7 @@ async function fetchAppointments() {
     calendar.removeAllEvents();
 
     allAppointments.forEach(item => {
-      if (isUnscheduled(item)) unscheduled++;
+      if (isActiveBucketItem(item)) unscheduled++;
       if (item.status === 'PENDING' && !isUnscheduled(item)) pending++;
       if (item.status === 'WAITLIST') waitlist++;
       if (item.status === 'BOOKED' || item.status === 'CONFIRMED') {
@@ -1190,7 +1190,8 @@ async function fetchAppointments() {
     const pendingEl = document.getElementById('statPending');
     const waitEl = document.getElementById('statWaitlist');
     pendingEl.innerText = pending;
-    pendingEl.dataset.open = String(pending + waitlist + unscheduled);
+    // «Νέο αίτημα» μόνο για αιτήματα πελάτη (εκκρεμή/ουρά) — όχι για bucket που βάζει ο admin
+    pendingEl.dataset.open = String(pending + waitlist);
     if (waitEl) {
       waitEl.textContent = `ουρά ${waitlist}`;
       waitEl.hidden = waitlist < 1;
@@ -1214,6 +1215,12 @@ async function fetchAppointments() {
 function isUnscheduled(item) {
   const date = String(item && item.date || '').trim();
   return !date || date === 'unscheduled';
+}
+
+function isActiveBucketItem(item) {
+  if (!isUnscheduled(item)) return false;
+  const status = String((item && item.status) || '');
+  return status !== 'BLOCKED' && status !== 'REJECTED' && status !== 'CANCELLED';
 }
 
 function waitlistNeedsTime(item) {
@@ -1344,7 +1351,7 @@ function statusBadge(item) {
 function appointmentsForKind(kind) {
   return allAppointments.filter(item => {
     if (kind === 'unscheduled') {
-      return isUnscheduled(item) && item.status !== 'BLOCKED' && item.status !== 'REJECTED' && item.status !== 'CANCELLED';
+      return isActiveBucketItem(item);
     }
     if (kind === 'all') return item.status !== 'BLOCKED';
     if (kind === 'pending') {
