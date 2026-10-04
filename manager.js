@@ -309,10 +309,18 @@ function showAuthNote(id, text, isError) {
   el.style.color = isError ? '#dc2626' : '#166534';
 }
 
+function openSupportModal() {
+  const note = document.getElementById('supportNote');
+  if (note) {
+    note.hidden = true;
+    note.textContent = '';
+  }
+  openModal('supportModal');
+  setTimeout(() => document.getElementById('supportMessage')?.focus(), 50);
+}
+
 function toggleSupportForm() {
-  const form = document.getElementById('supportForm');
-  form.hidden = !form.hidden;
-  if (!form.hidden) document.getElementById('supportMessage').focus();
+  openSupportModal();
 }
 
 async function sendSupportMessage(event) {
@@ -340,8 +348,9 @@ async function sendSupportMessage(event) {
       return;
     }
     note.style.color = '#166534';
-    note.textContent = data.message || 'Το μήνυμα στάλθηκε.';
+    note.textContent = data.message || 'Το μήνυμα στάλθηκε στον δημιουργό.';
     document.getElementById('supportMessage').value = '';
+    showToast('Στάλθηκε στην υποστήριξη.');
   } catch (err) {
     if (err && err.message === 'Unauthorized') return;
     note.hidden = false;
@@ -1320,7 +1329,7 @@ function openAppointmentList(kind) {
     pending: 'Αιτήματα που περιμένουν έγκριση.',
     booked: 'Μόνο μελλοντικά εγκεκριμένα.',
     history: 'Παρελθόντα, απορριφθέντα και ακυρωμένα.',
-    unscheduled: 'Ραντεβού που δεν έχουν μπει ακόμα σε ημερομηνία. Άνοιξε ένα και πάτα «Βάλε σε μέρα».'
+    unscheduled: 'Εσωτερική λίστα — σβήνεις ό,τι θες χωρίς ενημέρωση πελάτη. Όταν πατήσεις «Βάλε σε μέρα», στέλνεται email αν υπάρχει.'
   };
   document.getElementById('listTitle').textContent = titles[kind] || 'Ραντεβού';
   document.getElementById('listSubtitle').textContent = subtitles[kind] || '';
@@ -1448,9 +1457,14 @@ function openAppointmentDetails(item) {
     document.getElementById('actTitle').textContent = item.customer_name || 'Χωρίς όνομα';
     document.getElementById('actDetails').innerHTML = `
       <div>
-        <p class="guide-note" style="margin-top:0;">Στο bucket — διάλεξε μέρα/ώρα ή διέγραψέ το.</p>
+        <p class="guide-note" style="margin-top:0;">Εσωτερικό bucket — διέγραψέ το όποτε θες χωρίς ενημέρωση πελάτη. Email πάει μόνο όταν μπει στο πρόγραμμα.</p>
         <div class="detail-row"><span class="detail-k">Τηλέφωνο</span> <strong class="detail-v">${escapeHtml(item.customer_phone || '-')}</strong></div>
         <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
+        <div class="form-group" style="margin:0.75rem 0 0;">
+          <label for="bucketCustomerEmail">Email πελάτη (προαιρετικό)</label>
+          <input class="field" type="email" id="bucketCustomerEmail" value="${escapeHtml(item.customer_email || '')}" placeholder="για επιβεβαίωση όταν μπει στο πρόγραμμα" maxlength="120">
+          <p class="muted" style="margin:0.35rem 0 0;">Αν δεν έχει email, ενημέρωσέ τον κατ’ ιδίαν (τηλ./μήνυμα) αφού το βάλεις σε μέρα.</p>
+        </div>
       </div>
     `;
     const rescheduleHint = document.getElementById('rescheduleHint');
@@ -1744,18 +1758,22 @@ async function rescheduleAppointment(forcedTime) {
       return;
     }
     const current = allAppointments.find((a) => a.id === selectedEventId);
+    const wasBucket = current && isUnscheduled(current);
     const immediate = document.getElementById('rescheduleImmediate')?.checked === true
       || needsDayOrTime(current);
+    const bucketEmail = (document.getElementById('bucketCustomerEmail')?.value || '').trim();
     try {
+      const payload = {
+        id: selectedEventId,
+        date,
+        time: time.length === 5 ? time : time.slice(0, 5),
+        immediate
+      };
+      if (wasBucket && bucketEmail) payload.email = bucketEmail;
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/reschedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: selectedEventId,
-          date,
-          time: time.length === 5 ? time : time.slice(0, 5),
-          immediate
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 409 && data.overlap) {
@@ -1767,13 +1785,20 @@ async function rescheduleAppointment(forcedTime) {
       }
       if (!res.ok) throw new Error(data.error || 'Σφάλμα αλλαγής ώρας');
       hideOverlapBox();
-      const wasBucket = current && isUnscheduled(current);
       if (data.mode === 'proposed') {
         showToast(data.email_sent
           ? 'Στάλθηκε πρόταση στον πελάτη για αποδοχή.'
           : 'Η πρόταση αποθηκεύτηκε (το email δεν στάλθηκε).');
+      } else if (wasBucket || data.from_bucket) {
+        if (data.email_sent) {
+          showToast('Μπήκε στο ημερολόγιο · στάλθηκε email επιβεβαίωσης στον πελάτη.');
+        } else if (data.email_error === 'missing_email') {
+          showToast('Μπήκε στο ημερολόγιο. Δεν υπάρχει email πελάτη — ενημέρωσέ τον κατ’ ιδίαν ή βάλε email και ξαναπρογραμμάτισε.', true);
+        } else {
+          showToast('Μπήκε στο ημερολόγιο. Το email επιβεβαίωσης δεν στάλθηκε — ενημέρωσε τον πελάτη κατ’ ιδίαν αν χρειάζεται.', true);
+        }
       } else {
-        showToast(wasBucket ? 'Μπήκε στο ημερολόγιο.' : 'Η ώρα ενημερώθηκε.');
+        showToast(data.email_sent ? 'Η ώρα ενημερώθηκε · ενημερώθηκε ο πελάτης με email.' : 'Η ώρα ενημερώθηκε.');
       }
       document.getElementById('rescheduleGroup').style.display = 'none';
       document.getElementById('btnReschedule').innerHTML = '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
@@ -1786,9 +1811,10 @@ async function rescheduleAppointment(forcedTime) {
         found.proposed_date = null;
         found.proposed_start_time = null;
         found.propose_token = null;
+        if (wasBucket) found.status = 'BOOKED';
       }
       // Από bucket → κανονικό συμβάν: κλείσε την απλή κάρτα.
-      if (wasBucket && data.mode === 'applied') {
+      if ((wasBucket || data.from_bucket) && data.mode === 'applied') {
         closeModal('actionModal');
         if (currentListKind === 'unscheduled' && isOverlayVisible('modal', 'listModal')) {
           renderAppointmentList();
@@ -1808,7 +1834,8 @@ async function deleteAppointmentById(id) {
 async function deleteAppointment() {
   const current = allAppointments.find((a) => a.id === selectedEventId);
   const fromBucket = current && isUnscheduled(current);
-  if (!confirm(fromBucket ? 'Διαγραφή από το bucket;' : 'Διαγραφή ραντεβού; Μπορείτε να αναιρέσετε αμέσως μετά.')) return;
+  // Bucket: χωρίς ενημέρωση πελάτη. Τα υπόλοιπα κρατάνε confirm.
+  if (!fromBucket && !confirm('Διαγραφή ραντεβού; Μπορείτε να αναιρέσετε αμέσως μετά.')) return;
   await withLock(async () => {
     try {
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/delete`, {
@@ -1820,7 +1847,7 @@ async function deleteAppointment() {
       if (!res.ok) throw new Error(data.error || 'Σφάλμα διαγραφής');
       closeModal('actionModal');
       lastUndo = current ? { type: 'delete', id: current.id, snapshot: current } : null;
-      showToast(fromBucket ? 'Διαγράφηκε από το bucket.' : 'Το ραντεβού διαγράφηκε.', false, true);
+      showToast(fromBucket ? 'Διαγράφηκε από το bucket.' : 'Το ραντεβού διαγράφηκε.', false, !fromBucket);
       await fetchAppointments();
       if (fromBucket && currentListKind === 'unscheduled' && isOverlayVisible('modal', 'listModal')) {
         renderAppointmentList();

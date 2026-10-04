@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261004g">
+    <link rel="stylesheet" href="manager_style.css?v=20261004h">
 </head>
 <body data-theme="light">
 
@@ -127,7 +127,8 @@
       <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
       <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
       <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
-      <button type="button" class="manager-side-btn manager-side-btn-bottom" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
+      <button type="button" class="manager-side-btn manager-side-btn-bottom" onclick="openSupportModal()" title="Μήνυμα στον δημιουργό του QuickBook"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span></button>
+      <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
     </aside>
 
     <div class="container">
@@ -210,13 +211,8 @@
         </div>
       </div>
       <div class="support-box">
-        <p class="support-strip">Υποστήριξη: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
-        <button type="button" class="btn btn-outline support-open" onclick="toggleSupportForm()">Γράψε μήνυμα</button>
-        <form id="supportForm" hidden onsubmit="sendSupportMessage(event)">
-          <textarea class="field" id="supportMessage" rows="3" maxlength="2000" required placeholder="Τι χρειάζεσαι;"></textarea>
-          <button class="btn" type="submit">Αποστολή</button>
-          <p id="supportNote" hidden></p>
-        </form>
+        <p class="support-strip">Υποστήριξη δημιουργού: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+        <button type="button" class="btn btn-outline support-open" onclick="openSupportModal()"><i data-lucide="life-buoy" size="16"></i> Μήνυμα στον δημιουργό</button>
       </div>
     </div><!-- /.container -->
     </div><!-- /.manager-body -->
@@ -765,6 +761,31 @@
     </div>
   </div>
 
+  <!-- Υποστήριξη / μήνυμα στον δημιουργό -->
+  <div class="modal" id="supportModal">
+    <div class="modal-content support-modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+        <div>
+          <h3 style="margin:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="life-buoy" size="22"></i> Υποστήριξη</h3>
+          <p style="margin:0.4rem 0 0; color: var(--text-muted); font-size: 0.88rem; line-height:1.45;">
+            Εδώ μιλάς απευθείας με τον <strong>δημιουργό του QuickBook</strong>. Γράψε τι χρειάζεσαι — θα σου απαντήσει στο email της επιχείρησης και/ή με μήνυμα εδώ μέσα.
+          </p>
+        </div>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('supportModal')">Κλείσιμο</button>
+      </div>
+      <p class="support-strip" style="margin:1rem 0 0.75rem;">Email: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+      <form id="supportForm" onsubmit="sendSupportMessage(event)">
+        <textarea class="field" id="supportMessage" rows="4" maxlength="2000" required placeholder="π.χ. Δεν μου φαίνεται σωστά το ημερολόγιο · Θέλω βοήθεια με το Stripe…"></textarea>
+        <div class="modal-form-actions" style="margin-top:0.85rem;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('supportModal')">Ακύρωση</button>
+          <button class="btn" type="submit"><i data-lucide="send" size="16"></i> Αποστολή</button>
+        </div>
+        <p id="supportNote" hidden style="margin:0.65rem 0 0;"></p>
+      </form>
+      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('supportModal')">Κλείσιμο</button>
+    </div>
+  </div>
+
   <!-- Sticky notes board -->
   <div class="modal" id="notesModal">
     <div class="modal-content notes-modal-content">
@@ -804,7 +825,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20261004f"></script>
+<script src="manager.js?v=20261004i"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
