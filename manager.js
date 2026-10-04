@@ -730,6 +730,9 @@ function openBookingFromToolbar() {
 
 function openBookingToBucket() {
   pendingSlot = null;
+  // Κλείσε τη λίστα bucket αν είναι ανοιχτή — αλλιώς η φόρμα μένει από κάτω.
+  if (isOverlayVisible('modal', 'listModal')) closeModal('listModal');
+  if (isOverlayVisible('modal', 'actionModal')) closeModal('actionModal');
   openBookingModal();
   const unscheduled = document.getElementById('bookUnscheduled');
   if (unscheduled) {
@@ -1367,12 +1370,13 @@ function renderAppointmentList() {
     else last.items.push(item);
   });
 
+  const bucketList = currentListKind === 'unscheduled';
   list.innerHTML = groups.map((group) => `
     <section class="apt-day-group">
       <h3 class="apt-day">${escapeHtml(formatLongGreekDate(group.date))} · ${group.items.length}</h3>
       ${group.items.map((item) => `
-        <div class="apt-row" data-id="${escapeHtml(item.id)}">
-          <input type="checkbox" class="bulk-check" data-id="${escapeHtml(item.id)}" onclick="event.stopPropagation(); syncBulkBar()">
+        <div class="apt-row${bucketList ? ' apt-row-bucket' : ''}" data-id="${escapeHtml(item.id)}">
+          ${bucketList ? '' : `<input type="checkbox" class="bulk-check" data-id="${escapeHtml(item.id)}" onclick="event.stopPropagation(); syncBulkBar()">`}
           <div class="apt-time${isUnscheduled(item) ? ' is-bucket' : ''}">${escapeHtml(isUnscheduled(item) ? appointmentTimeLabel(item) : appointmentTimeLabel(item).slice(0, 5))}</div>
           <button type="button" class="apt-row-main">
             <div style="font-weight:650;">
@@ -1383,6 +1387,7 @@ function renderAppointmentList() {
               ${item.customer_phone ? ' · ' + escapeHtml(item.customer_phone) : ''}
             </div>
           </button>
+          ${bucketList ? `<button type="button" class="btn btn-quiet-danger apt-bucket-del" data-del-id="${escapeHtml(item.id)}" title="Διαγραφή από bucket" aria-label="Διαγραφή"><i data-lucide="trash-2" size="16"></i></button>` : ''}
           ${showBadge ? `<div class="apt-badges">${statusBadge(item)}</div>` : ''}
         </div>
       `).join('')}
@@ -1392,7 +1397,12 @@ function renderAppointmentList() {
   list.querySelectorAll('.apt-row').forEach(row => {
     row.addEventListener('click', (e) => {
       if (e.target.closest('.bulk-check')) return;
-      if (e.target.closest('.client-name-btn')) {
+      if (e.target.closest('.apt-bucket-del')) {
+        e.stopPropagation();
+        deleteAppointmentById(e.target.closest('.apt-bucket-del').getAttribute('data-del-id'));
+        return;
+      }
+      if (e.target.closest('.client-name-btn') && !bucketList) {
         e.stopPropagation();
         openClientDrawer(e.target.getAttribute('data-phone'), e.target.textContent);
         return;
@@ -1401,6 +1411,7 @@ function renderAppointmentList() {
       openAppointmentDetails(found);
     });
   });
+  if (typeof lucide !== 'undefined') lucide.createIcons();
   syncBulkBar();
 }
 
@@ -1432,6 +1443,47 @@ function openAppointmentDetails(item) {
   if (!item) return;
   selectedEventId = item.id;
   hideOverlapBox();
+
+  if (isUnscheduled(item)) {
+    document.getElementById('actTitle').textContent = item.customer_name || 'Χωρίς όνομα';
+    document.getElementById('actDetails').innerHTML = `
+      <div>
+        <p class="guide-note" style="margin-top:0;">Στο bucket — διάλεξε μέρα/ώρα ή διέγραψέ το.</p>
+        <div class="detail-row"><span class="detail-k">Τηλέφωνο</span> <strong class="detail-v">${escapeHtml(item.customer_phone || '-')}</strong></div>
+        <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
+      </div>
+    `;
+    const rescheduleHint = document.getElementById('rescheduleHint');
+    if (rescheduleHint) rescheduleHint.textContent = 'Διάλεξε μέρα και ώρα για να μπει στο ημερολόγιο.';
+    document.getElementById('rescheduleDate').value = '';
+    document.getElementById('rescheduleTime').value = '';
+    const immediateBox = document.getElementById('rescheduleImmediate');
+    if (immediateBox) {
+      immediateBox.checked = true;
+      const immLabel = immediateBox.closest('label');
+      if (immLabel) immLabel.style.display = 'none';
+    }
+    document.getElementById('btnApprove').style.display = 'none';
+    document.getElementById('btnReject').style.display = 'none';
+    document.getElementById('btnCancelAppt').style.display = 'none';
+    const captureBtn = document.getElementById('btnHoldCapture');
+    const refundBtn = document.getElementById('btnHoldRefund');
+    if (captureBtn) captureBtn.style.display = 'none';
+    if (refundBtn) refundBtn.style.display = 'none';
+    document.getElementById('reasonGroup').style.display = 'none';
+    document.getElementById('actReason').value = '';
+    document.getElementById('rescheduleGroup').style.display = 'grid';
+    const rescheduleBtn = document.getElementById('btnReschedule');
+    rescheduleBtn.style.display = 'inline-flex';
+    rescheduleBtn.innerHTML = '<i data-lucide="calendar-plus" size="16"></i> Βάλε σε μέρα';
+    const deleteBtn = document.getElementById('btnDeleteAppt');
+    deleteBtn.style.display = 'inline-flex';
+    deleteBtn.innerHTML = '<i data-lucide="trash-2" size="16"></i> Διαγραφή';
+    openModal('actionModal');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  }
+
   const pastNote = isPastAppointment(item)
     ? '<div class="detail-row"><span class="detail-k">Ετικέτα</span> <strong class="detail-v">Παρελθόν</strong></div>'
     : '';
@@ -1439,10 +1491,7 @@ function openAppointmentDetails(item) {
   const waitlistNote = item.status === 'WAITLIST'
     ? '<p class="guide-note">Ουρά ακύρωσης — δεν κλείνει ώρα. Επικοινώνησε και όρισε εσύ πότε βολεύει.</p>'
     : '';
-  const unscheduledNote = isUnscheduled(item)
-    ? '<p class="guide-note">Στο bucket «Χωρίς μέρα». Πάτα «Βάλε σε μέρα» όταν κανονίσεις ημερομηνία.</p>'
-    : '';
-  const requestNote = item.status === 'PENDING' && !isUnscheduled(item) && currentTenantData && currentTenantData.intake_mode === 'request'
+  const requestNote = item.status === 'PENDING' && currentTenantData && currentTenantData.intake_mode === 'request'
     ? '<p class="guide-note">Προτιμώμενη ώρα. Επικοινώνησε με τον πελάτη πριν την έγκριση.</p>'
     : '';
 
@@ -1456,12 +1505,11 @@ function openAppointmentDetails(item) {
       <div class="detail-row"><span class="detail-k">Email</span> <strong class="detail-v">${escapeHtml(item.customer_email || '-')}</strong></div>
       ${item.instagram ? `<div class="detail-row"><span class="detail-k">${escapeHtml(extraFieldTitle())}</span> <strong class="detail-v">${escapeHtml(item.instagram)}</strong></div>` : ''}
       <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
-      <div class="detail-row"><span class="detail-k">Ώρα</span> <strong class="detail-v">${isUnscheduled(item) || waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
+      <div class="detail-row"><span class="detail-k">Ώρα</span> <strong class="detail-v">${waitlistNeedsTime(item) ? 'χωρίς συγκεκριμένη ώρα' : `${item.start_time || '-'} – ${item.end_time || '-'}`}</strong></div>
       ${item.proposed_date && item.propose_token ? `<div class="detail-row"><span class="detail-k">Πρόταση</span> <strong class="detail-v">${escapeHtml(formatGreekDate(item.proposed_date))} · ${escapeHtml((item.proposed_start_time || '').slice(0, 5))} (εκκρεμεί αποδοχή)</strong></div>` : ''}
       <div class="detail-row"><span class="detail-k">Κατάσταση</span> <strong class="detail-v">${statusLabel(item.status)}</strong></div>
       ${holdLabel(item.hold_status, item) ? `<div class="detail-row"><span class="detail-k">Κάρτα</span> <strong class="detail-v">${escapeHtml(holdLabel(item.hold_status, item))}${item.hold_cents ? ` · ${(Number(item.hold_cents) / 100).toFixed(2)}€` : ''}</strong></div>` : ''}
       ${pastNote}
-      ${unscheduledNote}
       ${waitlistNote}
       ${requestNote}
     </div>
@@ -1472,13 +1520,13 @@ function openAppointmentDetails(item) {
       ? 'Διάλεξε σε ποια μέρα και ώρα θα μπει αυτό το ραντεβού.'
       : 'Διάλεξε νέα ημερομηνία και ώρα. Θα σταλεί πρόταση στον πελάτη με σύνδεσμο αποδοχής (ή εφάρμοσε άμεσα αν συμφωνήσατε στο τηλέφωνο).';
   }
-  document.getElementById('rescheduleDate').value = item.proposed_date || (isUnscheduled(item) ? '' : item.date) || '';
+  document.getElementById('rescheduleDate').value = item.proposed_date || item.date || '';
   document.getElementById('rescheduleTime').value = item.proposed_start_time || item.start_time || '';
   const immediateBox = document.getElementById('rescheduleImmediate');
   if (immediateBox) {
-    immediateBox.checked = isUnscheduled(item) || waitlistNeedsTime(item);
+    immediateBox.checked = waitlistNeedsTime(item);
     const immLabel = immediateBox.closest('label');
-    if (immLabel) immLabel.style.display = isUnscheduled(item) ? 'none' : '';
+    if (immLabel) immLabel.style.display = '';
   }
   const past = isPastAppointment(item);
   const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
@@ -1493,15 +1541,15 @@ function openAppointmentDetails(item) {
   if (captureBtn) captureBtn.style.display = hold === 'authorized' ? 'inline-flex' : 'none';
   if (refundBtn) refundBtn.style.display = hold === 'captured' ? 'inline-flex' : 'none';
   const deleteBtn = document.getElementById('btnDeleteAppt');
-  deleteBtn.style.display = canDeleteAppointment(item) || isUnscheduled(item) ? 'inline-flex' : 'none';
+  deleteBtn.style.display = canDeleteAppointment(item) ? 'inline-flex' : 'none';
   deleteBtn.innerHTML = historyItem
     ? '<i data-lucide="trash-2" size="16"></i> Διαγραφή'
     : '<i data-lucide="trash-2" size="16"></i> Διαγραφή οριστικά';
   const canReschedule = item.status !== 'BLOCKED' && !past;
-  document.getElementById('rescheduleGroup').style.display = isUnscheduled(item) ? 'grid' : 'none';
+  document.getElementById('rescheduleGroup').style.display = 'none';
   const rescheduleBtn = document.getElementById('btnReschedule');
   rescheduleBtn.style.display = canReschedule ? 'inline-flex' : 'none';
-  rescheduleBtn.innerHTML = isUnscheduled(item) || waitlistNeedsTime(item)
+  rescheduleBtn.innerHTML = waitlistNeedsTime(item)
     ? '<i data-lucide="calendar-plus" size="16"></i> Βάλε σε μέρα'
     : '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
   document.getElementById('reasonGroup').style.display = (actionable || (approved && !past)) ? 'block' : 'none';
@@ -1682,7 +1730,7 @@ function toggleRescheduleEditor() {
   }
   group.style.display = 'grid';
   document.getElementById('btnReschedule').innerHTML = needsDayOrTime(current)
-    ? '<i data-lucide="check" size="16"></i> Αποθήκευση μέρας'
+    ? '<i data-lucide="calendar-plus" size="16"></i> Βάλε σε μέρα'
     : '<i data-lucide="check" size="16"></i> Αποστολή πρότασης';
   lucide.createIcons();
 }
@@ -1719,12 +1767,13 @@ async function rescheduleAppointment(forcedTime) {
       }
       if (!res.ok) throw new Error(data.error || 'Σφάλμα αλλαγής ώρας');
       hideOverlapBox();
+      const wasBucket = current && isUnscheduled(current);
       if (data.mode === 'proposed') {
         showToast(data.email_sent
           ? 'Στάλθηκε πρόταση στον πελάτη για αποδοχή.'
           : 'Η πρόταση αποθηκεύτηκε (το email δεν στάλθηκε).');
       } else {
-        showToast('Η ώρα ενημερώθηκε.');
+        showToast(wasBucket ? 'Μπήκε στο ημερολόγιο.' : 'Η ώρα ενημερώθηκε.');
       }
       document.getElementById('rescheduleGroup').style.display = 'none';
       document.getElementById('btnReschedule').innerHTML = '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
@@ -1738,16 +1787,29 @@ async function rescheduleAppointment(forcedTime) {
         found.proposed_start_time = null;
         found.propose_token = null;
       }
+      // Από bucket → κανονικό συμβάν: κλείσε την απλή κάρτα.
+      if (wasBucket && data.mode === 'applied') {
+        closeModal('actionModal');
+        if (currentListKind === 'unscheduled' && isOverlayVisible('modal', 'listModal')) {
+          renderAppointmentList();
+        }
+      }
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα αλλαγής ώρας.', true);
     }
   });
 }
 
+async function deleteAppointmentById(id) {
+  selectedEventId = id;
+  await deleteAppointment();
+}
+
 async function deleteAppointment() {
-  if (!confirm('Διαγραφή ραντεβού; Μπορείτε να αναιρέσετε αμέσως μετά.')) return;
+  const current = allAppointments.find((a) => a.id === selectedEventId);
+  const fromBucket = current && isUnscheduled(current);
+  if (!confirm(fromBucket ? 'Διαγραφή από το bucket;' : 'Διαγραφή ραντεβού; Μπορείτε να αναιρέσετε αμέσως μετά.')) return;
   await withLock(async () => {
-    const current = allAppointments.find((a) => a.id === selectedEventId);
     try {
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/delete`, {
         method: 'POST',
@@ -1758,8 +1820,11 @@ async function deleteAppointment() {
       if (!res.ok) throw new Error(data.error || 'Σφάλμα διαγραφής');
       closeModal('actionModal');
       lastUndo = current ? { type: 'delete', id: current.id, snapshot: current } : null;
-      showToast('Το ραντεβού διαγράφηκε.', false, true);
+      showToast(fromBucket ? 'Διαγράφηκε από το bucket.' : 'Το ραντεβού διαγράφηκε.', false, true);
       await fetchAppointments();
+      if (fromBucket && currentListKind === 'unscheduled' && isOverlayVisible('modal', 'listModal')) {
+        renderAppointmentList();
+      }
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα διαγραφής.', true);
     }
@@ -2275,8 +2340,9 @@ function openModal(id) {
   if (!el) return;
   const already = el.style.display === 'flex';
   el.style.display = 'flex';
-  lucide.createIcons();
   if (!already) pushOverlay('modal', id);
+  el.style.zIndex = String(100 + Math.max(1, overlayStack.length) * 10);
+  lucide.createIcons();
 }
 
 function closeModal(id) {
@@ -2621,7 +2687,7 @@ function renderBulkActions(ids) {
   if ((currentListKind === 'booked' || currentListKind === 'all') && cancellable.length) {
     buttons.push(`<button type="button" class="btn btn-warning" onclick="bulkCancelSelected()">Ακύρωση (${cancellable.length})</button>`);
   }
-  if ((currentListKind === 'history' || currentListKind === 'all') && removable.length) {
+  if ((currentListKind === 'history' || currentListKind === 'all' || currentListKind === 'unscheduled') && removable.length) {
     buttons.push(`<button type="button" class="btn btn-danger" onclick="bulkDeleteSelected()">Διαγραφή (${removable.length})</button>`);
   }
   wrap.innerHTML = buttons.join('');

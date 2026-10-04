@@ -73,17 +73,18 @@ button, input, select, textarea { font-family: inherit; }
   height: 1.85rem !important;
   stroke-width: 2.15;
 }
-.manager-shell {
+.manager-shell { min-height: 100vh; }
+.manager-main { min-width: 0; }
+.manager-body {
   display: grid;
   grid-template-columns: 13.5rem minmax(0, 1fr);
   align-items: start;
-  min-height: calc(100vh - 0px);
 }
 .manager-side {
   position: sticky;
   top: 0;
   align-self: start;
-  height: 100vh;
+  min-height: calc(100vh - 4.5rem);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -114,8 +115,6 @@ button, input, select, textarea { font-family: inherit; }
   border-color: var(--border-color);
 }
 .manager-side-btn svg { flex: none; width: 1.15rem; height: 1.15rem; }
-.manager-main { min-width: 0; }
-.header-mobile-only { display: none; }
 .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 .card { background: var(--card-bg); border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
 .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background: #4f46e5; color: white; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; }
@@ -212,6 +211,9 @@ button, input, select, textarea { font-family: inherit; }
 .apt-list .apt-row {
   grid-template-columns: auto auto minmax(0, 1fr) auto;
 }
+.apt-list .apt-row.apt-row-bucket {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
 .apt-time {
   font-size: 1.05rem; font-weight: 750; letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums; min-width: 3.2rem; white-space: nowrap;
@@ -219,6 +221,11 @@ button, input, select, textarea { font-family: inherit; }
 .apt-time.is-bucket {
   font-size: 0.82rem; letter-spacing: 0; min-width: 4.2rem;
   color: #6366f1; text-transform: uppercase;
+}
+.apt-bucket-del {
+  flex: none;
+  padding: 0.4rem 0.55rem;
+  min-height: 2.4rem;
 }
 .apt-row {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.75rem; align-items: center;
@@ -646,9 +653,30 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 
 /* [SECTION: CSS-MOBILE] */
 @media (max-width: 760px) {
-  .manager-shell { display: block; }
-  .manager-side { display: none; }
-  .header-mobile-only { display: inline-flex; }
+  .manager-body { display: flex; flex-direction: column; }
+  .manager-side {
+    position: sticky;
+    top: 0;
+    z-index: 35;
+    min-height: 0;
+    height: auto;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    padding: 0.55rem 0.65rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .manager-side-btn {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
   .settings-shell { grid-template-columns: 1fr; min-height: 0; }
   .settings-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border-color, #e2e8f0); }
   .settings-nav-btn { flex: 1 1 auto; text-align: center; font-size: 0.75rem; padding: 0.45rem 0.5rem; }
@@ -698,6 +726,7 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   .stat-value { font-size: 1.35rem; }
   .list-filters { grid-template-columns: 1fr; }
   .apt-list .apt-row { grid-template-columns: auto auto minmax(0, 1fr); gap: 0.5rem; padding: 0.75rem; }
+  .apt-list .apt-row.apt-row-bucket { grid-template-columns: auto minmax(0, 1fr) auto; }
   .apt-list .apt-badges { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
   .appearance-layout { grid-template-columns: 1fr; }
   .client-preview { position: static; }

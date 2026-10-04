@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261004d">
+    <link rel="stylesheet" href="manager_style.css?v=20261004f">
 </head>
 <body data-theme="light">
 
@@ -106,14 +106,6 @@
     </div>
 
     <div class="manager-shell">
-    <aside class="manager-side" aria-label="Μενού">
-      <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
-      <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
-      <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
-      <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
-      <button type="button" class="manager-side-btn" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
-    </aside>
-
     <div class="manager-main">
     <div class="header">
       <div class="header-brand">
@@ -121,11 +113,6 @@
         <span id="storeCodeSpan"></span>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline header-mobile-only" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="16"></i> <span class="btn-label">Σημειώσεις</span></button>
-        <button class="btn btn-outline header-mobile-only" onclick="openPaymentsModal()"><i data-lucide="wallet" size="16"></i> <span class="btn-label">Πληρωμές</span></button>
-        <button class="btn btn-outline header-mobile-only" onclick="openAppointmentList('history')"><i data-lucide="history" size="16"></i> <span class="btn-label">Ιστορικό</span></button>
-        <button class="btn btn-outline header-mobile-only" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="16"></i> <span class="btn-label">Σελίδα Πελάτη</span></button>
-        <button class="btn btn-outline header-mobile-only" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="16"></i> <span class="btn-label">Κλείδωσε ώρες</span></button>
         <button class="btn btn-outline" onclick="openBookingToBucket()" title="Προσθήκη χωρίς μέρα"><i data-lucide="inbox" size="16"></i> <span class="btn-label">Στο bucket</span></button>
         <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
@@ -133,6 +120,15 @@
       </div>
       <button type="button" class="btn btn-danger btn-logout" onclick="handleLogout()" title="Αποσύνδεση" aria-label="Αποσύνδεση"><i data-lucide="log-out"></i></button>
     </div>
+
+    <div class="manager-body">
+    <aside class="manager-side" aria-label="Μενού">
+      <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
+      <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
+      <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
+      <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
+      <button type="button" class="manager-side-btn" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
+    </aside>
 
     <div class="container">
       <!-- Στατιστικά -->
@@ -222,7 +218,8 @@
           <p id="supportNote" hidden></p>
         </form>
       </div>
-    </div>
+    </div><!-- /.container -->
+    </div><!-- /.manager-body -->
     </div><!-- /.manager-main -->
     </div><!-- /.manager-shell -->
   </div>
@@ -807,7 +804,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20261004d"></script>
+<script src="manager.js?v=20261004f"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
