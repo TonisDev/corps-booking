@@ -100,6 +100,10 @@
         </div>
       </div>
     </div>
+    <button type="button" id="supportUnreadBanner" class="support-unread-banner" hidden onclick="openSupportModal()">
+      <span class="support-unread-banner-dot" aria-hidden="true"></span>
+      <span id="supportUnreadBannerText">Νέο μήνυμα στην Υποστήριξη — πάτα για άνοιγμα</span>
+    </button>
     <div id="billingWarnBanner" class="billing-warn-banner" hidden>
       <strong id="billingWarnTitle">Πρόβλημα συνδρομής</strong>
       <p id="billingWarnText"></p>
@@ -127,7 +131,7 @@
       <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
       <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
       <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
-      <button type="button" class="manager-side-btn manager-side-btn-bottom" onclick="openSupportModal()" title="Μήνυμα στον δημιουργό του QuickBook"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span></button>
+      <button type="button" class="manager-side-btn manager-side-btn-bottom" id="supportSideBtn" onclick="openSupportModal()" title="Chat με τον δημιουργό του QuickBook"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="supportUnreadDot" class="side-unread-dot" hidden></span></button>
       <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
     </aside>
 
@@ -761,23 +765,26 @@
     </div>
   </div>
 
-  <!-- Υποστήριξη / μήνυμα στον δημιουργό -->
+  <!-- Υποστήριξη / chat με τον δημιουργό -->
   <div class="modal" id="supportModal">
     <div class="modal-content support-modal-content">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
         <div>
           <h3 style="margin:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="life-buoy" size="22"></i> Υποστήριξη</h3>
           <p style="margin:0.4rem 0 0; color: var(--text-muted); font-size: 0.88rem; line-height:1.45;">
-            Εδώ μιλάς απευθείας με τον <strong>δημιουργό του QuickBook</strong>. Γράψε τι χρειάζεσαι — θα σου απαντήσει στο email της επιχείρησης και/ή με μήνυμα εδώ μέσα.
+            Chat με τον <strong>δημιουργό του QuickBook</strong>. Οι απαντήσεις φαίνονται εδώ — μπορείς να ξαναγράψεις όποτε θέλεις.
           </p>
         </div>
         <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('supportModal')">Κλείσιμο</button>
       </div>
-      <p class="support-strip" style="margin:1rem 0 0.75rem;">Email: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+      <p class="support-strip" style="margin:0.85rem 0 0.65rem;">Email: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a></p>
+      <div id="supportThread" class="support-thread" aria-live="polite">
+        <p class="muted" style="margin:0;">Φόρτωση συνομιλίας…</p>
+      </div>
       <form id="supportForm" onsubmit="sendSupportMessage(event)">
-        <textarea class="field" id="supportMessage" rows="4" maxlength="2000" required placeholder="π.χ. Δεν μου φαίνεται σωστά το ημερολόγιο · Θέλω βοήθεια με το Stripe…"></textarea>
-        <div class="modal-form-actions" style="margin-top:0.85rem;">
-          <button type="button" class="btn btn-outline" onclick="closeModal('supportModal')">Ακύρωση</button>
+        <textarea class="field" id="supportMessage" rows="3" maxlength="2000" required placeholder="Γράψε μήνυμα…"></textarea>
+        <div class="modal-form-actions" style="margin-top:0.65rem;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('supportModal')">Κλείσιμο</button>
           <button class="btn" type="submit"><i data-lucide="send" size="16"></i> Αποστολή</button>
         </div>
         <p id="supportNote" hidden style="margin:0.65rem 0 0;"></p>

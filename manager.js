@@ -309,6 +309,98 @@ function showAuthNote(id, text, isError) {
   el.style.color = isError ? '#dc2626' : '#166534';
 }
 
+function formatSupportWhen(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString('el-GR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+
+let lastRevealedMessageKey = '';
+
+function revealAdminMessage(el, key) {
+  if (!el || el.hidden) return;
+  const mark = String(key || '');
+  if (mark && mark === lastRevealedMessageKey) return;
+  lastRevealedMessageKey = mark || lastRevealedMessageKey;
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {}
+    el.classList.add('is-attention');
+    window.setTimeout(() => el.classList.remove('is-attention'), 2400);
+  });
+}
+
+function updateSupportUnreadBadge(count) {
+  const n = Number(count) || 0;
+  if (currentTenantData) currentTenantData.support_unread = n;
+  const dot = document.getElementById('supportUnreadDot');
+  if (dot) dot.hidden = n <= 0;
+  const btn = document.getElementById('supportSideBtn');
+  if (btn) {
+    btn.classList.toggle('has-unread', n > 0);
+    btn.title = n > 0
+      ? `Υποστήριξη · ${n} νέ${n === 1 ? 'α απάντηση' : 'ες απαντήσεις'}`
+      : 'Chat με τον δημιουργό του QuickBook';
+  }
+  const banner = document.getElementById('supportUnreadBanner');
+  const bannerText = document.getElementById('supportUnreadBannerText');
+  const noticeVisible = !!(currentTenantData && currentTenantData.admin_notice && currentTenantData.admin_notice.body);
+  if (banner) {
+    // Αν υπάρχει ήδη το κουτί πλατφόρμας, μη διπλοδείχνουμε· αρκεί το sticky notice.
+    if (n > 0 && !noticeVisible) {
+      if (bannerText) {
+        bannerText.textContent = n === 1
+          ? 'Νέο μήνυμα στην Υποστήριξη — πάτα για άνοιγμα'
+          : `${n} νέα μηνύματα στην Υποστήριξη — πάτα για άνοιγμα`;
+      }
+      banner.hidden = false;
+      revealAdminMessage(banner, `support:${n}:${currentTenantData && currentTenantData.support_unread}`);
+    } else {
+      banner.hidden = true;
+    }
+  }
+}
+
+function renderSupportThread(messages) {
+  const box = document.getElementById('supportThread');
+  if (!box) return;
+  const rows = Array.isArray(messages) ? messages : [];
+  if (!rows.length) {
+    box.innerHTML = '<p class="muted" style="margin:0;">Δεν υπάρχει ακόμα συνομιλία. Γράψε το πρώτο μήνυμα από κάτω.</p>';
+    return;
+  }
+  box.innerHTML = rows.map((m) => {
+    const mine = String(m.direction || 'tenant') !== 'sa';
+    const who = mine ? 'Εσύ' : 'QuickBook';
+    return `<div class="support-bubble ${mine ? 'me' : 'them'}">${escapeHtml(m.body || '')}<span class="support-bubble-meta">${escapeHtml(who)} · ${escapeHtml(formatSupportWhen(m.created_at))}</span></div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function loadSupportThread() {
+  const box = document.getElementById('supportThread');
+  if (!box || !currentBusinessCode) return;
+  box.innerHTML = '<p class="muted" style="margin:0;">Φόρτωση συνομιλίας…</p>';
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/support`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      box.innerHTML = `<p class="muted" style="margin:0;">${escapeHtml(data.error || 'Η συνομιλία δεν φορτώθηκε.')}</p>`;
+      return;
+    }
+    renderSupportThread(data.messages || []);
+    updateSupportUnreadBadge(0);
+  } catch (err) {
+    if (err && err.message === 'Unauthorized') return;
+    box.innerHTML = '<p class="muted" style="margin:0;">Η συνομιλία δεν φορτώθηκε.</p>';
+  }
+}
+
 function openSupportModal() {
   const note = document.getElementById('supportNote');
   if (note) {
@@ -316,7 +408,9 @@ function openSupportModal() {
     note.textContent = '';
   }
   openModal('supportModal');
+  loadSupportThread();
   setTimeout(() => document.getElementById('supportMessage')?.focus(), 50);
+  lucide.createIcons();
 }
 
 function toggleSupportForm() {
@@ -348,9 +442,10 @@ async function sendSupportMessage(event) {
       return;
     }
     note.style.color = '#166534';
-    note.textContent = data.message || 'Το μήνυμα στάλθηκε στον δημιουργό.';
+    note.textContent = data.message || 'Το μήνυμα στάλθηκε.';
     document.getElementById('supportMessage').value = '';
     showToast('Στάλθηκε στην υποστήριξη.');
+    await loadSupportThread();
   } catch (err) {
     if (err && err.message === 'Unauthorized') return;
     note.hidden = false;
@@ -451,6 +546,7 @@ async function loadDashboard(code) {
     renderPlatformBanners();
     renderBillingBox();
     renderConnectStatus();
+    updateSupportUnreadBadge(currentTenantData.support_unread);
   } catch (e) {
     console.error(e);
   }
@@ -496,6 +592,7 @@ async function refreshDashboard(silent) {
       renderPlatformBanners();
       renderBillingBox();
       renderConnectStatus();
+      updateSupportUnreadBadge(currentTenantData.support_unread);
     }
     await fetchAppointments();
     const pending = Number(document.getElementById('statPending').dataset.open) || 0;
@@ -2014,6 +2111,8 @@ function renderPlatformBanners() {
         btn.textContent = 'ΟΚ';
       }
       noticeEl.hidden = false;
+      const noticeKey = `notice:${notice.updated_at || ''}:${String(notice.body).slice(0, 80)}`;
+      revealAdminMessage(noticeEl, noticeKey);
     } else {
       noticeEl.hidden = true;
       platformNoticeOkStep = 0;
@@ -2063,6 +2162,8 @@ async function confirmPlatformNotice() {
     currentTenantData.admin_notice = null;
     noticeEl.hidden = true;
     platformNoticeOkStep = 0;
+    // Αν μένει unread στο chat, δείξε το banner μετά το ΟΚ
+    updateSupportUnreadBadge(currentTenantData.support_unread);
     showToast('Επιβεβαιώθηκε ότι διάβασες το μήνυμα.');
   } catch (err) {
     if (btn) btn.disabled = false;
