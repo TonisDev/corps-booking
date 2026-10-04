@@ -782,7 +782,11 @@
         <p class="muted" style="margin:0;">Φόρτωση συνομιλίας…</p>
       </div>
       <form id="supportForm" onsubmit="sendSupportMessage(event)">
-        <textarea class="field" id="supportMessage" rows="3" maxlength="2000" required placeholder="Γράψε μήνυμα…"></textarea>
+        <textarea class="field" id="supportMessage" rows="3" maxlength="2000" placeholder="Γράψε μήνυμα… (Enter = αποστολή, Shift+Enter = νέα γραμμή)"></textarea>
+        <label class="support-email-opt">
+          <input type="checkbox" id="supportNotifyEmail">
+          Στείλε και με email
+        </label>
         <div class="modal-form-actions" style="margin-top:0.65rem;">
           <button type="button" class="btn btn-outline" onclick="closeModal('supportModal')">Κλείσιμο</button>
           <button class="btn" type="submit"><i data-lucide="send" size="16"></i> Αποστολή</button>

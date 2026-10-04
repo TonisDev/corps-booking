@@ -158,6 +158,17 @@ button, input, select, textarea { font-family: inherit; }
   font-size: 0.72rem;
   opacity: 0.72;
 }
+.support-email-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.55rem 0 0;
+  font-size: 0.84rem;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  user-select: none;
+}
+.support-email-opt input { margin: 0; }
 .side-unread-dot {
   position: absolute;
   top: 0.45rem;

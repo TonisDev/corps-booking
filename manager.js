@@ -366,6 +366,13 @@ function updateSupportUnreadBadge(count) {
   }
 }
 
+function supportReceiptLabel(m, mine) {
+  const bits = [];
+  if (m.email_sent) bits.push('email');
+  if (mine) bits.push(m.read_at ? 'διαβάστηκε' : 'μη διαβασμένο');
+  return bits.length ? ` · ${bits.join(' · ')}` : '';
+}
+
 function renderSupportThread(messages) {
   const box = document.getElementById('supportThread');
   if (!box) return;
@@ -377,9 +384,20 @@ function renderSupportThread(messages) {
   box.innerHTML = rows.map((m) => {
     const mine = String(m.direction || 'tenant') !== 'sa';
     const who = mine ? 'Εσύ' : 'QuickBook';
-    return `<div class="support-bubble ${mine ? 'me' : 'them'}">${escapeHtml(m.body || '')}<span class="support-bubble-meta">${escapeHtml(who)} · ${escapeHtml(formatSupportWhen(m.created_at))}</span></div>`;
+    return `<div class="support-bubble ${mine ? 'me' : 'them'}">${escapeHtml(m.body || '')}<span class="support-bubble-meta">${escapeHtml(who)} · ${escapeHtml(formatSupportWhen(m.created_at))}${escapeHtml(supportReceiptLabel(m, mine))}</span></div>`;
   }).join('');
   box.scrollTop = box.scrollHeight;
+}
+
+function bindSupportEnterToSend(textareaId, onSend) {
+  const el = document.getElementById(textareaId);
+  if (!el || el.dataset.enterBound === '1') return;
+  el.dataset.enterBound = '1';
+  el.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    onSend(event);
+  });
 }
 
 async function loadSupportThread() {
@@ -409,6 +427,11 @@ function openSupportModal() {
   }
   openModal('supportModal');
   loadSupportThread();
+  bindSupportEnterToSend('supportMessage', (event) => {
+    const form = document.getElementById('supportForm');
+    if (form) form.requestSubmit();
+    else sendSupportMessage(event);
+  });
   setTimeout(() => document.getElementById('supportMessage')?.focus(), 50);
   lucide.createIcons();
 }
@@ -418,21 +441,22 @@ function toggleSupportForm() {
 }
 
 async function sendSupportMessage(event) {
-  event.preventDefault();
+  if (event && typeof event.preventDefault === 'function') event.preventDefault();
   const note = document.getElementById('supportNote');
   const message = document.getElementById('supportMessage').value.trim();
+  const notifyEmail = !!document.getElementById('supportNotifyEmail')?.checked;
   note.hidden = true;
-  if (message.length < 4) {
+  if (!message) {
     note.hidden = false;
     note.style.color = '#dc2626';
-    note.textContent = 'Γράψε ένα σύντομο μήνυμα.';
+    note.textContent = 'Γράψε μήνυμα.';
     return;
   }
   try {
     const res = await adminFetch(`/api/${currentBusinessCode}/admin/support`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message, notify_email: notifyEmail })
     });
     const data = await res.json().catch(() => ({}));
     note.hidden = false;
@@ -442,9 +466,9 @@ async function sendSupportMessage(event) {
       return;
     }
     note.style.color = '#166534';
-    note.textContent = data.message || 'Το μήνυμα στάλθηκε.';
+    note.textContent = data.message || 'Στο chat.';
     document.getElementById('supportMessage').value = '';
-    showToast('Στάλθηκε στην υποστήριξη.');
+    showToast(notifyEmail && data.email_sent ? 'Στο chat · και email.' : 'Στο chat.');
     await loadSupportThread();
   } catch (err) {
     if (err && err.message === 'Unauthorized') return;
@@ -726,6 +750,42 @@ function populateServicesDropdown() {
   if (services.length > 0) {
     document.getElementById('bookDuration').value = services[0].duration;
   }
+}
+
+function bucketServiceOptionsHtml(currentName, currentDuration) {
+  const services = (currentTenantData && currentTenantData.services) || [];
+  const current = String(currentName || '').trim();
+  const opts = [];
+  let matched = false;
+  services.forEach((s) => {
+    const name = String(s.name || '').trim();
+    if (!name) return;
+    const selected = name === current;
+    if (selected) matched = true;
+    opts.push(
+      `<option value="${escapeHtml(name)}" data-duration="${Number(s.duration) || 60}"${selected ? ' selected' : ''}>${escapeHtml(formatServiceLabel(s))}</option>`
+    );
+  });
+  if (current && !matched) {
+    opts.unshift(
+      `<option value="${escapeHtml(current)}" data-duration="${Number(currentDuration) || 60}" selected>${escapeHtml(current)}</option>`
+    );
+  }
+  if (!opts.length) {
+    opts.push(`<option value="${escapeHtml(current || 'Υπηρεσία')}" data-duration="${Number(currentDuration) || 60}" selected>${escapeHtml(current || 'Υπηρεσία')}</option>`);
+  }
+  return opts.join('');
+}
+
+function selectedBucketService() {
+  const sel = document.getElementById('bucketServiceSelect');
+  if (!sel) return null;
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt) return null;
+  return {
+    service_name: String(opt.value || '').trim(),
+    duration: Number(opt.getAttribute('data-duration')) || 60
+  };
 }
 
 function pad2(n) {
@@ -1563,7 +1623,11 @@ function openAppointmentDetails(item) {
       <div>
         <p class="guide-note" style="margin-top:0;">Εσωτερικό bucket — διέγραψέ το όποτε θες χωρίς ενημέρωση πελάτη. Email πάει μόνο όταν μπει στο πρόγραμμα.</p>
         <div class="detail-row"><span class="detail-k">Τηλέφωνο</span> <strong class="detail-v">${escapeHtml(item.customer_phone || '-')}</strong></div>
-        <div class="detail-row"><span class="detail-k">Υπηρεσία</span> <strong class="detail-v">${escapeHtml(item.service_name || '-')}</strong></div>
+        <div class="form-group" style="margin:0.55rem 0 0;">
+          <label for="bucketServiceSelect">Υπηρεσία</label>
+          <select class="field" id="bucketServiceSelect">${bucketServiceOptionsHtml(item.service_name, item.duration)}</select>
+          <p class="muted" style="margin:0.35rem 0 0;">Μπορείς να την αλλάξεις πριν το βάλεις σε μέρα.</p>
+        </div>
         <div class="form-group" style="margin:0.75rem 0 0;">
           <label for="bucketCustomerEmail">Email πελάτη (προαιρετικό)</label>
           <input class="field" type="email" id="bucketCustomerEmail" value="${escapeHtml(item.customer_email || '')}" placeholder="για επιβεβαίωση όταν μπει στο πρόγραμμα" maxlength="120">
@@ -1866,6 +1930,7 @@ async function rescheduleAppointment(forcedTime) {
     const immediate = document.getElementById('rescheduleImmediate')?.checked === true
       || needsDayOrTime(current);
     const bucketEmail = (document.getElementById('bucketCustomerEmail')?.value || '').trim();
+    const bucketService = wasBucket ? selectedBucketService() : null;
     try {
       const payload = {
         id: selectedEventId,
@@ -1874,6 +1939,10 @@ async function rescheduleAppointment(forcedTime) {
         immediate
       };
       if (wasBucket && bucketEmail) payload.email = bucketEmail;
+      if (bucketService && bucketService.service_name) {
+        payload.service_name = bucketService.service_name;
+        payload.duration = bucketService.duration;
+      }
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/reschedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1915,7 +1984,13 @@ async function rescheduleAppointment(forcedTime) {
         found.proposed_date = null;
         found.proposed_start_time = null;
         found.propose_token = null;
-        if (wasBucket) found.status = 'BOOKED';
+        if (wasBucket) {
+          found.status = 'BOOKED';
+          if (bucketService && bucketService.service_name) {
+            found.service_name = bucketService.service_name;
+            found.duration = bucketService.duration;
+          }
+        }
       }
       // Από bucket → κανονικό συμβάν: κλείσε την απλή κάρτα.
       if ((wasBucket || data.from_bucket) && data.mode === 'applied') {
