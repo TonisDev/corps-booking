@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261004f">
+    <link rel="stylesheet" href="manager_style.css?v=20261004g">
 </head>
 <body data-theme="light">
 
@@ -123,11 +123,11 @@
 
     <div class="manager-body">
     <aside class="manager-side" aria-label="Μενού">
+      <button type="button" class="manager-side-btn" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
+      <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
       <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
       <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
-      <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
-      <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
-      <button type="button" class="manager-side-btn" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
+      <button type="button" class="manager-side-btn manager-side-btn-bottom" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
     </aside>
 
     <div class="container">
@@ -138,7 +138,7 @@
             <div style="font-size: 0.875rem; color: var(--text-muted);">Συνολικά Ραντεβού</div>
             <div class="stat-value" id="statTotal">0</div>
           </div>
-          <div style="color: #4f46e5;"><i data-lucide="calendar-check-2" size="24"></i></div>
+          <div class="stat-icon-total"><i data-lucide="calendar-check-2" size="24"></i></div>
         </button>
         <button type="button" class="stat-card clickable" onclick="openAppointmentList('pending')">
           <div>
@@ -204,7 +204,7 @@
         <div class="calendar-layout">
           <div id="calendar"></div>
           <aside class="admin-qr-card">
-            <p>Manager στο κινητό</p>
+            <p>Άνοιξε στο κινητό</p>
             <div id="adminQr"></div>
           </aside>
         </div>
