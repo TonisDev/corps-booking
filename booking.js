@@ -894,33 +894,19 @@
             lifetime: 'Ισόβια άδεια',
             trial: 'Δωρεάν δοκιμή 2 εβδομάδων'
         };
-        const LEAD_INTEREST_LEADS = {
-            month: 'Επιλέξατε μηνιαία συνδρομή. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.',
-            year: 'Επιλέξατε ετήσια συνδρομή. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.',
-            lifetime: 'Επιλέξατε ισόβια άδεια. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.',
-            trial: 'Επιλέξατε δωρεάν δοκιμή. Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε για το στήσιμο.'
-        };
-        const DEFAULT_LEAD_COPY = 'Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε μαζί σας για να αναλάβουμε το στήσιμο.';
 
         function setLeadInterest(interest) {
             const key = LEAD_INTEREST_LABELS[interest] ? interest : '';
             const input = document.getElementById('leadInterest');
-            const chip = document.getElementById('leadInterestChip');
-            const lead = document.getElementById('leadFormLead');
             if (input) input.value = key;
-            if (chip) {
-                if (key) {
-                    chip.hidden = false;
-                    chip.textContent = `Επιλογή: ${LEAD_INTEREST_LABELS[key]}`;
-                } else {
-                    chip.hidden = true;
-                    chip.textContent = '';
-                }
-            }
-            if (lead) lead.textContent = key ? LEAD_INTEREST_LEADS[key] : DEFAULT_LEAD_COPY;
+            document.querySelectorAll('#leadForm [data-interest]').forEach((el) => {
+                const on = key && el.getAttribute('data-interest') === key;
+                el.classList.toggle('is-selected', on);
+                el.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
         }
 
-        document.querySelectorAll('[data-interest]').forEach((el) => {
+        document.querySelectorAll('#leadForm [data-interest]').forEach((el) => {
             el.addEventListener('click', () => {
                 setLeadInterest(el.getAttribute('data-interest') || '');
             });
@@ -930,10 +916,15 @@
             event.preventDefault();
             const form = event.currentTarget;
             const status = document.getElementById('leadStatus');
-            const button = form.querySelector('button');
+            const button = form.querySelector('.home-lead-submit');
             const body = Object.fromEntries(new FormData(form).entries());
             status.textContent = '';
             status.className = 'home-lead-status';
+            if (!LEAD_INTEREST_LABELS[body.interest]) {
+                status.classList.add('is-err');
+                status.textContent = 'Επιλέξτε με ποιο πλάνο το θέλετε (ή δοκιμή).';
+                return;
+            }
             button.disabled = true;
             try {
                 const res = await fetch(`${API_BASE_URL}/api/install-requests`, {
@@ -946,7 +937,7 @@
                 form.reset();
                 setLeadInterest('');
                 status.classList.add('is-ok');
-                status.textContent = 'Το αίτημα καταχωρήθηκε.';
+                status.textContent = 'Το αίτημα καταχωρήθηκε. Θα επικοινωνήσουμε μαζί σας.';
             } catch (err) {
                 status.classList.add('is-err');
                 status.textContent = err.message || 'Το αίτημα δεν στάλθηκε.';

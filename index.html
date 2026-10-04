@@ -231,27 +231,47 @@
                     <li><strong>Άμεση ενημέρωση:</strong> Ημερολόγιο εγκρίσεων με ειδοποιήσεις μέσω Email / Telegram — τέλος στα χαμένα μηνύματα στο Instagram.</li>
                     <li><strong>Έτοιμο προς χρήση:</strong> Πλήρες στήσιμο από εμάς, χωρίς καμία προμήθεια ανά ραντεβού.</li>
                 </ul>
-                <p class="home-pricing-fine">Οι τιμές αναγράφονται σε ευρώ. Ο ΦΠΑ προστίθεται όπου εφαρμόζεται. Η τελική χρέωση επιβεβαιώνεται στη σελίδα πληρωμής του Stripe Checkout. <a href="oroi-epicheiriseis.html">Όροι επιχειρήσεων</a> · <a href="aporrito.html">Πολιτική απορρήτου</a>.</p>
+                <p class="home-pricing-fine">Οι τιμές αναγράφονται σε ευρώ. Ο ΦΠΑ προστίθεται όπου εφαρμόζεται. Η πληρωμή γίνεται αργότερα, μετά την επικοινωνία — όχι από αυτή τη φόρμα. <a href="oroi-epicheiriseis.html">Όροι επιχειρήσεων</a> · <a href="aporrito.html">Πολιτική απορρήτου</a>.</p>
             </div>
         </section>
 
         <section class="home-close" id="aitima">
             <div class="home-request">
                 <div class="home-request-inner">
-                    <h2>Θέλετε το QuickBook στην επιχείρησή σας;</h2>
-                    <p id="leadFormLead">Συμπληρώστε τη φόρμα και θα επικοινωνήσουμε μαζί σας για να αναλάβουμε το στήσιμο.</p>
-                    <p id="leadInterestChip" class="home-lead-interest" hidden></p>
+                    <h2>Θέλω το QuickBook στην επιχείρησή μου</h2>
+                    <p id="leadFormLead">Δήλωση ενδιαφέροντος — όχι πληρωμή από εδώ. Διαλέξτε με ποιο πλάνο το θέλετε περισσότερο και συμπληρώστε τα στοιχεία σας.</p>
                     <form id="leadForm" class="home-lead">
                         <div class="home-honey" aria-hidden="true">
                             <input type="text" name="website" tabindex="-1" autocomplete="off">
                         </div>
                         <input type="hidden" name="interest" id="leadInterest" value="">
+                        <fieldset class="home-lead-plans">
+                            <legend>Με αυτό το πλάνο το θέλω πιο πολύ</legend>
+                            <div class="home-lead-plan-grid" role="radiogroup" aria-label="Επιλογή πλάνου">
+                                <button type="button" class="home-lead-plan" data-interest="month" aria-pressed="false">
+                                    <span class="home-lead-plan-name">Μηνιαία</span>
+                                    <span class="home-lead-plan-price">22,50€<small>/μήνα</small></span>
+                                    <span class="home-lead-plan-tag">Το θέλω</span>
+                                </button>
+                                <button type="button" class="home-lead-plan is-featured" data-interest="year" aria-pressed="false">
+                                    <span class="home-lead-plan-name">Ετήσια</span>
+                                    <span class="home-lead-plan-price">19,99€<small>/μήνα</small></span>
+                                    <span class="home-lead-plan-tag">Το θέλω</span>
+                                </button>
+                                <button type="button" class="home-lead-plan" data-interest="lifetime" aria-pressed="false">
+                                    <span class="home-lead-plan-name">Ισόβια</span>
+                                    <span class="home-lead-plan-price">360€<small>εφάπαξ</small></span>
+                                    <span class="home-lead-plan-tag">Το θέλω</span>
+                                </button>
+                            </div>
+                            <button type="button" class="home-lead-trial-opt" data-interest="trial" aria-pressed="false">Προτιμώ πρώτα δωρεάν δοκιμή 2 εβδομάδων</button>
+                        </fieldset>
                         <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
                         <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
                         <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
                         <label>Email<input name="email" type="email" maxlength="120" autocomplete="email"></label>
                         <p class="home-lead-hint">Συμπληρώστε τηλέφωνο ή email επικοινωνίας.</p>
-                        <button type="submit">Υποβολή αιτήματος</button>
+                        <button type="submit" class="home-lead-submit">Το θέλω — στείλε το αίτημα</button>
                         <p id="leadStatus" class="home-lead-status" role="status"></p>
                     </form>
                 </div>
