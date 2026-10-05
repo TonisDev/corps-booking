@@ -373,6 +373,12 @@ function supportReceiptLabel(m, mine) {
   return bits.length ? ` · ${bits.join(' · ')}` : '';
 }
 
+function supportBubbleHtml(m) {
+  const mine = String(m.direction || 'tenant') !== 'sa';
+  const who = mine ? 'Εσύ' : 'QuickBook';
+  return `<div class="support-bubble ${mine ? 'me' : 'them'}">${escapeHtml(m.body || '')}<span class="support-bubble-meta">${escapeHtml(who)} · ${escapeHtml(formatSupportWhen(m.created_at))}${escapeHtml(supportReceiptLabel(m, mine))}</span></div>`;
+}
+
 function renderSupportThread(messages) {
   const box = document.getElementById('supportThread');
   if (!box) return;
@@ -381,11 +387,16 @@ function renderSupportThread(messages) {
     box.innerHTML = '<p class="muted" style="margin:0;">Δεν υπάρχει ακόμα συνομιλία. Γράψε το πρώτο μήνυμα από κάτω.</p>';
     return;
   }
-  box.innerHTML = rows.map((m) => {
-    const mine = String(m.direction || 'tenant') !== 'sa';
-    const who = mine ? 'Εσύ' : 'QuickBook';
-    return `<div class="support-bubble ${mine ? 'me' : 'them'}">${escapeHtml(m.body || '')}<span class="support-bubble-meta">${escapeHtml(who)} · ${escapeHtml(formatSupportWhen(m.created_at))}${escapeHtml(supportReceiptLabel(m, mine))}</span></div>`;
-  }).join('');
+  box.innerHTML = rows.map(supportBubbleHtml).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendSupportBubble(m) {
+  const box = document.getElementById('supportThread');
+  if (!box) return;
+  const empty = box.querySelector('p.muted');
+  if (empty && /συνομιλία|Φόρτωση/i.test(empty.textContent || '')) empty.remove();
+  box.insertAdjacentHTML('beforeend', supportBubbleHtml(m));
   box.scrollTop = box.scrollHeight;
 }
 
@@ -400,22 +411,25 @@ function bindSupportEnterToSend(textareaId, onSend) {
   });
 }
 
-async function loadSupportThread() {
+async function loadSupportThread(options = {}) {
   const box = document.getElementById('supportThread');
   if (!box || !currentBusinessCode) return;
-  box.innerHTML = '<p class="muted" style="margin:0;">Φόρτωση συνομιλίας…</p>';
+  const soft = options.soft === true;
+  if (!soft) box.innerHTML = '<p class="muted" style="margin:0;">Φόρτωση συνομιλίας…</p>';
   try {
     const res = await adminFetch(`/api/${currentBusinessCode}/admin/support`);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      box.innerHTML = `<p class="muted" style="margin:0;">${escapeHtml(data.error || 'Η συνομιλία δεν φορτώθηκε.')}</p>`;
+      if (!soft) {
+        box.innerHTML = `<p class="muted" style="margin:0;">${escapeHtml(data.error || 'Η συνομιλία δεν φορτώθηκε.')}</p>`;
+      }
       return;
     }
     renderSupportThread(data.messages || []);
     updateSupportUnreadBadge(0);
   } catch (err) {
     if (err && err.message === 'Unauthorized') return;
-    box.innerHTML = '<p class="muted" style="margin:0;">Η συνομιλία δεν φορτώθηκε.</p>';
+    if (!soft) box.innerHTML = '<p class="muted" style="margin:0;">Η συνομιλία δεν φορτώθηκε.</p>';
   }
 }
 
@@ -428,9 +442,7 @@ function openSupportModal() {
   openModal('supportModal');
   loadSupportThread();
   bindSupportEnterToSend('supportMessage', (event) => {
-    const form = document.getElementById('supportForm');
-    if (form) form.requestSubmit();
-    else sendSupportMessage(event);
+    sendSupportMessage(event);
   });
   setTimeout(() => document.getElementById('supportMessage')?.focus(), 50);
   lucide.createIcons();
@@ -440,18 +452,40 @@ function toggleSupportForm() {
   openSupportModal();
 }
 
+let supportSendBusy = false;
+
 async function sendSupportMessage(event) {
   if (event && typeof event.preventDefault === 'function') event.preventDefault();
+  if (supportSendBusy) return;
   const note = document.getElementById('supportNote');
-  const message = document.getElementById('supportMessage').value.trim();
+  const input = document.getElementById('supportMessage');
+  const message = (input?.value || '').trim();
   const notifyEmail = !!document.getElementById('supportNotifyEmail')?.checked;
-  note.hidden = true;
+  if (note) {
+    note.hidden = true;
+    note.textContent = '';
+  }
   if (!message) {
-    note.hidden = false;
-    note.style.color = '#dc2626';
-    note.textContent = 'Γράψε μήνυμα.';
+    if (note) {
+      note.hidden = false;
+      note.style.color = '#dc2626';
+      note.textContent = 'Γράψε μήνυμα.';
+    }
     return;
   }
+  supportSendBusy = true;
+  // Άμεσα στο chat — χωρίς toast / φόρτωση / μετακίνηση οθόνης
+  if (input) {
+    input.value = '';
+    input.focus({ preventScroll: true });
+  }
+  appendSupportBubble({
+    body: message,
+    direction: 'tenant',
+    created_at: new Date().toISOString(),
+    email_sent: notifyEmail,
+    read_at: null
+  });
   try {
     const res = await adminFetch(`/api/${currentBusinessCode}/admin/support`, {
       method: 'POST',
@@ -459,30 +493,26 @@ async function sendSupportMessage(event) {
       body: JSON.stringify({ message, notify_email: notifyEmail })
     });
     const data = await res.json().catch(() => ({}));
-    note.hidden = false;
     if (!res.ok) {
-      note.style.color = '#dc2626';
-      note.textContent = data.error || 'Το μήνυμα δεν στάλθηκε.';
+      if (note) {
+        note.hidden = false;
+        note.style.color = '#dc2626';
+        note.textContent = data.error || 'Το μήνυμα δεν στάλθηκε.';
+      }
+      await loadSupportThread({ soft: true });
       return;
     }
-    note.style.color = '#166534';
-    note.textContent = data.message || 'Στο chat.';
-    document.getElementById('supportMessage').value = '';
-    if (data.telegram_sent) {
-      showToast(notifyEmail && data.email_sent ? 'Στο chat · Telegram ✓ · email ✓' : 'Στο chat · Telegram ✓');
-    } else {
-      const why = data.telegram_skip || 'άγνωστο';
-      const hint = why === 'no_sa_chat'
-        ? 'λείπει TELEGRAM_SA_CHAT_ID'
-        : (why === 'no_token' ? 'λείπει TELEGRAM_BOT_TOKEN' : why);
-      showToast(`Στο chat · Telegram όχι (${hint})`, true);
-    }
-    await loadSupportThread();
+    if (input) input.focus({ preventScroll: true });
   } catch (err) {
     if (err && err.message === 'Unauthorized') return;
-    note.hidden = false;
-    note.style.color = '#dc2626';
-    note.textContent = 'Το μήνυμα δεν στάλθηκε.';
+    if (note) {
+      note.hidden = false;
+      note.style.color = '#dc2626';
+      note.textContent = 'Το μήνυμα δεν στάλθηκε.';
+    }
+    await loadSupportThread({ soft: true });
+  } finally {
+    supportSendBusy = false;
   }
 }
 
