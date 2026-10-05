@@ -468,7 +468,15 @@ async function sendSupportMessage(event) {
     note.style.color = '#166534';
     note.textContent = data.message || 'Στο chat.';
     document.getElementById('supportMessage').value = '';
-    showToast(notifyEmail && data.email_sent ? 'Στο chat · και email.' : 'Στο chat.');
+    if (data.telegram_sent) {
+      showToast(notifyEmail && data.email_sent ? 'Στο chat · Telegram ✓ · email ✓' : 'Στο chat · Telegram ✓');
+    } else {
+      const why = data.telegram_skip || 'άγνωστο';
+      const hint = why === 'no_sa_chat'
+        ? 'λείπει TELEGRAM_SA_CHAT_ID'
+        : (why === 'no_token' ? 'λείπει TELEGRAM_BOT_TOKEN' : why);
+      showToast(`Στο chat · Telegram όχι (${hint})`, true);
+    }
     await loadSupportThread();
   } catch (err) {
     if (err && err.message === 'Unauthorized') return;
