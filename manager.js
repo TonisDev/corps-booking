@@ -373,22 +373,57 @@ function supportReceiptLabel(m, mine) {
   return bits.length ? ` · ${bits.join(' · ')}` : '';
 }
 
+function supportMessagesSig(messages) {
+  return (Array.isArray(messages) ? messages : [])
+    .map((m) => `${m.id || ''}|${m.read_at || ''}|${m.email_sent ? 1 : 0}|${String(m.body || '').length}`)
+    .join(';');
+}
+
 function supportBubbleHtml(m) {
   const mine = String(m.direction || 'tenant') !== 'sa';
   const who = mine ? 'Εσύ' : 'QuickBook';
   return `<div class="support-bubble ${mine ? 'me' : 'them'}">${escapeHtml(m.body || '')}<span class="support-bubble-meta">${escapeHtml(who)} · ${escapeHtml(formatSupportWhen(m.created_at))}${escapeHtml(supportReceiptLabel(m, mine))}</span></div>`;
 }
 
-function renderSupportThread(messages) {
+let supportThreadSig = '';
+let supportPollTimer = 0;
+
+function stopSupportPoll() {
+  if (supportPollTimer) {
+    clearInterval(supportPollTimer);
+    supportPollTimer = 0;
+  }
+}
+
+function startSupportPoll() {
+  stopSupportPoll();
+  supportPollTimer = setInterval(() => {
+    if (document.visibilityState === 'hidden' || !currentBusinessCode) return;
+    const modal = document.getElementById('supportModal');
+    if (!modal || modal.style.display !== 'flex') {
+      stopSupportPoll();
+      return;
+    }
+    if (supportSendBusy) return;
+    loadSupportThread({ soft: true });
+  }, 3000);
+}
+
+function renderSupportThread(messages, options = {}) {
   const box = document.getElementById('supportThread');
   if (!box) return;
+  const soft = options.soft === true;
   const rows = Array.isArray(messages) ? messages : [];
+  const sig = supportMessagesSig(rows);
+  if (soft && sig === supportThreadSig) return;
+  supportThreadSig = sig;
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
   if (!rows.length) {
     box.innerHTML = '<p class="muted" style="margin:0;">Δεν υπάρχει ακόμα συνομιλία. Γράψε το πρώτο μήνυμα από κάτω.</p>';
     return;
   }
   box.innerHTML = rows.map(supportBubbleHtml).join('');
-  box.scrollTop = box.scrollHeight;
+  if (!soft || nearBottom) box.scrollTop = box.scrollHeight;
 }
 
 function appendSupportBubble(m) {
@@ -398,6 +433,7 @@ function appendSupportBubble(m) {
   if (empty && /συνομιλία|Φόρτωση/i.test(empty.textContent || '')) empty.remove();
   box.insertAdjacentHTML('beforeend', supportBubbleHtml(m));
   box.scrollTop = box.scrollHeight;
+  supportThreadSig = '';
 }
 
 function bindSupportEnterToSend(textareaId, onSend) {
@@ -425,7 +461,7 @@ async function loadSupportThread(options = {}) {
       }
       return;
     }
-    renderSupportThread(data.messages || []);
+    renderSupportThread(data.messages || [], { soft });
     updateSupportUnreadBadge(0);
   } catch (err) {
     if (err && err.message === 'Unauthorized') return;
@@ -439,12 +475,14 @@ function openSupportModal() {
     note.hidden = true;
     note.textContent = '';
   }
+  supportThreadSig = '';
   openModal('supportModal');
   loadSupportThread();
+  startSupportPoll();
   bindSupportEnterToSend('supportMessage', (event) => {
     sendSupportMessage(event);
   });
-  setTimeout(() => document.getElementById('supportMessage')?.focus(), 50);
+  setTimeout(() => document.getElementById('supportMessage')?.focus({ preventScroll: true }), 50);
   lucide.createIcons();
 }
 
@@ -771,7 +809,7 @@ function syncNamedChecks(name, masterId) {
 
 function populateServicesDropdown() {
   const services = currentTenantData.services || [];
-  const serviceSelect = document.getElementById('massageType');
+  const serviceSelect = document.getElementById('bookingService');
   serviceSelect.innerHTML = '';
   services.forEach(s => {
     const opt = document.createElement('option');
@@ -2105,7 +2143,7 @@ async function restoreAppointments(snapshots, message) {
 
 async function handleManualBooking(e) {
   e.preventDefault();
-  const selectedOpt = document.getElementById('massageType').selectedOptions[0];
+  const selectedOpt = document.getElementById('bookingService').selectedOptions[0];
   const duration = parseInt(selectedOpt.getAttribute('data-duration')) || 60;
   const unscheduled = !!document.getElementById('bookUnscheduled')?.checked;
   const time = `${document.getElementById('bookHour').value}:${document.getElementById('bookMinute').value}`;
@@ -2117,7 +2155,7 @@ async function handleManualBooking(e) {
       body: JSON.stringify({
         name: document.getElementById('custName').value.trim(),
         phone: document.getElementById('custPhone').value.trim(),
-        service_name: document.getElementById('massageType').value,
+        service_name: document.getElementById('bookingService').value,
         duration: duration,
         unscheduled,
         date: unscheduled ? '' : document.getElementById('bookDate').value,
@@ -2594,6 +2632,7 @@ function openModal(id) {
 }
 
 function closeModal(id) {
+  if (id === 'supportModal') stopSupportPoll();
   closeOverlay('modal', id);
 }
 
