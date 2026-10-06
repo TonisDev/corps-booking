@@ -737,7 +737,11 @@
                         showWaitlistCta(dateStr);
                     } else {
                         resetTimePickers('—');
-                        slotHint.textContent = 'Η ημέρα έχει ήδη τα ραντεβού που δέχεται.';
+                        slotHint.textContent = data.cap_full
+                            ? 'Η ημέρα έχει ήδη τα ραντεβού που δέχεται (όριο ημέρας).'
+                            : (data.slots_full
+                                ? 'Όλες οι ώρες του ωραρίου είναι κλεισμένες.'
+                                : 'Η ημέρα δεν δέχεται άλλα ραντεβού.');
                         slotHint.className = 'field-help field-help-wait';
                     }
                     return;

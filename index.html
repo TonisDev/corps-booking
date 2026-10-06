@@ -239,14 +239,16 @@
             <div class="home-request">
                 <div class="home-request-inner">
                     <h2>Θέλω το QuickBook στην επιχείρησή μου</h2>
-                    <p id="leadFormLead">Δήλωση ενδιαφέροντος — όχι πληρωμή από εδώ. Διαλέξτε με ποιο πλάνο το θέλετε περισσότερο και συμπληρώστε τα στοιχεία σας.</p>
+                    <p id="leadFormLead">Διάλεξε ξεκάθαρα: <strong>μόνο δωρεάν δοκιμή 2 εβδομάδων</strong> ή <strong>πακέτο που σε ενδιαφέρει</strong> (πληρωμή αργότερα, μετά την επικοινωνία — όχι από εδώ).</p>
                     <form id="leadForm" class="home-lead">
                         <div class="home-honey" aria-hidden="true">
                             <input type="text" name="website" tabindex="-1" autocomplete="off">
                         </div>
                         <input type="hidden" name="interest" id="leadInterest" value="">
                         <fieldset class="home-lead-plans">
-                            <legend>Με αυτό το πλάνο το θέλω πιο πολύ</legend>
+                            <legend>Τι θέλεις;</legend>
+                            <button type="button" class="home-lead-trial-opt" data-interest="trial" aria-pressed="false">Μόνο δωρεάν δοκιμή 2 εβδομάδων — χωρίς πακέτο ακόμα</button>
+                            <p class="home-lead-hint" style="margin:0.75rem 0 0.4rem;">Ή διάλεξε πακέτο που σε ενδιαφέρει (πληρωμή μετά την επικοινωνία μας):</p>
                             <div class="home-lead-plan-grid" role="radiogroup" aria-label="Επιλογή πλάνου">
                                 <button type="button" class="home-lead-plan" data-interest="month" aria-pressed="false">
                                     <span class="home-lead-plan-name">Μηνιαία</span>
@@ -264,7 +266,6 @@
                                     <span class="home-lead-plan-tag">Το θέλω</span>
                                 </button>
                             </div>
-                            <button type="button" class="home-lead-trial-opt" data-interest="trial" aria-pressed="false">Προτιμώ πρώτα δωρεάν δοκιμή 2 εβδομάδων</button>
                         </fieldset>
                         <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
                         <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>

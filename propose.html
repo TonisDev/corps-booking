@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Πρόταση ώρας — QuickBook</title>
+  <meta name="robots" content="noindex">
+  <style>
+    body { margin: 0; background: #f8fafc; color: #0f172a; font-family: Arial, Helvetica, sans-serif; }
+    main { max-width: 420px; margin: 48px auto; padding: 24px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    p { line-height: 1.5; }
+    button { background: #0f766e; color: #fff; border: 0; border-radius: 10px; padding: 12px 16px; font-size: 16px; cursor: pointer; width: 100%; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .muted { color: #64748b; font-size: 14px; }
+    .err { color: #b91c1c; }
+  </style>
+</head>
+<body>
+<main id="root"><p class="muted">Φόρτωση…</p></main>
+<script>
+(function () {
+  const API = 'https://corporate-bookings.tonisdevv.workers.dev';
+  const p = new URLSearchParams(location.search);
+  const b = (p.get('b') || '').trim();
+  const t = (p.get('t') || '').trim();
+  const root = document.getElementById('root');
+  if (!b || !/^[a-f0-9]{32}$/.test(t)) {
+    root.innerHTML = '<h1>Αλλαγή ώρας</h1><p class="err">Ο σύνδεσμος δεν ισχύει.</p>';
+    return;
+  }
+  const endpoint = `${API}/api/${encodeURIComponent(b)}/propose/${encodeURIComponent(t)}?json=1`;
+
+  async function load() {
+    try {
+      const res = await fetch(endpoint, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        root.innerHTML = `<h1>Αλλαγή ώρας</h1><p class="err">${esc(data.error || 'Ο σύνδεσμος δεν ισχύει.')}</p>`;
+        return;
+      }
+      const title = data.from_waitlist ? 'Προσφορά ώρας από λίστα αναμονής' : 'Πρόταση νέας ώρας';
+      const lead = data.from_waitlist
+        ? `<p>Άδειασε μια ώρα. Αν μπορείς να έρθεις, πάτα αποδοχή.</p><p>Πρόταση: <strong>${esc(data.proposed_when)}</strong></p>`
+        : `<p>Τώρα: <strong>${esc(data.current_when)}</strong></p><p>Νέα πρόταση: <strong>${esc(data.proposed_when)}</strong></p>`;
+      const btn = data.from_waitlist ? 'Ναι, μπορώ — κλείσε με' : 'Αποδοχή νέας ώρας';
+      root.innerHTML = `
+        <h1>${esc(title)}</h1>
+        <p>${esc(data.service_name || 'Ραντεβού')} · ${esc(data.shop || '')}</p>
+        ${lead}
+        <button type="button" id="go">${esc(btn)}</button>
+        <p class="muted" style="margin-top:16px;">Αν δεν σου ταιριάζει, αγνόησε το μήνυμα ή τηλεφώνησε το κατάστημα.</p>
+        ${data.phone ? `<p class="muted">Τηλέφωνο: ${esc(data.phone)}</p>` : ''}
+      `;
+      document.getElementById('go').onclick = accept;
+    } catch (err) {
+      root.innerHTML = '<h1>Αλλαγή ώρας</h1><p class="err">Αποτυχία φόρτωσης. Δοκίμασε ξανά.</p>';
+    }
+  }
+
+  async function accept() {
+    const btn = document.getElementById('go');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        root.innerHTML = `<h1>Αλλαγή ώρας</h1><p class="err">${esc(data.error || 'Η αποδοχή απέτυχε.')}</p>`;
+        return;
+      }
+      root.innerHTML = `<h1>${data.from_waitlist ? 'Κλείστηκε' : 'Η ώρα ενημερώθηκε'}</h1>
+        <p>Το ραντεβού σου ${data.from_waitlist ? 'κλείστηκε' : 'μεταφέρθηκε'} στις <strong>${esc(data.when)}</strong>.</p>`;
+    } catch (err) {
+      root.innerHTML = '<h1>Αλλαγή ώρας</h1><p class="err">Αποτυχία. Δοκίμασε ξανά.</p>';
+    }
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  load();
+})();
+</script>
+</body>
+</html>

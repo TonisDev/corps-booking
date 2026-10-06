@@ -32,6 +32,7 @@ let searchRelaxed = false;
 let pendingResetToken = '';
 let lastUndo = null;
 let actionLock = false;
+let pendingCalendarRevert = null;
 let overlayStack = []; // ιστορικό Back: κάθε modal/drawer κάνει pushState
 let silentPop = 0;     // close από κουμπί → history.back() χωρίς διπλό κλείσιμο
 
@@ -1130,6 +1131,123 @@ function clockLabel(mins) {
   return `${pad2(Math.floor(mins / 60))}:${pad2(mins % 60)}`;
 }
 
+function getRescheduleTimeValue() {
+  const h = document.getElementById('rescheduleHour')?.value || '';
+  const m = document.getElementById('rescheduleMinute')?.value || '';
+  if (!h || !m) return '';
+  return `${h}:${m}`;
+}
+
+function setRescheduleTimeValue(raw) {
+  const match = String(raw || '').match(/(\d{1,2}):(\d{2})/);
+  const hourEl = document.getElementById('rescheduleHour');
+  const minEl = document.getElementById('rescheduleMinute');
+  if (!hourEl || !minEl) return;
+  if (!match) {
+    hourEl.value = '';
+    minEl.value = '00';
+    return;
+  }
+  hourEl.value = pad2(Math.min(23, Number(match[1])));
+  const minute = match[2];
+  if (![...minEl.options].some((o) => o.value === minute)) {
+    const opt = document.createElement('option');
+    opt.value = minute;
+    opt.textContent = minute;
+    minEl.appendChild(opt);
+  }
+  minEl.value = minute;
+}
+
+function timeWithinWorkingHours(dateStr, timeStr) {
+  if (!currentTenantData || !dateStr || !timeStr) return true;
+  let workDays = [1, 2, 3, 4, 5];
+  let hours = [{ start: '09:00', end: '21:00' }];
+  try {
+    if (currentTenantData.work_days) workDays = JSON.parse(currentTenantData.work_days);
+    if (currentTenantData.working_hours) hours = JSON.parse(currentTenantData.working_hours);
+  } catch (e) {}
+  const [y, m, d] = String(dateStr).split('-').map(Number);
+  const day = new Date(y, m - 1, d).getDay();
+  if (!workDays.map(Number).includes(day)) return false;
+  const shifts = Array.isArray(hours) ? hours : (hours[String(day)] || []);
+  const [hh, mm] = String(timeStr).slice(0, 5).split(':').map(Number);
+  const mins = (hh || 0) * 60 + (mm || 0);
+  return (shifts || []).some((sh) => {
+    const start = timeToMinutesLocal(sh.start);
+    const end = timeToMinutesLocal(sh.end);
+    return mins >= start && mins < end;
+  });
+}
+
+function timeToMinutesLocal(value) {
+  const [h, m] = String(value || '0:0').split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function calendarSlotBounds() {
+  let min = 8 * 60;
+  let max = 22 * 60;
+  let workDays = [1, 2, 3, 4, 5];
+  let hours = [{ start: '09:00', end: '21:00' }];
+  try {
+    if (currentTenantData?.work_days) workDays = JSON.parse(currentTenantData.work_days);
+    if (currentTenantData?.working_hours) hours = JSON.parse(currentTenantData.working_hours);
+  } catch (e) {}
+  const collect = (shifts) => {
+    (shifts || []).forEach((sh) => {
+      min = Math.min(min, timeToMinutesLocal(sh.start));
+      max = Math.max(max, timeToMinutesLocal(sh.end));
+    });
+  };
+  if (Array.isArray(hours)) collect(hours);
+  else Object.values(hours || {}).forEach(collect);
+  (allAppointments || []).forEach((item) => {
+    if (!item.start_time || item.status === 'BLOCKED') return;
+    const s = timeToMinutesLocal(item.start_time);
+    const e = item.end_time ? timeToMinutesLocal(item.end_time) : s + (item.duration || 60);
+    min = Math.min(min, s);
+    max = Math.max(max, e);
+  });
+  min = Math.max(0, Math.floor(min / 30) * 30);
+  max = Math.min(24 * 60, Math.ceil(max / 30) * 30);
+  if (max <= min) max = min + 60;
+  return {
+    slotMinTime: `${pad2(Math.floor(min / 60))}:${pad2(min % 60)}:00`,
+    slotMaxTime: `${pad2(Math.floor(max / 60))}:${pad2(max % 60)}:00`
+  };
+}
+
+function renderOutOfHoursExceptions() {
+  const wrap = document.getElementById('outOfHoursList');
+  if (!wrap) return;
+  const rows = (allAppointments || []).filter((item) => {
+    if (!item.date || !item.start_time || item.status === 'BLOCKED' || item.status === 'CANCELLED' || item.status === 'REJECTED') return false;
+    return !timeWithinWorkingHours(item.date, item.start_time);
+  }).sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.start_time).localeCompare(String(b.start_time)));
+  if (!rows.length) {
+    wrap.hidden = true;
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.hidden = false;
+  wrap.innerHTML = `<h4 style="margin:0 0 0.5rem;">Εκτός ωραρίου (${rows.length})</h4>` + rows.map((item) => `
+    <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
+      <div>
+        <div style="font-weight:600;">${escapeHtml(formatGreekDate(item.date))} · ${escapeHtml(String(item.start_time).slice(0, 5))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
+        <div class="apt-row-meta">${escapeHtml(item.service_name || '-')} · εξαιρείται από κανονικό ωράριο</div>
+      </div>
+      <div>${statusBadge(item)}</div>
+    </button>
+  `).join('');
+  wrap.querySelectorAll('.apt-row').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const found = allAppointments.find((a) => a.id === btn.getAttribute('data-id'));
+      openAppointmentDetails(found);
+    });
+  });
+}
+
 function applyBlockEndMinutes(mins) {
   setSelectValue('blockEndHour', pad2(Math.floor(mins / 60)));
   setSelectValue('blockEndMin', pad2(mins % 60));
@@ -1258,6 +1376,7 @@ function calendarClickIgnored() {
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
   const phone = managerIsPhone();
+  const bounds = calendarSlotBounds();
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: phone ? 'timeGridDay' : 'timeGridWeek',
     height: phone ? calendarPhoneHeight() : 'auto',
@@ -1271,10 +1390,50 @@ function initCalendar() {
     eventMinHeight: 28,
     eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
     slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-    slotMinTime: '08:00:00',
-    slotMaxTime: '22:00:00',
+    slotMinTime: bounds.slotMinTime,
+    slotMaxTime: bounds.slotMaxTime,
     scrollTime: calendarScrollTime(),
     stickyHeaderDates: true,
+    editable: true,
+    eventStartEditable: true,
+    eventDurationEditable: false,
+    eventAllow: (dropInfo, dragged) => {
+      const s = dragged && dragged.extendedProps && dragged.extendedProps.status;
+      return s === 'PENDING' || s === 'WAITLIST';
+    },
+    eventDrop: (info) => {
+      const props = info.event.extendedProps || {};
+      const status = props.status;
+      if (status !== 'PENDING' && status !== 'WAITLIST') {
+        info.revert();
+        return;
+      }
+      const start = info.event.start;
+      if (!start) {
+        info.revert();
+        return;
+      }
+      pendingCalendarRevert = () => info.revert();
+      const date = `${start.getFullYear()}-${pad2(start.getMonth() + 1)}-${pad2(start.getDate())}`;
+      const time = `${pad2(start.getHours())}:${pad2(start.getMinutes())}`;
+      const item = Object.assign({}, props, {
+        id: info.event.id || props.id,
+        date,
+        start_time: time
+      });
+      openAppointmentDetails(item);
+      document.getElementById('rescheduleGroup').style.display = 'grid';
+      document.getElementById('rescheduleDate').value = date;
+      setRescheduleTimeValue(time);
+      const immediateBox = document.getElementById('rescheduleImmediate');
+      if (immediateBox) immediateBox.checked = false;
+      const rescheduleBtn = document.getElementById('btnReschedule');
+      if (rescheduleBtn) {
+        rescheduleBtn.innerHTML = '<i data-lucide="check" size="16"></i> Αποστολή πρότασης';
+        lucide.createIcons();
+      }
+      showToast('Νέο slot από drag — επιβεβαίωσε ή πάτα Κλείσιμο για αναίρεση.');
+    },
     headerToolbar: calendarToolbar(),
     buttonText: calendarButtonText(),
     views: {
@@ -1380,6 +1539,12 @@ async function fetchAppointments() {
     const unsEl = document.getElementById('statUnscheduled');
     if (unsEl) unsEl.innerText = unscheduled;
     renderTodayList();
+    renderOutOfHoursExceptions();
+    if (calendar) {
+      const bounds = calendarSlotBounds();
+      calendar.setOption('slotMinTime', bounds.slotMinTime);
+      calendar.setOption('slotMaxTime', bounds.slotMaxTime);
+    }
     paintMonthDayCounts();
     applyCalendarEventTitles();
     if (document.getElementById('listModal').style.display === 'flex') {
@@ -1480,13 +1645,20 @@ function todayISO() {
 function renderTodayList() {
   const today = todayISO();
   document.getElementById('todayDateLabel').textContent = formatGreekDate(today);
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
   const rows = allAppointments
-    .filter(item => item.date === today && item.status !== 'BLOCKED')
+    .filter((item) => {
+      if (item.date !== today || item.status === 'BLOCKED') return false;
+      if (waitlistNeedsTime(item) || !item.start_time) return true;
+      const [hh, mm] = String(item.start_time).slice(0, 5).split(':').map(Number);
+      const startMins = (hh || 0) * 60 + (mm || 0);
+      return startMins >= nowMins - 15;
+    })
     .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
 
   const list = document.getElementById('todayList');
   if (!rows.length) {
-    list.innerHTML = '<p class="today-empty">Δεν υπάρχουν ραντεβού για σήμερα.</p>';
+    list.innerHTML = '<p class="today-empty">Δεν υπάρχουν επερχόμενα ραντεβού για σήμερα.</p>';
     return;
   }
 
@@ -1644,10 +1816,23 @@ function renderAppointmentList() {
     .filter(item => !status || item.status === status)
     .filter(item => matchesQuery(item, q))
     .sort((a, b) => {
+      if (currentListKind === 'pending') {
+        const aw = a.status === 'WAITLIST' ? 0 : 1;
+        const bw = b.status === 'WAITLIST' ? 0 : 1;
+        if (aw !== bw) return aw - bw;
+        if (a.status === 'WAITLIST' && b.status === 'WAITLIST') {
+          return String(a.created_at || '').localeCompare(String(b.created_at || ''));
+        }
+      }
       const byDay = String(a.date || '').localeCompare(String(b.date || '')) * dayDir;
       if (byDay) return byDay;
       return String(a.start_time || '').localeCompare(String(b.start_time || ''));
     });
+
+  const waitlistRank = new Map();
+  if (currentListKind === 'pending') {
+    rows.filter((r) => r.status === 'WAITLIST').forEach((r, i) => waitlistRank.set(r.id, i + 1));
+  }
 
   const list = document.getElementById('aptList');
   if (!rows.length) {
@@ -1673,6 +1858,7 @@ function renderAppointmentList() {
           <div class="apt-time${isUnscheduled(item) ? ' is-bucket' : ''}">${escapeHtml(isUnscheduled(item) ? appointmentTimeLabel(item) : appointmentTimeLabel(item).slice(0, 5))}</div>
           <button type="button" class="apt-row-main">
             <div style="font-weight:650;">
+              ${waitlistRank.has(item.id) ? `<span class="badge badge-waitlist">#${waitlistRank.get(item.id)}</span> ` : ''}
               <span class="client-name-btn" data-phone="${escapeHtml(item.customer_phone || '')}">${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</span>
             </div>
             <div class="apt-row-meta">
@@ -1758,7 +1944,8 @@ function openAppointmentDetails(item) {
     const rescheduleHint = document.getElementById('rescheduleHint');
     if (rescheduleHint) rescheduleHint.textContent = 'Διάλεξε μέρα και ώρα για να μπει στο ημερολόγιο.';
     document.getElementById('rescheduleDate').value = '';
-    document.getElementById('rescheduleTime').value = '';
+    setRescheduleTimeValue('');
+    hideNoShowChoice();
     const immediateBox = document.getElementById('rescheduleImmediate');
     if (immediateBox) {
       immediateBox.checked = true;
@@ -1823,7 +2010,8 @@ function openAppointmentDetails(item) {
       : 'Διάλεξε νέα ημερομηνία και ώρα. Θα σταλεί πρόταση στον πελάτη με σύνδεσμο αποδοχής (ή εφάρμοσε άμεσα αν συμφωνήσατε στο τηλέφωνο).';
   }
   document.getElementById('rescheduleDate').value = item.proposed_date || item.date || '';
-  document.getElementById('rescheduleTime').value = item.proposed_start_time || item.start_time || '';
+  setRescheduleTimeValue(item.proposed_start_time || item.start_time || '');
+  hideNoShowChoice();
   const immediateBox = document.getElementById('rescheduleImmediate');
   if (immediateBox) {
     immediateBox.checked = waitlistNeedsTime(item);
@@ -1892,6 +2080,20 @@ async function updateStatus(status, extra) {
       return;
     }
     try {
+      // Αν είναι ανοιχτό το παράθυρο αλλαγής ώρας με νέα τιμή, εφάρμοσέ την πριν την έγκριση
+      if (status === 'BOOKED' && current) {
+        const group = document.getElementById('rescheduleGroup');
+        if (group && group.style.display === 'grid') {
+          const date = document.getElementById('rescheduleDate')?.value || '';
+          const time = getRescheduleTimeValue();
+          const curDate = String(current.date || '');
+          const curTime = String(current.start_time || '').slice(0, 5);
+          if (date && time && (date !== curDate || time !== curTime)) {
+            const moved = await rescheduleAppointment(time, { immediate: true, keepOpen: true, silent: true, skipLock: true });
+            if (!moved) return;
+          }
+        }
+      }
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/update-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1900,13 +2102,14 @@ async function updateStatus(status, extra) {
       const data = await res.json().catch(() => ({}));
       if (res.status === 409 && data.overlap) {
         showOverlapBox(data.error || 'Το slot είναι κατειλημμένο.', data.suggestions || [], async (slot) => {
-          document.getElementById('rescheduleTime').value = slot;
-          await rescheduleAppointment(slot);
+          setRescheduleTimeValue(slot);
+          await rescheduleAppointment(slot, { immediate: true, keepOpen: true, skipLock: true });
           await updateStatus('BOOKED');
         });
         return;
       }
       if (!res.ok) throw new Error(data.error || 'Σφάλμα ενημέρωσης');
+      pendingCalendarRevert = null;
       closeModal('actionModal');
       lastUndo = current ? { type: 'status', id: current.id, status: current.status } : null;
       showToast(status === 'CANCELLED' ? 'Το ραντεβού ακυρώθηκε.' : 'Η κατάσταση ενημερώθηκε.', false, true);
@@ -2105,24 +2308,46 @@ function appointmentStartMsLocal(item) {
 }
 
 async function markNoShow() {
+  const current = allAppointments.find((a) => a.id === selectedEventId);
+  const hasAuth = current && current.hold_status === 'authorized';
+  if (hasAuth) {
+    const choice = document.getElementById('noShowChoice');
+    if (choice) {
+      choice.hidden = false;
+      choice.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+  }
+  await confirmNoShow(false);
+}
+
+async function confirmNoShow(charge) {
+  const choice = document.getElementById('noShowChoice');
+  if (choice) choice.hidden = true;
   await withLock(async () => {
     try {
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/no-show`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedEventId })
+        body: JSON.stringify({ id: selectedEventId, charge: !!charge })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Δεν καταχωρήθηκε.');
       closeModal('actionModal');
-      showToast(data.captured
-        ? 'Καταχωρήθηκε «δεν προσήλθε» · χρεώθηκε η εγγύηση.'
-        : 'Καταχωρήθηκε «δεν προσήλθε».');
+      let msg = 'Καταχωρήθηκε «δεν προσήλθε».';
+      if (data.captured) msg = 'Καταχωρήθηκε «δεν προσήλθε» · χρεώθηκε η εγγύηση.';
+      else if (data.released) msg = 'Καταχωρήθηκε «δεν προσήλθε» · χωρίς χρέωση (αποδεσμεύτηκε).';
+      showToast(msg);
       fetchAppointments();
     } catch (err) {
       if (err.message !== 'Unauthorized') showToast(err.message || 'Αποτυχία.', true);
     }
   });
+}
+
+function hideNoShowChoice() {
+  const choice = document.getElementById('noShowChoice');
+  if (choice) choice.hidden = true;
 }
 
 function dismissWaitlistOffer() {
@@ -2140,9 +2365,10 @@ function showWaitlistOffer(offer) {
   const when = `${formatGreekDate(offer.date)} · ${offer.time || ''}`;
   text.textContent = `Άδειο slot ${when}. Διάλεξε πελάτη από τη λίστα αναμονής και στείλε πρόταση (email) για επιβεβαίωση.`;
   select.innerHTML = offer.candidates.map((c, i) => {
+    const pri = c.priority || (i + 1);
     const phone = c.customer_phone ? ` · ${c.customer_phone}` : '';
     const mail = c.customer_email ? '' : ' · χωρίς email';
-    return `<option value="${escapeHtml(c.id)}"${i === 0 ? ' selected' : ''}>${escapeHtml(c.customer_name || 'Πελάτης')}${escapeHtml(phone)}${escapeHtml(mail)}</option>`;
+    return `<option value="${escapeHtml(c.id)}"${i === 0 ? ' selected' : ''}>#${pri} ${escapeHtml(c.customer_name || 'Πελάτης')}${escapeHtml(phone)}${escapeHtml(mail)}</option>`;
   }).join('');
   bar.hidden = false;
 }
@@ -2200,17 +2426,19 @@ function toggleRescheduleEditor() {
   lucide.createIcons();
 }
 
-async function rescheduleAppointment(forcedTime) {
-  await withLock(async () => {
+async function rescheduleAppointment(forcedTime, opts = {}) {
+  let ok = false;
+  const run = async () => {
     const date = document.getElementById('rescheduleDate').value;
-    const time = forcedTime || document.getElementById('rescheduleTime').value;
+    const time = forcedTime || getRescheduleTimeValue();
     if (!date || !time) {
       showToast('Συμπληρώστε ημερομηνία και ώρα.', true);
       return;
     }
     const current = allAppointments.find((a) => a.id === selectedEventId);
     const wasBucket = current && isUnscheduled(current);
-    const immediate = document.getElementById('rescheduleImmediate')?.checked === true
+    const immediate = opts.immediate === true
+      || document.getElementById('rescheduleImmediate')?.checked === true
       || needsDayOrTime(current);
     const bucketEmail = (document.getElementById('bucketCustomerEmail')?.value || '').trim();
     const bucketService = wasBucket ? selectedBucketService() : null;
@@ -2234,58 +2462,44 @@ async function rescheduleAppointment(forcedTime) {
       const data = await res.json().catch(() => ({}));
       if (res.status === 409 && data.overlap) {
         showOverlapBox(data.error || 'Το slot είναι κατειλημμένο.', data.suggestions || [], (slot) => {
-          document.getElementById('rescheduleTime').value = slot;
-          rescheduleAppointment(slot);
+          setRescheduleTimeValue(slot);
+          rescheduleAppointment(slot, opts);
         });
         return;
       }
       if (!res.ok) throw new Error(data.error || 'Σφάλμα αλλαγής ώρας');
       hideOverlapBox();
-      if (data.mode === 'proposed') {
-        showToast(data.email_sent
-          ? 'Στάλθηκε πρόταση στον πελάτη για αποδοχή.'
-          : 'Η πρόταση αποθηκεύτηκε (το email δεν στάλθηκε).');
-      } else if (wasBucket || data.from_bucket) {
-        if (data.email_sent) {
-          showToast('Μπήκε στο ημερολόγιο · στάλθηκε email επιβεβαίωσης στον πελάτη.');
-        } else if (data.email_error === 'missing_email') {
-          showToast('Μπήκε στο ημερολόγιο. Δεν υπάρχει email πελάτη — ενημέρωσέ τον κατ’ ιδίαν ή βάλε email και ξαναπρογραμμάτισε.', true);
-        } else {
-          showToast('Μπήκε στο ημερολόγιο. Το email επιβεβαίωσης δεν στάλθηκε — ενημέρωσε τον πελάτη κατ’ ιδίαν αν χρειάζεται.', true);
-        }
-      } else {
-        showToast(data.email_sent ? 'Η ώρα ενημερώθηκε · ενημερώθηκε ο πελάτης με email.' : 'Η ώρα ενημερώθηκε.');
-      }
-      document.getElementById('rescheduleGroup').style.display = 'none';
-      document.getElementById('btnReschedule').innerHTML = '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
-      lucide.createIcons();
-      await fetchAppointments();
-      const found = (allAppointments || []).find((a) => a.id === selectedEventId);
-      if (found && data.mode === 'applied') {
-        found.date = date;
-        found.start_time = time.length === 5 ? time : time.slice(0, 5);
-        found.proposed_date = null;
-        found.proposed_start_time = null;
-        found.propose_token = null;
-        if (wasBucket) {
-          found.status = 'BOOKED';
-          if (bucketService && bucketService.service_name) {
-            found.service_name = bucketService.service_name;
-            found.duration = bucketService.duration;
+      pendingCalendarRevert = null;
+      ok = true;
+      if (!opts.silent) {
+        if (data.mode === 'proposed') {
+          showToast(data.email_sent
+            ? 'Στάλθηκε πρόταση στον πελάτη για αποδοχή.'
+            : 'Η πρόταση αποθηκεύτηκε (το email δεν στάλθηκε).');
+        } else if (wasBucket || data.from_bucket) {
+          if (data.email_sent) {
+            showToast('Μπήκε στο πρόγραμμα · στάλθηκε επιβεβαίωση.');
+          } else {
+            showToast('Μπήκε στο πρόγραμμα.');
           }
+        } else {
+          showToast('Η ώρα ενημερώθηκε.');
         }
       }
-      // Από bucket → κανονικό συμβάν: κλείσε την απλή κάρτα.
-      if ((wasBucket || data.from_bucket) && data.mode === 'applied') {
+      if (!opts.keepOpen) {
         closeModal('actionModal');
-        if (currentListKind === 'unscheduled' && isOverlayVisible('modal', 'listModal')) {
-          renderAppointmentList();
-        }
       }
+      await fetchAppointments();
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα αλλαγής ώρας.', true);
     }
-  });
+  };
+  if (opts.skipLock || actionLock) {
+    await run();
+  } else {
+    await withLock(run);
+  }
+  return ok;
 }
 
 async function deleteAppointmentById(id) {
@@ -2357,7 +2571,11 @@ async function handleManualBooking(e) {
     showToast('Το bucket είναι απενεργοποιημένο στις ρυθμίσεις.', true);
     return;
   }
+  const date = document.getElementById('bookDate').value;
   const time = `${document.getElementById('bookHour').value}:${document.getElementById('bookMinute').value}`;
+  if (!unscheduled && date && time && !timeWithinWorkingHours(date, time)) {
+    if (!confirm(`Η ώρα ${time} είναι εκτός ωραρίου λειτουργίας. Να αποθηκευτεί ως εξαίρεση;`)) return;
+  }
 
   try {
     const res = await adminFetch(`/api/${currentBusinessCode}/admin/bookings`, {
@@ -2369,7 +2587,7 @@ async function handleManualBooking(e) {
         service_name: document.getElementById('bookingService').value,
         duration: duration,
         unscheduled,
-        date: unscheduled ? '' : document.getElementById('bookDate').value,
+        date: unscheduled ? '' : date,
         time: unscheduled ? '' : time
       })
     });
@@ -2379,7 +2597,11 @@ async function handleManualBooking(e) {
     closeModal('slotChoiceModal');
     e.target.reset();
     syncBookUnscheduledFields();
-    showToast(unscheduled ? 'Μπήκε στο bucket «Χωρίς μέρα».' : 'Το νέο ραντεβού προστέθηκε.');
+    showToast(unscheduled
+      ? 'Μπήκε στο bucket «Χωρίς μέρα».'
+      : (!timeWithinWorkingHours(date, time)
+        ? 'Προστέθηκε εκτός ωραρίου — φαίνεται κάτω ως εξαίρεση.'
+        : 'Το νέο ραντεβού προστέθηκε.'));
     fetchAppointments();
   } catch (err) {
     if (err.message !== 'Unauthorized') showToast(err.message, true);
@@ -2852,6 +3074,11 @@ function openModal(id) {
 }
 
 function closeModal(id) {
+  if (id === 'actionModal' && pendingCalendarRevert) {
+    const revert = pendingCalendarRevert;
+    pendingCalendarRevert = null;
+    try { revert(); } catch (e) {}
+  }
   if (id === 'supportModal') stopSupportPoll();
   closeOverlay('modal', id);
 }
@@ -3344,7 +3571,11 @@ function showToast(text, isError = false, undoable = false) {
   toast.style.background = isError ? '#ef4444' : '#0f172a';
   toast.style.color = '#fff';
   toast.classList.add('show');
-  const canUndo = Boolean(undoable && lastUndo && (lastUndo.id || (lastUndo.snapshots && lastUndo.snapshots.length)));
+  const canUndo = Boolean(undoable && lastUndo && (
+    lastUndo.id
+    || (lastUndo.snapshots && lastUndo.snapshots.length)
+    || lastUndo.snapshot
+  ));
   if (undoBtn) {
     undoBtn.style.display = canUndo ? 'inline-flex' : 'none';
     undoBtn.onclick = () => {
@@ -3360,6 +3591,10 @@ function showToast(text, isError = false, undoable = false) {
       }
       if (undo.type === 'bulk-delete') {
         restoreAppointments(undo.snapshots, 'Οι διαγραφές αναιρέθηκαν.');
+        return;
+      }
+      if (undo.type === 'note-delete') {
+        restoreStickyNote(undo.snapshot);
         return;
       }
       selectedEventId = undo.id;
@@ -3542,6 +3777,7 @@ async function toggleStickyNoteDone(id, done) {
 
 async function deleteStickyNote(id) {
   if (!confirm('Να διαγραφεί αυτή η σημείωση;')) return;
+  const snap = shopNotesCache.find((n) => n.id === id);
   try {
     const res = await adminFetch(`/api/${currentBusinessCode}/admin/notes`, {
       method: 'DELETE',
@@ -3550,7 +3786,29 @@ async function deleteStickyNote(id) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Δεν διαγράφηκε.');
+    lastUndo = snap ? { type: 'note-delete', snapshot: snap } : null;
     await loadStickyNotes();
+    showToast('Η σημείωση διαγράφηκε.', false, true);
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message || 'Σφάλμα', true);
+  }
+}
+
+async function restoreStickyNote(snapshot) {
+  if (!snapshot) return;
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        body: snapshot.body || '',
+        color: snapshot.color || 'yellow'
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Η αναίρεση απέτυχε.');
+    await loadStickyNotes();
+    showToast('Η σημείωση επαναφέρθηκε.');
   } catch (err) {
     if (err.message !== 'Unauthorized') showToast(err.message || 'Σφάλμα', true);
   }

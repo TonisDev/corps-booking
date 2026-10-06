@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Επίλεξε πακέτο — QuickBook</title>
+  <meta name="robots" content="noindex">
+  <style>
+    body { margin: 0; background: linear-gradient(160deg, #ecfeff 0%, #f8fafc 45%, #fff7ed 100%); color: #0f172a; font-family: Georgia, 'Times New Roman', serif; min-height: 100vh; }
+    main { max-width: 440px; margin: 40px auto; padding: 28px 24px; background: rgba(255,255,255,.92); border: 1px solid #e2e8f0; border-radius: 18px; box-shadow: 0 12px 40px rgba(15,23,42,.06); }
+    .brand { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #0f766e; font-family: Arial, sans-serif; margin: 0 0 8px; }
+    h1 { font-size: 26px; margin: 0 0 8px; line-height: 1.2; }
+    .lead { color: #475569; font-size: 15px; line-height: 1.5; margin: 0 0 20px; font-family: Arial, sans-serif; }
+    .plan { display: block; width: 100%; text-align: left; margin: 0 0 10px; padding: 14px 16px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; font-family: Arial, sans-serif; }
+    .plan.is-on { border-color: #0f766e; background: #f0fdfa; }
+    .plan strong { display: block; font-size: 16px; }
+    .plan span { color: #64748b; font-size: 13px; }
+    button.go { width: 100%; margin-top: 14px; background: #0f766e; color: #fff; border: 0; border-radius: 12px; padding: 14px 16px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: Arial, sans-serif; }
+    button.go:disabled { opacity: .55; cursor: wait; }
+    .err { color: #b91c1c; font-family: Arial, sans-serif; }
+    .muted { color: #64748b; font-size: 13px; font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+<main id="root"><p class="muted">Φόρτωση…</p></main>
+<script>
+(function () {
+  const API = 'https://corporate-bookings.tonisdevv.workers.dev';
+  const token = new URLSearchParams(location.search).get('token') || '';
+  const root = document.getElementById('root');
+  let selected = 'year';
+
+  if (!token) {
+    root.innerHTML = '<p class="err">Λείπει ο σύνδεσμος πληρωμής.</p>';
+    return;
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(`${API}/api/billing-invite?token=${encodeURIComponent(token)}`, { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        root.innerHTML = `<p class="err">${esc(data.error || 'Ο σύνδεσμος δεν ισχύει.')}</p>`;
+        return;
+      }
+      if (!data.billing_enabled) {
+        root.innerHTML = `<p class="brand">QuickBook</p><h1>${esc(data.name || 'Το κατάστημά σου')}</h1><p class="lead">Οι συνδρομές δεν είναι ενεργές ακόμα. Θα σε ειδοποιήσουμε όταν ανοίξει η πληρωμή.</p>`;
+        return;
+      }
+      const plans = (data.plans || []).map((p) => `
+        <button type="button" class="plan${p.id === selected ? ' is-on' : ''}" data-plan="${esc(p.id)}">
+          <strong>${esc(p.label)}</strong>
+          <span>${esc(p.price)}</span>
+        </button>
+      `).join('');
+      root.innerHTML = `
+        <p class="brand">QuickBook</p>
+        <h1>${esc(data.name || 'Το κατάστημά σου')}</h1>
+        <p class="lead">Διάλεξε πακέτο και πλήρωσε. Η πρόσβαση στο manager ενεργοποιείται αυτόματα μετά την πληρωμή.</p>
+        <div id="plans">${plans}</div>
+        <button type="button" class="go" id="pay">Συνέχεια στην πληρωμή</button>
+        <p class="muted" style="margin-top:12px;">Χωρίς εγγραφή — ο σύνδεσμος είναι προσωπικός για το κατάστημά σου.</p>
+        <p id="status" class="muted" role="status"></p>
+      `;
+      root.querySelectorAll('.plan').forEach((btn) => {
+        btn.onclick = () => {
+          selected = btn.getAttribute('data-plan');
+          root.querySelectorAll('.plan').forEach((el) => el.classList.toggle('is-on', el === btn));
+        };
+      });
+      document.getElementById('pay').onclick = checkout;
+    } catch (err) {
+      root.innerHTML = '<p class="err">Αποτυχία φόρτωσης. Δοκίμασε ξανά.</p>';
+    }
+  }
+
+  async function checkout() {
+    const btn = document.getElementById('pay');
+    const status = document.getElementById('status');
+    if (btn) btn.disabled = true;
+    if (status) status.textContent = 'Άνοιγμα Stripe…';
+    try {
+      const res = await fetch(`${API}/api/billing-invite/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, plan: selected })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        if (status) status.innerHTML = `<span class="err">${esc(data.error || 'Αποτυχία')}</span>`;
+        if (btn) btn.disabled = false;
+        return;
+      }
+      location.href = data.url;
+    } catch (err) {
+      if (status) status.innerHTML = '<span class="err">Αποτυχία σύνδεσης.</span>';
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  load();
+})();
+</script>
+</body>
+</html>
