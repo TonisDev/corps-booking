@@ -409,6 +409,27 @@ button, input, select, textarea { font-family: inherit; }
   flex: none;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22);
 }
+.waitlist-offer-bar {
+  position: sticky;
+  top: 0;
+  z-index: 38;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  width: calc(100% - 2rem);
+  max-width: 42rem;
+  margin: 0.55rem auto 0;
+  padding: 0.7rem 0.9rem;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  border-radius: 0.75rem;
+  color: #065f46;
+  font-size: 0.88rem;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+.waitlist-offer-bar[hidden] { display: none !important; }
 .platform-notice-label {
   font-size: 0.68rem;
   font-weight: 700;

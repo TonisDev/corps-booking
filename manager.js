@@ -647,6 +647,7 @@ async function loadDashboard(code) {
     renderBillingBox();
     renderConnectStatus();
     updateSupportUnreadBadge(currentTenantData.support_unread);
+    applyFeatureUi();
   } catch (e) {
     console.error(e);
   }
@@ -693,6 +694,7 @@ async function refreshDashboard(silent) {
       renderBillingBox();
       renderConnectStatus();
       updateSupportUnreadBadge(currentTenantData.support_unread);
+      applyFeatureUi();
     }
     await fetchAppointments();
     const pending = Number(document.getElementById('statPending').dataset.open) || 0;
@@ -971,6 +973,10 @@ function openBookingFromToolbar() {
 }
 
 function openBookingToBucket() {
+  if (!featureOn('bucket')) {
+    showToast('Το bucket είναι απενεργοποιημένο στις ρυθμίσεις.', true);
+    return;
+  }
   pendingSlot = null;
   // Κλείσε τη λίστα bucket αν είναι ανοιχτή — αλλιώς η φόρμα μένει από κάτω.
   if (isOverlayVisible('modal', 'listModal')) closeModal('listModal');
@@ -981,6 +987,42 @@ function openBookingToBucket() {
     unscheduled.checked = true;
     syncBookUnscheduledFields();
   }
+  setTimeout(() => document.getElementById('custName')?.focus({ preventScroll: true }), 40);
+}
+
+function featureOn(key) {
+  const feats = (currentTenantData && currentTenantData.features) || {};
+  if (key === 'waitlist') {
+    if (Object.prototype.hasOwnProperty.call(feats, 'waitlist')) return feats.waitlist !== false;
+    return currentTenantData && currentTenantData.waitlist_enabled !== false && currentTenantData.waitlist_enabled !== 0;
+  }
+  return feats[key] !== false;
+}
+
+function applyFeatureUi() {
+  const bucketOn = featureOn('bucket');
+  const notesOn = featureOn('notes');
+  const igOn = featureOn('instagram');
+  document.querySelectorAll('[onclick="openBookingToBucket()"]').forEach((el) => {
+    el.style.display = bucketOn ? '' : 'none';
+  });
+  const unsCard = document.querySelector('.stat-card[onclick*="unscheduled"]');
+  if (unsCard) unsCard.style.display = bucketOn ? '' : 'none';
+  const unsCheck = document.getElementById('bookUnscheduled');
+  if (unsCheck) {
+    const label = unsCheck.closest('label');
+    if (label) label.style.display = bucketOn ? '' : 'none';
+    if (!bucketOn) {
+      unsCheck.checked = false;
+      syncBookUnscheduledFields();
+    }
+  }
+  document.querySelectorAll('[onclick="openStickyBoard()"]').forEach((el) => {
+    el.style.display = notesOn ? '' : 'none';
+  });
+  document.querySelectorAll('[onclick="copyInstagramPack()"]').forEach((el) => {
+    el.style.display = igOn ? '' : 'none';
+  });
 }
 
 function openBlockFromToolbar() {
@@ -1296,7 +1338,7 @@ async function fetchAppointments() {
       if (item.status === 'BOOKED' || item.status === 'CONFIRMED') {
         if (!isPastAppointment(item)) booked++;
       }
-      if (item.status === 'REJECTED' || item.status === 'CANCELLED' || (isPastAppointment(item) && item.status !== 'BLOCKED' && item.status !== 'PENDING' && item.status !== 'WAITLIST')) history++;
+      if (item.status === 'REJECTED' || item.status === 'CANCELLED' || item.status === 'NO_SHOW' || (isPastAppointment(item) && item.status !== 'BLOCKED' && item.status !== 'PENDING' && item.status !== 'WAITLIST')) history++;
 
       if (isUnscheduled(item)) return;
 
@@ -1306,6 +1348,7 @@ async function fetchAppointments() {
       if (item.status === 'BLOCKED') color = '#64748b';
       if (item.status === 'REJECTED') color = '#ef4444';
       if (item.status === 'CANCELLED') color = '#facc15';
+      if (item.status === 'NO_SHOW') color = '#ea580c';
 
       const floating = waitlistNeedsTime(item);
       calendar.addEvent({
@@ -1316,7 +1359,7 @@ async function fetchAppointments() {
         end: floating ? undefined : `${item.date}T${item.end_time}`,
         backgroundColor: color,
         borderColor: color,
-        textColor: item.status === 'CANCELLED' ? '#713f12' : '#ffffff',
+        textColor: (item.status === 'CANCELLED' || item.status === 'NO_SHOW') ? '#713f12' : '#ffffff',
         extendedProps: item
       });
     });
@@ -1356,7 +1399,7 @@ function isUnscheduled(item) {
 function isActiveBucketItem(item) {
   if (!isUnscheduled(item)) return false;
   const status = String((item && item.status) || '');
-  return status !== 'BLOCKED' && status !== 'REJECTED' && status !== 'CANCELLED';
+  return status !== 'BLOCKED' && status !== 'REJECTED' && status !== 'CANCELLED' && status !== 'NO_SHOW';
 }
 
 function waitlistNeedsTime(item) {
@@ -1397,7 +1440,7 @@ function formatLongGreekDate(dateStr) {
 function appointmentsOnDate(dateStr) {
   return allAppointments.filter(item => {
     if (item.date !== dateStr) return false;
-    return item.status !== 'BLOCKED' && item.status !== 'REJECTED' && item.status !== 'CANCELLED';
+    return item.status !== 'BLOCKED' && item.status !== 'REJECTED' && item.status !== 'CANCELLED' && item.status !== 'NO_SHOW';
   });
 }
 
@@ -1476,6 +1519,7 @@ function statusBadge(item) {
   if (item.status === 'BLOCKED') cls = 'badge-blocked';
   if (item.status === 'REJECTED') cls = 'badge-rejected';
   if (item.status === 'CANCELLED') cls = 'badge-cancelled';
+  if (item.status === 'NO_SHOW') cls = 'badge-rejected';
   const bits = [`<span class="badge ${cls}">${statusLabel(item.status)}</span>`];
   if (past) bits.push('<span class="badge badge-past">Παρελθόν</span>');
   if (item.proposed_date && item.propose_token) {
@@ -1498,7 +1542,7 @@ function appointmentsForKind(kind) {
     }
     if (kind === 'history') {
       if (item.status === 'BLOCKED' || item.status === 'PENDING' || item.status === 'WAITLIST') return false;
-      return item.status === 'REJECTED' || item.status === 'CANCELLED' || isPastAppointment(item);
+      return item.status === 'REJECTED' || item.status === 'CANCELLED' || item.status === 'NO_SHOW' || isPastAppointment(item);
     }
     return true;
   });
@@ -1665,7 +1709,7 @@ function renderAppointmentList() {
 }
 
 function statusLabel(status) {
-  const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', WAITLIST: 'Ουρά', BLOCKED: 'Κλειδωμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο', CANCELLED: 'Ακυρώθηκε' };
+  const labels = { BOOKED: 'Εγκεκριμένο', PENDING: 'Εκκρεμές', WAITLIST: 'Ουρά', BLOCKED: 'Κλειδωμένο', REJECTED: 'Απορρίφθηκε', CONFIRMED: 'Εγκεκριμένο', CANCELLED: 'Ακυρώθηκε', NO_SHOW: 'Δεν προσήλθε' };
   return labels[status] || status;
 }
 
@@ -1789,14 +1833,19 @@ function openAppointmentDetails(item) {
   const past = isPastAppointment(item);
   const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
   const approved = item.status === 'BOOKED' || item.status === 'CONFIRMED';
-  const historyItem = past || item.status === 'REJECTED' || item.status === 'CANCELLED';
-  document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || item.status === 'CANCELLED' || item.status === 'REJECTED') ? 'none' : 'inline-flex';
+  const historyItem = past || item.status === 'REJECTED' || item.status === 'CANCELLED' || item.status === 'NO_SHOW';
+  document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || item.status === 'CANCELLED' || item.status === 'REJECTED' || item.status === 'NO_SHOW') ? 'none' : 'inline-flex';
   document.getElementById('btnReject').style.display = actionable && !past ? 'inline-flex' : 'none';
   document.getElementById('btnCancelAppt').style.display = approved && !past ? 'inline-flex' : 'none';
   const hold = item.hold_status || '';
   const captureBtn = document.getElementById('btnHoldCapture');
   const refundBtn = document.getElementById('btnHoldRefund');
-  if (captureBtn) captureBtn.style.display = hold === 'authorized' ? 'inline-flex' : 'none';
+  const noShowBtn = document.getElementById('btnNoShow');
+  const startMs = appointmentStartMsLocal(item);
+  const canNoShow = approved && startMs && Date.now() >= startMs - 30 * 60 * 1000 && item.status !== 'NO_SHOW';
+  if (noShowBtn) noShowBtn.style.display = canNoShow ? 'inline-flex' : 'none';
+  // Χρέωση εγγύησης μόνο όταν υπάρχει authorized και δεν δείχνουμε ήδη το «Δεν προσήλθε»
+  if (captureBtn) captureBtn.style.display = (!canNoShow && hold === 'authorized') ? 'inline-flex' : 'none';
   if (refundBtn) refundBtn.style.display = hold === 'captured' ? 'inline-flex' : 'none';
   const deleteBtn = document.getElementById('btnDeleteAppt');
   deleteBtn.style.display = canDeleteAppointment(item) ? 'inline-flex' : 'none';
@@ -1861,6 +1910,7 @@ async function updateStatus(status, extra) {
       closeModal('actionModal');
       lastUndo = current ? { type: 'status', id: current.id, status: current.status } : null;
       showToast(status === 'CANCELLED' ? 'Το ραντεβού ακυρώθηκε.' : 'Η κατάσταση ενημερώθηκε.', false, true);
+      if (status === 'CANCELLED' && data.waitlist_offer) showWaitlistOffer(data.waitlist_offer);
       fetchAppointments();
     } catch (e) {
       if (e.message !== 'Unauthorized') showToast(e.message || 'Σφάλμα ενημέρωσης.', true);
@@ -1972,6 +2022,163 @@ async function exportPaymentsCsv() {
   } catch (e) {
     if (e.message !== 'Unauthorized') showToast(e.message || 'Η εξαγωγή απέτυχε.', true);
   }
+}
+
+async function exportAccountantNote() {
+  const from = (document.getElementById('paymentsExportFrom') || {}).value || '';
+  const to = (document.getElementById('paymentsExportTo') || {}).value || '';
+  const params = new URLSearchParams({ format: 'json', mode: 'accountant', by: 'settled' });
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/payments/export?${params.toString()}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Η εξαγωγή απέτυχε');
+    const shop = (currentTenantData && currentTenantData.name) || currentBusinessCode || 'Κατάστημα';
+    const t = data.totals || {};
+    const holds = data.open_holds || {};
+    const period = `${from || 'αρχή'} → ${to || 'σήμερα'}`;
+    const lines = [
+      'ΣΗΜΕΙΩΜΑ ΓΙΑ ΛΟΓΙΣΤΗ — QuickBook',
+      `Κατάστημα: ${shop}`,
+      `Κωδικός: ${currentBusinessCode || ''}`,
+      `Περίοδος: ${period}`,
+      '',
+      `Χρεώσεις (captures): ${t.income_eur || '0.00'} €`,
+      `Επιστροφές (refunds): ${t.refund_eur || '0.00'} €`,
+      `Καθαρό: ${t.net_eur || '0.00'} €`,
+      `Γραμμές ledger: ${t.rows || 0}`,
+      '',
+      `Ανοιχτές δεσμεύσεις κάρτας (ΔΕΝ είναι έσοδα): ${holds.count || 0} · ${((Number(holds.hold_cents) || 0) / 100).toFixed(2)} €`,
+      '',
+      'Σημειώσεις:',
+      '- Τα ποσά προέρχονται από payment_ledger (μόνο capture / refund).',
+      '- authorized / card_saved / released δεν δηλώνονται ως έσοδα.',
+      '- Για ανάλυση ανά κίνηση χρησιμοποίησε το CSV εξαγωγής.',
+      '',
+      `Ημερομηνία έκδοσης: ${new Date().toLocaleString('el-GR')}`
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `simeioma-logisti-${currentBusinessCode || 'shop'}-${from || 'all'}-${to || 'all'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Το σημείωμα λογιστή κατέβηκε.');
+  } catch (e) {
+    if (e.message !== 'Unauthorized') showToast(e.message || 'Το σημείωμα απέτυχε.', true);
+  }
+}
+
+function publicBookingUrl() {
+  return `https://quickbook.gr/?business_code=${encodeURIComponent(currentBusinessCode || '')}`;
+}
+
+async function copyInstagramPack() {
+  if (!currentBusinessCode) return;
+  const name = (currentTenantData && currentTenantData.name) || 'το κατάστημα';
+  const url = publicBookingUrl();
+  const text = [
+    `Κλείσε ραντεβού online στο ${name}`,
+    '',
+    url,
+    '',
+    'Διάλεξε ώρα από τον σύνδεσμο — χωρίς εγγραφή και χωρίς εφαρμογή.'
+  ].join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Αντιγράφηκε κείμενο + σύνδεσμος για Instagram.');
+  } catch (err) {
+    window.prompt('Αντίγραψε αυτό για Instagram:', text);
+  }
+}
+
+let pendingWaitlistOffer = null;
+
+function appointmentStartMsLocal(item) {
+  if (!item || !item.date || !item.start_time) return 0;
+  const [y, m, d] = String(item.date).split('-').map(Number);
+  const [hh, mm] = String(item.start_time).slice(0, 5).split(':').map(Number);
+  if (!y || !m || !d) return 0;
+  return new Date(y, m - 1, d, hh || 0, mm || 0, 0).getTime();
+}
+
+async function markNoShow() {
+  await withLock(async () => {
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/no-show`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedEventId })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Δεν καταχωρήθηκε.');
+      closeModal('actionModal');
+      showToast(data.captured
+        ? 'Καταχωρήθηκε «δεν προσήλθε» · χρεώθηκε η εγγύηση.'
+        : 'Καταχωρήθηκε «δεν προσήλθε».');
+      fetchAppointments();
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message || 'Αποτυχία.', true);
+    }
+  });
+}
+
+function dismissWaitlistOffer() {
+  pendingWaitlistOffer = null;
+  const bar = document.getElementById('waitlistOfferBar');
+  if (bar) bar.hidden = true;
+}
+
+function showWaitlistOffer(offer) {
+  const bar = document.getElementById('waitlistOfferBar');
+  const text = document.getElementById('waitlistOfferText');
+  const select = document.getElementById('waitlistOfferSelect');
+  if (!bar || !text || !select || !offer || !offer.candidates || !offer.candidates.length) return;
+  pendingWaitlistOffer = offer;
+  const when = `${formatGreekDate(offer.date)} · ${offer.time || ''}`;
+  text.textContent = `Άδειο slot ${when}. Διάλεξε πελάτη από τη λίστα αναμονής και στείλε πρόταση (email) για επιβεβαίωση.`;
+  select.innerHTML = offer.candidates.map((c, i) => {
+    const phone = c.customer_phone ? ` · ${c.customer_phone}` : '';
+    const mail = c.customer_email ? '' : ' · χωρίς email';
+    return `<option value="${escapeHtml(c.id)}"${i === 0 ? ' selected' : ''}>${escapeHtml(c.customer_name || 'Πελάτης')}${escapeHtml(phone)}${escapeHtml(mail)}</option>`;
+  }).join('');
+  bar.hidden = false;
+}
+
+async function acceptWaitlistOffer() {
+  const offer = pendingWaitlistOffer;
+  if (!offer || !offer.candidates || !offer.candidates.length) return;
+  const select = document.getElementById('waitlistOfferSelect');
+  const pickId = select ? select.value : offer.candidates[0].id;
+  const picked = offer.candidates.find((c) => c.id === pickId) || offer.candidates[0];
+  if (!picked.customer_email) {
+    showToast('Αυτός ο πελάτης δεν έχει email — βάλε email πρώτα ή διάλεξε άλλον.', true);
+    return;
+  }
+  await withLock(async () => {
+    try {
+      const res = await adminFetch(`/api/${currentBusinessCode}/admin/waitlist-offer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: picked.id,
+          date: offer.date,
+          time: offer.time
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Η πρόταση δεν στάλθηκε.');
+      dismissWaitlistOffer();
+      showToast(data.email_sent
+        ? `Στάλθηκε πρόταση σε ${picked.customer_name || 'πελάτη'} — περιμένει αποδοχή.`
+        : (data.email_error || 'Η πρόταση αποθηκεύτηκε χωρίς email.'));
+      fetchAppointments();
+    } catch (err) {
+      if (err.message !== 'Unauthorized') showToast(err.message || 'Η πρόταση απέτυχε.', true);
+    }
+  });
 }
 
 function forceApprove() {
@@ -2146,6 +2353,10 @@ async function handleManualBooking(e) {
   const selectedOpt = document.getElementById('bookingService').selectedOptions[0];
   const duration = parseInt(selectedOpt.getAttribute('data-duration')) || 60;
   const unscheduled = !!document.getElementById('bookUnscheduled')?.checked;
+  if (unscheduled && !featureOn('bucket')) {
+    showToast('Το bucket είναι απενεργοποιημένο στις ρυθμίσεις.', true);
+    return;
+  }
   const time = `${document.getElementById('bookHour').value}:${document.getElementById('bookMinute').value}`;
 
   try {
@@ -2457,6 +2668,15 @@ function openSettingsModal() {
   if (cancelHours) cancelHours.value = currentTenantData.cancel_hours === 0 ? 0 : (currentTenantData.cancel_hours || 24);
   const holdDays = document.getElementById('setHoldDays');
   if (holdDays) holdDays.value = currentTenantData.hold_days_before === 0 ? 0 : (currentTenantData.hold_days_before ?? 2);
+  const feats = currentTenantData.features || {};
+  const featBucket = document.getElementById('featBucket');
+  if (featBucket) featBucket.checked = feats.bucket !== false;
+  const featWaitlist = document.getElementById('featWaitlist');
+  if (featWaitlist) featWaitlist.checked = featureOn('waitlist');
+  const featNotes = document.getElementById('featNotes');
+  if (featNotes) featNotes.checked = feats.notes !== false;
+  const featInstagram = document.getElementById('featInstagram');
+  if (featInstagram) featInstagram.checked = feats.instagram !== false;
   renderConnectStatus();
   document.getElementById('setPhone').value = currentTenantData.phone || '';
   document.getElementById('setAddress').value = currentTenantData.address || '';
@@ -2904,7 +3124,13 @@ async function saveSettings(e) {
         deposit_percent: document.getElementById('setDepositPercent') ? Number(document.getElementById('setDepositPercent').value) : 50,
         deposit_fixed_euros: document.getElementById('setDepositFixed') ? Number(document.getElementById('setDepositFixed').value) : 1,
         cancel_hours: document.getElementById('setCancelHours') ? Number(document.getElementById('setCancelHours').value) : 24,
-        hold_days_before: document.getElementById('setHoldDays') ? Number(document.getElementById('setHoldDays').value) : 2
+        hold_days_before: document.getElementById('setHoldDays') ? Number(document.getElementById('setHoldDays').value) : 2,
+        features: {
+          bucket: document.getElementById('featBucket') ? document.getElementById('featBucket').checked : true,
+          waitlist: document.getElementById('featWaitlist') ? document.getElementById('featWaitlist').checked : true,
+          notes: document.getElementById('featNotes') ? document.getElementById('featNotes').checked : true,
+          instagram: document.getElementById('featInstagram') ? document.getElementById('featInstagram').checked : true
+        }
       })
     });
 

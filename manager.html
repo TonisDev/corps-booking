@@ -104,6 +104,17 @@
       <span class="support-unread-banner-dot" aria-hidden="true"></span>
       <span id="supportUnreadBannerText">Νέο μήνυμα στην Υποστήριξη — πάτα για άνοιγμα</span>
     </button>
+    <div id="waitlistOfferBar" class="waitlist-offer-bar" hidden>
+      <div style="flex:1;min-width:12rem;">
+        <p id="waitlistOfferText" style="margin:0 0 0.4rem;"></p>
+        <label for="waitlistOfferSelect" class="settings-hint" style="display:block;margin:0 0 0.25rem;">Πελάτης από τη λίστα</label>
+        <select class="field" id="waitlistOfferSelect" style="max-width:100%;"></select>
+      </div>
+      <div class="actions" style="margin:0;gap:0.4rem;align-items:flex-end;">
+        <button type="button" class="btn" id="waitlistOfferBtn" onclick="acceptWaitlistOffer()">Στείλε πρόταση (email)</button>
+        <button type="button" class="btn btn-outline" onclick="dismissWaitlistOffer()">Όχι τώρα</button>
+      </div>
+    </div>
     <div id="billingWarnBanner" class="billing-warn-banner" hidden>
       <strong id="billingWarnTitle">Πρόβλημα συνδρομής</strong>
       <p id="billingWarnText"></p>
@@ -117,7 +128,7 @@
         <span id="storeCodeSpan"></span>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="openBookingToBucket()" title="Προσθήκη χωρίς μέρα"><i data-lucide="inbox" size="16"></i> <span class="btn-label">Στο bucket</span></button>
+        <button class="btn btn-outline" onclick="openBookingToBucket()" title="Προσθήκη χωρίς μέρα — μπαίνει στο bucket"><i data-lucide="inbox" size="16"></i> <span class="btn-label">Στο bucket</span></button>
         <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
         <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
@@ -130,6 +141,7 @@
       <button type="button" class="manager-side-btn" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
       <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
       <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
+      <button type="button" class="manager-side-btn" onclick="copyInstagramPack()" title="Κείμενο + σύνδεσμος για Instagram story/bio"><i data-lucide="instagram" size="18"></i><span>Για Instagram</span></button>
       <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
       <button type="button" class="manager-side-btn manager-side-btn-bottom" id="supportSideBtn" onclick="openSupportModal()" title="Chat με τον δημιουργό του QuickBook"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="supportUnreadDot" class="side-unread-dot" hidden></span></button>
       <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
@@ -204,6 +216,7 @@
             <span><i style="background:#64748b;"></i> Κλειστό</span>
             <span><i style="background:#ef4444;"></i> Απορρίφθηκε</span>
             <span><i style="background:#facc15;"></i> Ακυρώθηκε</span>
+            <span><i style="background:#ea580c;"></i> Δεν προσήλθε</span>
           </div>
         </div>
         <div class="calendar-layout">
@@ -235,6 +248,7 @@
           <button type="button" class="settings-nav-btn" data-settings-panel="hours" onclick="showSettingsPanel('hours')">Ωράριο</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="services" onclick="showSettingsPanel('services')">Υπηρεσίες</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="form" onclick="showSettingsPanel('form')">Φόρμα πελάτη</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="features" onclick="showSettingsPanel('features')">Λειτουργίες</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="integrations" onclick="showSettingsPanel('integrations')">Telegram / Calendar</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="billing" id="settingsNavBilling" onclick="showSettingsPanel('billing')" hidden>Συνδρομή</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="security" onclick="showSettingsPanel('security')">Κωδικός / Κινητό</button>
@@ -425,6 +439,29 @@
                 </div>
               </aside>
             </div>
+          </div>
+
+          <div class="settings-panel" id="settingsPanel-features">
+            <h3 class="settings-panel-title">Λειτουργίες καταστήματος</h3>
+            <p class="settings-hint">Άνοιξε/κλείσε ό,τι δεν χρειάζεσαι. Οι αλλαγές ισχύουν μετά την αποθήκευση.</p>
+            <label class="remember-me">
+              <input type="checkbox" id="featBucket" checked>
+              Bucket «Χωρίς μέρα»
+            </label>
+            <p class="settings-hint">Γρήγορη καταχώρηση από τηλέφωνο χωρίς ημερομηνία.</p>
+            <label class="remember-me" style="margin-top:0.65rem;">
+              <input type="checkbox" id="featWaitlist" checked>
+              Λίστα αναμονής
+            </label>
+            <p class="settings-hint">Όταν γεμίζει η μέρα, ο πελάτης μπορεί να μπει σε ουρά.</p>
+            <label class="remember-me" style="margin-top:0.65rem;">
+              <input type="checkbox" id="featNotes" checked>
+              Εσωτερικές σημειώσεις
+            </label>
+            <label class="remember-me" style="margin-top:0.65rem;">
+              <input type="checkbox" id="featInstagram" checked>
+              Κουμπί «Για Instagram»
+            </label>
           </div>
 
           <div class="settings-panel" id="settingsPanel-integrations">
@@ -709,9 +746,10 @@
         </select>
         <input class="field" type="date" id="paymentsExportFrom" title="Από" style="max-width:10rem;">
         <input class="field" type="date" id="paymentsExportTo" title="Έως" style="max-width:10rem;">
-        <button type="button" class="btn btn-outline" onclick="exportPaymentsCsv()">Εξαγωγή για λογιστή (CSV)</button>
+        <button type="button" class="btn btn-outline" onclick="exportPaymentsCsv()">Εξαγωγή CSV</button>
+        <button type="button" class="btn" onclick="exportAccountantNote()">Σημείωμα λογιστή</button>
       </div>
-      <p class="guide-note" style="margin:0.55rem 0 0;">Η εξαγωγή μετρά μόνο πραγματικές χρεώσεις και επιστροφές (ledger). Οι δεσμεύσεις κάρτας δεν εμφανίζονται ως έσοδα.</p>
+      <p class="guide-note" style="margin:0.55rem 0 0;">Το σημείωμα έχει σύνολα (χρεώσεις − επιστροφές). Το CSV είναι η αναλυτική κίνηση από το ledger. Οι δεσμεύσεις κάρτας δεν είναι έσοδα.</p>
       <div id="paymentsList" class="apt-list"></div>
       <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('paymentsModal')">Κλείσιμο</button>
     </div>
@@ -752,7 +790,8 @@
           <button type="button" class="btn btn-outline" id="btnReschedule" onclick="toggleRescheduleEditor()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
           <button type="button" class="btn btn-outline" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
           <button type="button" class="btn btn-warning" id="btnCancelAppt" onclick="updateStatus('CANCELLED')" style="display:none;">Ακύρωση ραντεβού</button>
-          <button type="button" class="btn btn-warning" id="btnHoldCapture" onclick="settleHold('capture')" style="display:none;">Δεν ήρθε</button>
+          <button type="button" class="btn btn-warning" id="btnNoShow" onclick="markNoShow()" style="display:none;">Δεν προσήλθε</button>
+          <button type="button" class="btn btn-warning" id="btnHoldCapture" onclick="settleHold('capture')" style="display:none;">Χρέωση εγγύησης</button>
           <button type="button" class="btn btn-outline" id="btnHoldRefund" onclick="settleHold('refund')" style="display:none;">Επιστροφή</button>
         </div>
         <button type="button" class="btn btn-quiet-danger" id="btnDeleteAppt" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή οριστικά</button>

@@ -303,6 +303,24 @@
                 && (businessData.pay_online_enabled !== false || businessData.pay_shop_enabled !== false));
         }
 
+        function renderBookingPolicyNote() {
+            const el = document.getElementById('bookingPolicyNote');
+            if (!el || !businessData) return;
+            const hoursRaw = Number(businessData.cancel_hours);
+            const hours = Number.isFinite(hoursRaw) ? Math.min(168, Math.max(0, Math.floor(hoursRaw))) : 24;
+            const until = hours === 0
+                ? 'μέχρι την έναρξη'
+                : hours === 1
+                    ? 'έως 1 ώρα πριν'
+                    : `έως ${hours} ώρες πριν`;
+            const holdOn = !!(businessData.client_hold_enabled && businessData.connect_ready
+                && businessData.pay_shop_enabled !== false);
+            el.hidden = false;
+            el.textContent = holdOn
+                ? `Ακύρωση online ${until} · αλλιώς ισχύει η εγγύηση κράτησης.`
+                : `Ακύρωση online ${until}. Για αλλαγή ώρας επικοινώνησε με το κατάστημα.`;
+        }
+
         function selectedServicePrice() {
             const name = serviceSelect.value;
             const service = (businessData.services || []).find((s) => s.name === name);
@@ -504,6 +522,7 @@
                 } else {
                     welcomeText.classList.add('hidden');
                 }
+                renderBookingPolicyNote();
 
                 document.getElementById('shopInfoTitle').textContent = businessData.name || 'Πληροφορίες';
                 if (businessData.address) {
