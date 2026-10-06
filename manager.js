@@ -2623,6 +2623,10 @@ async function handleManualBooking(e) {
       })
     });
     const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && data.overlap) {
+      showToast((data.error || 'Το slot είναι κατειλημμένο.') + (data.suggestions && data.suggestions.length ? ` Δοκίμασε: ${data.suggestions.join(', ')}` : ''), true);
+      return;
+    }
     if (!res.ok) throw new Error(data.error || 'Αποτυχία κράτησης');
     closeModal('bookingModal');
     closeModal('slotChoiceModal');
