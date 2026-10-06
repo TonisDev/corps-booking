@@ -807,10 +807,9 @@
         </label>
       </div>
       <div id="noShowChoice" class="overlap-box" hidden>
-        <p style="margin:0 0 0.6rem;">Υπάρχει εγγύηση στην κάρτα. Θέλεις να χρεωθεί;</p>
+        <p style="margin:0 0 0.6rem;">Θα καταχωρηθεί «δεν προσήλθε» <strong>χωρίς</strong> χρέωση εγγύησης. Σίγουρα;</p>
         <div class="overlap-suggestions">
-          <button type="button" class="btn" onclick="confirmNoShow(true)">Χρέωσε</button>
-          <button type="button" class="btn btn-outline" onclick="confirmNoShow(false)">Μην χρεώσεις</button>
+          <button type="button" class="btn btn-warning" onclick="markNoShow(false)">Ναι · χωρίς χρέωση</button>
           <button type="button" class="btn btn-outline" onclick="hideNoShowChoice()">Άκυρο</button>
         </div>
       </div>
@@ -824,7 +823,8 @@
           <button type="button" class="btn btn-outline" id="btnReschedule" onclick="toggleRescheduleEditor()" style="display:none;"><i data-lucide="clock" size="16"></i> Αλλαγή ώρας</button>
           <button type="button" class="btn btn-outline" id="btnReject" onclick="updateStatus('REJECTED')" style="display:none;"><i data-lucide="x" size="16"></i> Απόρριψη</button>
           <button type="button" class="btn btn-warning" id="btnCancelAppt" onclick="updateStatus('CANCELLED')" style="display:none;">Ακύρωση ραντεβού</button>
-          <button type="button" class="btn btn-warning" id="btnNoShow" onclick="markNoShow()" style="display:none;">Δεν προσήλθε</button>
+          <button type="button" class="btn btn-warning" id="btnNoShow" onclick="markNoShow(true)" style="display:none;">Δεν προσήλθε</button>
+          <button type="button" class="btn btn-outline" id="btnNoShowWaive" onclick="showNoShowWaive()" style="display:none;">Δεν προσήλθε · χωρίς χρέωση</button>
           <button type="button" class="btn btn-warning" id="btnHoldCapture" onclick="settleHold('capture')" style="display:none;">Χρέωση εγγύησης</button>
           <button type="button" class="btn btn-outline" id="btnHoldRefund" onclick="settleHold('refund')" style="display:none;">Επιστροφή</button>
         </div>

@@ -2029,9 +2029,13 @@ function openAppointmentDetails(item) {
   const captureBtn = document.getElementById('btnHoldCapture');
   const refundBtn = document.getElementById('btnHoldRefund');
   const noShowBtn = document.getElementById('btnNoShow');
+  const noShowWaiveBtn = document.getElementById('btnNoShowWaive');
   const startMs = appointmentStartMsLocal(item);
   const canNoShow = approved && startMs && Date.now() >= startMs - 30 * 60 * 1000 && item.status !== 'NO_SHOW';
   if (noShowBtn) noShowBtn.style.display = canNoShow ? 'inline-flex' : 'none';
+  // Opt-out χωρίς χρέωση μόνο όταν υπάρχει authorized εγγύηση
+  if (noShowWaiveBtn) noShowWaiveBtn.style.display = (canNoShow && hold === 'authorized') ? 'inline-flex' : 'none';
+  hideNoShowChoice();
   // Χρέωση εγγύησης μόνο όταν υπάρχει authorized και δεν δείχνουμε ήδη το «Δεν προσήλθε»
   if (captureBtn) captureBtn.style.display = (!canNoShow && hold === 'authorized') ? 'inline-flex' : 'none';
   if (refundBtn) refundBtn.style.display = hold === 'captured' ? 'inline-flex' : 'none';
@@ -2307,29 +2311,14 @@ function appointmentStartMsLocal(item) {
   return new Date(y, m - 1, d, hh || 0, mm || 0, 0).getTime();
 }
 
-async function markNoShow() {
-  const current = allAppointments.find((a) => a.id === selectedEventId);
-  const hasAuth = current && current.hold_status === 'authorized';
-  if (hasAuth) {
-    const choice = document.getElementById('noShowChoice');
-    if (choice) {
-      choice.hidden = false;
-      choice.scrollIntoView({ block: 'nearest' });
-      return;
-    }
-  }
-  await confirmNoShow(false);
-}
-
-async function confirmNoShow(charge) {
-  const choice = document.getElementById('noShowChoice');
-  if (choice) choice.hidden = true;
+async function markNoShow(charge = true) {
+  hideNoShowChoice();
   await withLock(async () => {
     try {
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/no-show`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedEventId, charge: !!charge })
+        body: JSON.stringify({ id: selectedEventId, charge: charge !== false })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Δεν καταχωρήθηκε.');
@@ -2343,6 +2332,14 @@ async function confirmNoShow(charge) {
       if (err.message !== 'Unauthorized') showToast(err.message || 'Αποτυχία.', true);
     }
   });
+}
+
+function showNoShowWaive() {
+  const choice = document.getElementById('noShowChoice');
+  if (choice) {
+    choice.hidden = false;
+    choice.scrollIntoView({ block: 'nearest' });
+  }
 }
 
 function hideNoShowChoice() {
