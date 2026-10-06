@@ -1422,17 +1422,12 @@ function initCalendar() {
         start_time: time
       });
       openAppointmentDetails(item);
-      document.getElementById('rescheduleGroup').style.display = 'grid';
       document.getElementById('rescheduleDate').value = date;
       setRescheduleTimeValue(time);
       const immediateBox = document.getElementById('rescheduleImmediate');
       if (immediateBox) immediateBox.checked = false;
-      const rescheduleBtn = document.getElementById('btnReschedule');
-      if (rescheduleBtn) {
-        rescheduleBtn.innerHTML = '<i data-lucide="check" size="16"></i> Αποστολή πρότασης';
-        lucide.createIcons();
-      }
-      showToast('Νέο slot από drag — επιβεβαίωσε ή πάτα Κλείσιμο για αναίρεση.');
+      setRescheduleEditorUi(true);
+      showToast('Νέο slot από drag — πάτα «Αποθήκευση ώρας» ή Κλείσιμο για αναίρεση.');
     },
     headerToolbar: calendarToolbar(),
     buttonText: calendarButtonText(),
@@ -2005,18 +2000,23 @@ function openAppointmentDetails(item) {
   `;
   const rescheduleHint = document.getElementById('rescheduleHint');
   if (rescheduleHint) {
-    rescheduleHint.textContent = needsDayOrTime(item)
-      ? 'Διάλεξε σε ποια μέρα και ώρα θα μπει αυτό το ραντεβού.'
-      : 'Διάλεξε νέα ημερομηνία και ώρα. Θα σταλεί πρόταση στον πελάτη με σύνδεσμο αποδοχής (ή εφάρμοσε άμεσα αν συμφωνήσατε στο τηλέφωνο).';
+    if (item.status === 'CANCELLED' || item.status === 'REJECTED') {
+      rescheduleHint.textContent = 'Διάλεξε νέα μέρα/ώρα — το ραντεβού ξαναγίνεται εγκεκριμένο (πράσινο).';
+    } else if (needsDayOrTime(item)) {
+      rescheduleHint.textContent = 'Διάλεξε σε ποια μέρα και ώρα θα μπει αυτό το ραντεβού.';
+    } else {
+      rescheduleHint.textContent = 'Άλλαξε ώρα εδώ και πάτα «Αποθήκευση ώρας». Η «Έγκριση» είναι μόνο για την τρέχουσα ώρα χωρίς αλλαγή.';
+    }
   }
   document.getElementById('rescheduleDate').value = item.proposed_date || item.date || '';
   setRescheduleTimeValue(item.proposed_start_time || item.start_time || '');
   hideNoShowChoice();
   const immediateBox = document.getElementById('rescheduleImmediate');
+  const reviveItem = item.status === 'CANCELLED' || item.status === 'REJECTED';
   if (immediateBox) {
-    immediateBox.checked = waitlistNeedsTime(item);
+    immediateBox.checked = waitlistNeedsTime(item) || reviveItem;
     const immLabel = immediateBox.closest('label');
-    if (immLabel) immLabel.style.display = '';
+    if (immLabel) immLabel.style.display = reviveItem ? 'none' : '';
   }
   const past = isPastAppointment(item);
   const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
@@ -2044,13 +2044,15 @@ function openAppointmentDetails(item) {
   deleteBtn.innerHTML = historyItem
     ? '<i data-lucide="trash-2" size="16"></i> Διαγραφή'
     : '<i data-lucide="trash-2" size="16"></i> Διαγραφή οριστικά';
-  const canReschedule = item.status !== 'BLOCKED' && !past;
+  const canReschedule = item.status !== 'BLOCKED' && item.status !== 'NO_SHOW' && !past;
   document.getElementById('rescheduleGroup').style.display = 'none';
   const rescheduleBtn = document.getElementById('btnReschedule');
   rescheduleBtn.style.display = canReschedule ? 'inline-flex' : 'none';
   rescheduleBtn.innerHTML = waitlistNeedsTime(item)
     ? '<i data-lucide="calendar-plus" size="16"></i> Βάλε σε μέρα'
-    : '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας';
+    : (reviveItem
+      ? '<i data-lucide="calendar-check" size="16"></i> Νέα ώρα · επανενεργοποίηση'
+      : '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας');
   document.getElementById('reasonGroup').style.display = (actionable || (approved && !past)) ? 'block' : 'none';
   document.getElementById('actReason').value = item.status_reason || '';
   openModal('actionModal');
@@ -2409,18 +2411,44 @@ function forceApprove() {
   updateStatus('BOOKED', { force: true });
 }
 
-function toggleRescheduleEditor() {
+function setRescheduleEditorUi(open) {
   const group = document.getElementById('rescheduleGroup');
   const current = allAppointments.find((a) => a.id === selectedEventId);
+  const approve = document.getElementById('btnApprove');
+  const reject = document.getElementById('btnReject');
+  const btn = document.getElementById('btnReschedule');
+  if (!group || !btn) return;
+  if (!open) {
+    group.style.display = 'none';
+    return;
+  }
+  group.style.display = 'grid';
+  if (approve) approve.style.display = 'none';
+  if (reject) reject.style.display = 'none';
+  const revive = current && (current.status === 'CANCELLED' || current.status === 'REJECTED');
+  const immediateBox = document.getElementById('rescheduleImmediate');
+  if (immediateBox && revive) {
+    immediateBox.checked = true;
+    const immLabel = immediateBox.closest('label');
+    if (immLabel) immLabel.style.display = 'none';
+  }
+  if (needsDayOrTime(current)) {
+    btn.innerHTML = '<i data-lucide="check" size="16"></i> Αποθήκευση μέρας';
+  } else if (revive) {
+    btn.innerHTML = '<i data-lucide="check" size="16"></i> Επανενεργοποίηση';
+  } else {
+    btn.innerHTML = '<i data-lucide="check" size="16"></i> Αποθήκευση ώρας';
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function toggleRescheduleEditor() {
+  const group = document.getElementById('rescheduleGroup');
   if (group.style.display === 'grid') {
     rescheduleAppointment();
     return;
   }
-  group.style.display = 'grid';
-  document.getElementById('btnReschedule').innerHTML = needsDayOrTime(current)
-    ? '<i data-lucide="calendar-plus" size="16"></i> Βάλε σε μέρα'
-    : '<i data-lucide="check" size="16"></i> Αποστολή πρότασης';
-  lucide.createIcons();
+  setRescheduleEditorUi(true);
 }
 
 async function rescheduleAppointment(forcedTime, opts = {}) {
@@ -2434,7 +2462,9 @@ async function rescheduleAppointment(forcedTime, opts = {}) {
     }
     const current = allAppointments.find((a) => a.id === selectedEventId);
     const wasBucket = current && isUnscheduled(current);
+    const revive = current && (current.status === 'CANCELLED' || current.status === 'REJECTED');
     const immediate = opts.immediate === true
+      || revive
       || document.getElementById('rescheduleImmediate')?.checked === true
       || needsDayOrTime(current);
     const bucketEmail = (document.getElementById('bucketCustomerEmail')?.value || '').trim();
@@ -2473,6 +2503,10 @@ async function rescheduleAppointment(forcedTime, opts = {}) {
           showToast(data.email_sent
             ? 'Στάλθηκε πρόταση στον πελάτη για αποδοχή.'
             : 'Η πρόταση αποθηκεύτηκε (το email δεν στάλθηκε).');
+        } else if (data.revived || revive) {
+          showToast(data.email_sent
+            ? 'Επανενεργοποιήθηκε (εγκεκριμένο) · ενημερώθηκε ο πελάτης.'
+            : 'Επανενεργοποιήθηκε — φαίνεται πράσινο στο πρόγραμμα.');
         } else if (wasBucket || data.from_bucket) {
           if (data.email_sent) {
             showToast('Μπήκε στο πρόγραμμα · στάλθηκε επιβεβαίωση.');
