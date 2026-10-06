@@ -1644,6 +1644,7 @@ function renderTodayList() {
   const rows = allAppointments
     .filter((item) => {
       if (item.date !== today || item.status === 'BLOCKED') return false;
+      if (item.status === 'CANCELLED' || item.status === 'REJECTED' || item.status === 'NO_SHOW') return false;
       if (waitlistNeedsTime(item) || !item.start_time) return true;
       const [hh, mm] = String(item.start_time).slice(0, 5).split(':').map(Number);
       const startMins = (hh || 0) * 60 + (mm || 0);
@@ -2022,7 +2023,8 @@ function openAppointmentDetails(item) {
   const actionable = item.status === 'PENDING' || item.status === 'WAITLIST';
   const approved = item.status === 'BOOKED' || item.status === 'CONFIRMED';
   const historyItem = past || item.status === 'REJECTED' || item.status === 'CANCELLED' || item.status === 'NO_SHOW';
-  document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || item.status === 'CANCELLED' || item.status === 'REJECTED' || item.status === 'NO_SHOW') ? 'none' : 'inline-flex';
+  const missingSlot = needsDayOrTime(item);
+  document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || missingSlot || item.status === 'CANCELLED' || item.status === 'REJECTED' || item.status === 'NO_SHOW') ? 'none' : 'inline-flex';
   document.getElementById('btnReject').style.display = actionable && !past ? 'inline-flex' : 'none';
   document.getElementById('btnCancelAppt').style.display = approved && !past ? 'inline-flex' : 'none';
   const hold = item.hold_status || '';
@@ -2056,6 +2058,7 @@ function openAppointmentDetails(item) {
   document.getElementById('reasonGroup').style.display = (actionable || (approved && !past)) ? 'block' : 'none';
   document.getElementById('actReason').value = item.status_reason || '';
   openModal('actionModal');
+  if (missingSlot && canReschedule) setRescheduleEditorUi(true);
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
@@ -2079,10 +2082,7 @@ async function updateStatus(status, extra) {
     const current = allAppointments.find((a) => a.id === selectedEventId);
     if (status === 'BOOKED' && needsDayOrTime(current)) {
       showToast('Πρώτα βάλε μέρα και ώρα, μετά έγκρινε.', true);
-      document.getElementById('rescheduleGroup').style.display = 'grid';
-      const rescheduleBtn = document.getElementById('btnReschedule');
-      rescheduleBtn.innerHTML = '<i data-lucide="check" size="16"></i> Αποθήκευση μέρας';
-      lucide.createIcons();
+      setRescheduleEditorUi(true);
       return;
     }
     try {
@@ -3054,6 +3054,11 @@ function lastOverlayIndex(kind, id) {
 }
 
 function hideOverlay(kind, id) {
+  if (kind === 'modal' && id === 'actionModal' && pendingCalendarRevert) {
+    const revert = pendingCalendarRevert;
+    pendingCalendarRevert = null;
+    try { revert(); } catch (e) {}
+  }
   if (kind === 'drawer') {
     const drawer = document.getElementById('clientDrawer');
     if (drawer) drawer.classList.remove('open');
@@ -3109,11 +3114,6 @@ function openModal(id) {
 }
 
 function closeModal(id) {
-  if (id === 'actionModal' && pendingCalendarRevert) {
-    const revert = pendingCalendarRevert;
-    pendingCalendarRevert = null;
-    try { revert(); } catch (e) {}
-  }
   if (id === 'supportModal') stopSupportPoll();
   closeOverlay('modal', id);
 }
