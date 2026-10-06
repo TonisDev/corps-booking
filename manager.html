@@ -119,6 +119,11 @@
       <strong id="billingWarnTitle">Πρόβλημα συνδρομής</strong>
       <p id="billingWarnText"></p>
     </div>
+    <div id="holdRiskBanner" class="hold-risk-banner" hidden>
+      <strong>Εγγύηση σε αναμονή χρέωσης</strong>
+      <p id="holdRiskText"></p>
+      <button type="button" class="btn btn-outline" onclick="openPaymentsModal()" style="margin-top:0.45rem;">Άνοιγμα πληρωμών</button>
+    </div>
 
     <div class="manager-shell">
     <div class="manager-main">
@@ -245,13 +250,13 @@
       <form id="settingsForm" class="settings-shell" onsubmit="saveSettings(event)">
         <nav class="settings-nav" aria-label="Θέματα ρυθμίσεων">
           <button type="button" class="settings-nav-btn active" data-settings-panel="profile" onclick="showSettingsPanel('profile')">Επιχείρηση</button>
-          <button type="button" class="settings-nav-btn" data-settings-panel="payments" onclick="showSettingsPanel('payments')">Πληρωμές / Εγγύηση</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="payments" onclick="showSettingsPanel('payments')">Πληρωμές πελατών</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="hours" onclick="showSettingsPanel('hours')">Ωράριο</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="services" onclick="showSettingsPanel('services')">Υπηρεσίες</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="form" onclick="showSettingsPanel('form')">Φόρμα πελάτη</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="features" onclick="showSettingsPanel('features')">Λειτουργίες</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="integrations" onclick="showSettingsPanel('integrations')">Telegram / Calendar</button>
-          <button type="button" class="settings-nav-btn" data-settings-panel="billing" id="settingsNavBilling" onclick="showSettingsPanel('billing')" hidden>Συνδρομή</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="billing" id="settingsNavBilling" onclick="showSettingsPanel('billing')" hidden>Συνδρομή QuickBook</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="security" onclick="showSettingsPanel('security')">Κωδικός / Κινητό</button>
         </nav>
         <div class="settings-main">
@@ -281,43 +286,54 @@
           </div>
 
           <div class="settings-panel" id="settingsPanel-payments">
-            <h3 class="settings-panel-title">Πληρωμές / Εγγύηση Κράτησης</h3>
-            <label class="remember-me">
-              <input type="checkbox" id="setClientHold">
-              Πληρωμές με κάρτα
-            </label>
-            <p class="settings-hint">Μόνο για υπηρεσίες με τιμή. Τα χρήματα πηγαίνουν στον δικό σου λογαριασμό Stripe.</p>
-            <p id="connectStatus" class="settings-hint"></p>
-            <button type="button" class="btn btn-outline" id="connectStripeBtn" onclick="startStripeConnect()" style="margin-top:0.45rem;">Σύνδεση Stripe</button>
-            <label class="remember-me" style="margin-top:0.85rem;">
-              <input type="checkbox" id="setPayOnline" checked>
-              Πληρωμή online (ολόκληρο ποσό)
-            </label>
-            <label class="remember-me" style="margin-top:0.45rem;">
-              <input type="checkbox" id="setPayShop" checked>
-              Πληρωμή στο κατάστημα (εγγύηση κράτησης)
-            </label>
-            <p class="settings-hint">Εγγύηση: μηδενική χρέωση σήμερα. Χρέωση μόνο σε ακύρωση τελευταίας στιγμής ή απουσία. Το υπόλοιπο πληρώνεται στο μαγαζί.</p>
-            <fieldset class="deposit-fieldset">
-              <legend>Ποσό εγγύησης</legend>
-              <label class="remember-me"><input type="radio" name="depositMode" id="depositModePercent" value="percent" checked onchange="syncDepositModeUi()"> Ποσοστό της τιμής υπηρεσίας</label>
-              <label class="remember-me" style="margin-top:0.35rem;"><input type="radio" name="depositMode" id="depositModeFixed" value="fixed" onchange="syncDepositModeUi()"> Σταθερό ποσό (€)</label>
-              <div id="depositPercentWrap" style="margin-top:0.55rem;">
-                <label for="setDepositPercent">Ποσοστό (%)</label>
-                <input class="field" type="number" id="setDepositPercent" min="1" max="100" value="50" style="max-width:7rem;">
-              </div>
-              <div id="depositFixedWrap" style="margin-top:0.55rem; display:none;">
-                <label for="setDepositFixed">Ποσό (€)</label>
-                <input class="field" type="number" id="setDepositFixed" min="0.5" step="0.5" value="1" style="max-width:7rem;">
-                <p class="settings-hint">Ελάχ. 0,50€. Αν η υπηρεσία είναι φθηνότερη, δεσμεύεται όλο το ποσό.</p>
-              </div>
-            </fieldset>
-            <label for="setCancelHours" style="display:block; margin-top:0.85rem;">Ακύρωση online, ώρες πριν</label>
-            <input class="field" type="number" id="setCancelHours" min="0" max="168" value="24" style="max-width:7rem;">
-            <p class="settings-hint">0 = μέχρι την ώρα του ραντεβού. Μέσα στο όριο η εγγύηση επιστρέφεται.</p>
-            <label for="setHoldDays" style="display:block; margin-top:0.85rem;">Δέσμευση χρημάτων, ημέρες πριν</label>
-            <input class="field" type="number" id="setHoldDays" min="0" max="14" value="2" style="max-width:7rem;">
-            <p class="settings-hint">Πότε μπαίνει προσωρινή δέσμευση στην κάρτα. 0 = αμέσως. Προεπιλογή 2. Μέχρι τότε μόνο αποθηκεύεται η κάρτα.</p>
+            <h3 class="settings-panel-title">Πληρωμές πελατών / Εγγύηση</h3>
+            <p class="settings-callout">Αυτό αφορά <strong>κάρτες πελατών</strong> → λεφτά στο <strong>μαγαζί σου</strong> (Stripe Connect). Η <strong>συνδρομή QuickBook</strong> είναι άλλη καρτέλα («Συνδρομή») και πληρώνεται στο QuickBook.</p>
+            <div class="help-box" style="margin-top:0;">
+              <h3>1. Σύνδεση λογαριασμού μαγαζιού</h3>
+              <label class="remember-me">
+                <input type="checkbox" id="setClientHold">
+                Πληρωμές με κάρτα
+              </label>
+              <p class="settings-hint">Μόνο για υπηρεσίες με τιμή. Τα χρήματα πηγαίνουν στον δικό σου λογαριασμό Stripe.</p>
+              <p id="connectStatus" class="settings-hint"></p>
+              <button type="button" class="btn btn-outline" id="connectStripeBtn" onclick="startStripeConnect()" style="margin-top:0.45rem;">Σύνδεση Stripe (Connect)</button>
+            </div>
+            <div class="help-box">
+              <h3>2. Τι ζητάς από τον πελάτη</h3>
+              <label class="remember-me">
+                <input type="checkbox" id="setPayOnline" checked>
+                Πληρωμή online (ολόκληρο ποσό)
+              </label>
+              <label class="remember-me" style="margin-top:0.45rem;">
+                <input type="checkbox" id="setPayShop" checked>
+                Πληρωμή στο κατάστημα (εγγύηση κράτησης)
+              </label>
+              <p class="settings-hint">Εγγύηση: μηδενική χρέωση σήμερα. Χρέωση μόνο με «Δεν προσήλθε» / ακύρωση τελευταίας στιγμής. Το υπόλοιπο πληρώνεται στο μαγαζί.</p>
+              <fieldset class="deposit-fieldset">
+                <legend>Ποσό εγγύησης</legend>
+                <label class="remember-me"><input type="radio" name="depositMode" id="depositModePercent" value="percent" checked onchange="syncDepositModeUi()"> Ποσοστό της τιμής υπηρεσίας</label>
+                <label class="remember-me" style="margin-top:0.35rem;"><input type="radio" name="depositMode" id="depositModeFixed" value="fixed" onchange="syncDepositModeUi()"> Σταθερό ποσό (€)</label>
+                <div id="depositPercentWrap" style="margin-top:0.55rem;">
+                  <label for="setDepositPercent">Ποσοστό (%)</label>
+                  <input class="field" type="number" id="setDepositPercent" min="1" max="100" value="50" style="max-width:7rem;">
+                </div>
+                <div id="depositFixedWrap" style="margin-top:0.55rem; display:none;">
+                  <label for="setDepositFixed">Ποσό (€)</label>
+                  <input class="field" type="number" id="setDepositFixed" min="0.5" step="0.5" value="1" style="max-width:7rem;">
+                  <p class="settings-hint">Ελάχ. 0,50€. Αν η υπηρεσία είναι φθηνότερη, δεσμεύεται όλο το ποσό.</p>
+                </div>
+              </fieldset>
+            </div>
+            <div class="help-box">
+              <h3>3. Κανόνες ακύρωσης / δέσμευσης</h3>
+              <label for="setCancelHours" style="display:block;">Ακύρωση online, ώρες πριν</label>
+              <input class="field" type="number" id="setCancelHours" min="0" max="168" value="24" style="max-width:7rem;">
+              <p class="settings-hint">0 = μέχρι την ώρα του ραντεβού. Μέσα στο όριο η εγγύηση επιστρέφεται.</p>
+              <label for="setHoldDays" style="display:block; margin-top:0.85rem;">Δέσμευση χρημάτων, ημέρες πριν</label>
+              <input class="field" type="number" id="setHoldDays" min="0" max="14" value="2" style="max-width:7rem;">
+              <p class="settings-hint">Πότε μπαίνει προσωρινή δέσμευση στην κάρτα. 0 = αμέσως. Προεπιλογή 2. Μέχρι τότε μόνο αποθηκεύεται η κάρτα.</p>
+              <p class="settings-hint settings-hint-warn">Αν περάσει η μέρα του ραντεβού και δεν πατήσεις «Δεν προσήλθε», η δέσμευση <strong>απελευθερώνεται αυτόματα</strong> — δεν χρεώνεται από μόνη της.</p>
+            </div>
           </div>
 
           <div class="settings-panel" id="settingsPanel-hours">
@@ -361,10 +377,11 @@
             <h3 class="settings-panel-title">Φόρμα πελάτη</h3>
             <h4 class="settings-subhead">Πεδία φόρμας</h4>
             <p class="settings-hint">Ξετσεκάρισε ό,τι δεν θέλεις. Πρέπει να μείνει <strong>τηλέφωνο ή email</strong>.</p>
+            <p id="emailFieldWarn" class="settings-hint settings-hint-warn" hidden>Χωρίς email πελάτη δεν στέλνονται σύνδεσμοι ακύρωσης / πρότασης ώρας / υπενθυμίσεις. Μένει μόνο τηλέφωνο.</p>
             <div class="form-field-toggles">
               <label><input type="checkbox" id="selectAllFormFields" onchange="toggleFormFields(this.checked)"> Επιλογή όλων</label>
-              <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone'); syncFormFieldSelect()"> Τηλέφωνο</label>
-              <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email'); syncFormFieldSelect()"> Email</label>
+              <label><input type="checkbox" id="formFieldPhone" checked onchange="guardContactFields('phone'); syncFormFieldSelect(); syncEmailFieldWarn()"> Τηλέφωνο</label>
+              <label><input type="checkbox" id="formFieldEmail" checked onchange="guardContactFields('email'); syncFormFieldSelect(); syncEmailFieldWarn()"> Email</label>
               <label><input type="checkbox" id="formFieldNotes" checked onchange="syncFormFieldSelect()"> Σημειώσεις</label>
               <label class="extra-field-toggle"><input type="checkbox" id="formFieldInstagram" checked onchange="syncExtraField(); syncFormFieldSelect()"> Επιπλέον πεδίο</label>
               <input class="field extra-field-title" type="text" id="formFieldExtraLabel" maxlength="40" placeholder="Τίτλος, π.χ. Instagram ή Telegram" oninput="syncExtraField()">
@@ -491,7 +508,8 @@
           </div>
 
           <div class="settings-panel" id="settingsPanel-billing">
-            <h3 class="settings-panel-title">Συνδρομή</h3>
+            <h3 class="settings-panel-title">Συνδρομή QuickBook</h3>
+            <p class="settings-callout">Αυτό είναι η <strong>συνδρομή πλατφόρμας</strong> (πληρωμή στο QuickBook). <strong>Δεν</strong> είναι οι κάρτες/εγγυήσεις πελατών — αυτές ρυθμίζονται στο «Πληρωμές πελατών / Εγγύηση».</p>
             <div class="help-box" id="billingBox" hidden style="margin-top:0;">
               <p id="billingText" style="margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;"></p>
               <div class="billing-actions" id="billingStart">
@@ -501,7 +519,7 @@
               </div>
               <button type="button" class="btn btn-outline" id="billingPortal" hidden onclick="openBillingPortal()">Διαχείριση συνδρομής</button>
             </div>
-            <p id="billingOffNote" class="settings-hint">Οι συνδρομές πλατφόρμας δεν είναι ενεργές ακόμα.</p>
+            <p id="billingOffNote" class="settings-hint">Οι συνδρομές πλατφόρμας δεν είναι ενεργές ακόμα (ελέγχεται από Super Admin).</p>
             <p class="settings-hint">Πριν πληρώσεις: <a href="oroi-epicheiriseis.html" target="_blank" rel="noopener">όροι επιχειρήσεων</a>, <a href="aporrito.html" target="_blank" rel="noopener">απόρρητο</a>. Για κάρτες πελατών απαιτείται αποδοχή όρων Stripe Connect στο onboarding.</p>
           </div>
 

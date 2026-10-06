@@ -1979,6 +1979,16 @@ function openAppointmentDetails(item) {
   const requestNote = item.status === 'PENDING' && currentTenantData && currentTenantData.intake_mode === 'request'
     ? '<p class="guide-note">Προτιμώμενη ώρα. Επικοινώνησε με τον πελάτη πριν την έγκριση.</p>'
     : '';
+  const noEmail = !(item.customer_email || '').trim();
+  const emailNote = noEmail
+    ? '<p class="guide-note guide-note-warn">Χωρίς email: δεν στέλνονται σύνδεσμος ακύρωσης, πρόταση ώρας ή υπενθύμιση. Μόνο τηλέφωνο / άμεση εφαρμογή.</p>'
+    : '';
+  const hold = item.hold_status || '';
+  const holdRiskNote = hold === 'authorized' && (item.status === 'BOOKED' || item.status === 'CONFIRMED')
+    ? (isPastAppointment(item)
+      ? '<p class="guide-note guide-note-warn">Η εγγύηση είναι δεσμευμένη αλλά το ραντεβού πέρασε. Πάτα «Δεν προσήλθε» για χρέωση — αλλιώς θα απελευθερωθεί αυτόματα.</p>'
+      : '<p class="guide-note">Εγγύηση δεσμευμένη. Αν δεν έρθει, πάτα «Δεν προσήλθε» (χρεώνει). Χωρίς ενέργεια μετά τη μέρα, απελευθερώνεται αυτόματα.</p>')
+    : '';
 
   document.getElementById('actTitle').innerHTML = item.status === 'BLOCKED'
     ? escapeHtml(blockedLabel(item))
@@ -1995,6 +2005,8 @@ function openAppointmentDetails(item) {
       <div class="detail-row"><span class="detail-k">Κατάσταση</span> <strong class="detail-v">${statusLabel(item.status)}</strong></div>
       ${holdLabel(item.hold_status, item) ? `<div class="detail-row"><span class="detail-k">Κάρτα</span> <strong class="detail-v">${escapeHtml(holdLabel(item.hold_status, item))}${item.hold_cents ? ` · ${(Number(item.hold_cents) / 100).toFixed(2)}€` : ''}</strong></div>` : ''}
       ${pastNote}
+      ${emailNote}
+      ${holdRiskNote}
       ${waitlistNote}
       ${requestNote}
     </div>
@@ -2131,8 +2143,8 @@ function holdLabel(status, item) {
   if (status === 'captured' && item && item.pay_mode === 'online') return 'Πληρωμένη online';
   return {
     awaiting_card: 'Αναμονή κάρτας',
-    authorized: 'Εγγύηση κράτησης',
-    card_saved: 'Κάρτα εγγύησης αποθηκευμένη',
+    authorized: 'Δεσμευμένη εγγύηση — χρέωση μόνο με «Δεν προσήλθε»',
+    card_saved: 'Κάρτα αποθηκευμένη (δέσμευση αργότερα)',
     captured: 'Εγγύηση χρεωμένη',
     released: 'Εγγύηση αποδεσμευμένη',
     refunded: 'Επιστράφηκε',
