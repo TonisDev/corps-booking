@@ -774,6 +774,14 @@ function syncFormFieldSelect() {
   if (!master || !boxes.length) return;
   master.checked = boxes.every((box) => box.checked);
   master.indeterminate = boxes.some((box) => box.checked) && !master.checked;
+  syncEmailFieldWarn();
+}
+
+function syncEmailFieldWarn() {
+  const email = document.getElementById('formFieldEmail');
+  const warn = document.getElementById('emailFieldWarn');
+  if (!warn) return;
+  warn.hidden = !(email && !email.checked);
 }
 
 function toggleFormFields(checked) {
@@ -1542,6 +1550,7 @@ async function fetchAppointments() {
     }
     paintMonthDayCounts();
     applyCalendarEventTitles();
+    renderHoldRiskBanner();
     if (document.getElementById('listModal').style.display === 'flex') {
       renderAppointmentList();
     }
@@ -2039,14 +2048,18 @@ function openAppointmentDetails(item) {
   document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || missingSlot || item.status === 'CANCELLED' || item.status === 'REJECTED' || item.status === 'NO_SHOW') ? 'none' : 'inline-flex';
   document.getElementById('btnReject').style.display = actionable && !past ? 'inline-flex' : 'none';
   document.getElementById('btnCancelAppt').style.display = approved && !past ? 'inline-flex' : 'none';
-  const hold = item.hold_status || '';
   const captureBtn = document.getElementById('btnHoldCapture');
   const refundBtn = document.getElementById('btnHoldRefund');
   const noShowBtn = document.getElementById('btnNoShow');
   const noShowWaiveBtn = document.getElementById('btnNoShowWaive');
   const startMs = appointmentStartMsLocal(item);
   const canNoShow = approved && startMs && Date.now() >= startMs - 30 * 60 * 1000 && item.status !== 'NO_SHOW';
-  if (noShowBtn) noShowBtn.style.display = canNoShow ? 'inline-flex' : 'none';
+  if (noShowBtn) {
+    noShowBtn.style.display = canNoShow ? 'inline-flex' : 'none';
+    noShowBtn.innerHTML = hold === 'authorized'
+      ? '<i data-lucide="user-x" size="16"></i> Δεν προσήλθε · χρέωση'
+      : '<i data-lucide="user-x" size="16"></i> Δεν προσήλθε';
+  }
   // Opt-out χωρίς χρέωση μόνο όταν υπάρχει authorized εγγύηση
   if (noShowWaiveBtn) noShowWaiveBtn.style.display = (canNoShow && hold === 'authorized') ? 'inline-flex' : 'none';
   hideNoShowChoice();
@@ -2150,6 +2163,29 @@ function holdLabel(status, item) {
     refunded: 'Επιστράφηκε',
     failed: 'Η εγγύηση απέτυχε'
   }[status] || '';
+}
+
+function atRiskAuthorizedHolds() {
+  return (allAppointments || []).filter((item) => (
+    item.hold_status === 'authorized'
+    && (item.status === 'BOOKED' || item.status === 'CONFIRMED')
+    && isPastAppointment(item)
+  ));
+}
+
+function renderHoldRiskBanner() {
+  const banner = document.getElementById('holdRiskBanner');
+  const text = document.getElementById('holdRiskText');
+  if (!banner || !text) return;
+  const rows = atRiskAuthorizedHolds();
+  if (!rows.length) {
+    banner.hidden = true;
+    return;
+  }
+  banner.hidden = false;
+  const names = rows.slice(0, 3).map((r) => r.customer_name || 'Πελάτης').join(', ');
+  const more = rows.length > 3 ? ` (+${rows.length - 3})` : '';
+  text.textContent = `${rows.length} δεσμευμένη${rows.length === 1 ? '' : 'ες'} εγγύηση${rows.length === 1 ? '' : 'ες'} σε παρελθόντα ραντεβού (${names}${more}). Πάτα «Δεν προσήλθε» για χρέωση — αλλιώς απελευθερώνονται αυτόματα.`;
 }
 
 async function settleHold(action) {
@@ -2848,11 +2884,11 @@ function renderConnectStatus() {
   const el = document.getElementById('connectStatus');
   if (!el || !currentTenantData) return;
   if (currentTenantData.connect_ready) {
-    el.textContent = 'Το Stripe είναι συνδεδεμένο. Οι δεσμεύσεις καρτών πηγαίνουν στο κατάστημα.';
+    el.textContent = 'Stripe Connect OK — κάρτες πελατών / εγγυήσεις πηγαίνουν στο μαγαζί (όχι στη συνδρομή QuickBook).';
   } else if (currentTenantData.connect_started) {
-    el.textContent = 'Η σύνδεση Stripe δεν έχει ολοκληρωθεί. Πάτα ξανά το κουμπί και τελείωσε τη φόρμα.';
+    el.textContent = 'Η σύνδεση Stripe Connect δεν έχει ολοκληρωθεί. Πάτα ξανά το κουμπί και τελείωσε τη φόρμα.';
   } else {
-    el.textContent = 'Χωρίς σύνδεση Stripe, η Εγγύηση Κράτησης δεν ανοίγει.';
+    el.textContent = 'Χωρίς Stripe Connect, οι πληρωμές/εγγυήσεις πελατών δεν ανοίγουν.';
   }
 }
 
@@ -2965,6 +3001,7 @@ function openSettingsModal() {
   const fields = formFieldsFromTenant(currentTenantData);
   document.getElementById('formFieldPhone').checked = fields.phone;
   document.getElementById('formFieldEmail').checked = fields.email;
+  syncEmailFieldWarn();
   document.getElementById('formFieldInstagram').checked = fields.instagram;
   document.getElementById('formFieldNotes').checked = fields.notes;
   document.getElementById('formFieldExtraLabel').value = fields.extra_label || '';

@@ -359,7 +359,7 @@ button, input, select, textarea { font-family: inherit; }
   justify-content: center;
   background: linear-gradient(180deg, rgba(255,251,235,0.97) 0%, rgba(255,251,235,0.92) 70%, rgba(255,251,235,0) 100%);
 }
-.platform-notice[hidden], .billing-warn-banner[hidden], .support-unread-banner[hidden] { display: none !important; }
+.platform-notice[hidden], .billing-warn-banner[hidden], .support-unread-banner[hidden], .hold-risk-banner[hidden] { display: none !important; }
 .platform-notice-box {
   width: min(36rem, 100%);
   padding: 0.7rem 0.85rem 0.65rem;
@@ -490,6 +490,32 @@ button, input, select, textarea { font-family: inherit; }
 }
 .billing-warn-banner strong { display: block; margin-bottom: 0.25rem; }
 .billing-warn-banner p { margin: 0; font-size: 0.86rem; line-height: 1.45; }
+.hold-risk-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+  color: #9a3412;
+}
+.hold-risk-banner[hidden] { display: none !important; }
+.hold-risk-banner strong { display: block; margin-bottom: 0.25rem; }
+.hold-risk-banner p { margin: 0; font-size: 0.86rem; line-height: 1.45; }
+.settings-callout {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, #0f172a 6%, var(--field-bg));
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.settings-hint-warn { color: #9a3412; font-weight: 600; }
+.guide-note-warn {
+  background: color-mix(in srgb, #ea580c 12%, var(--field-bg));
+  border-color: color-mix(in srgb, #ea580c 28%, var(--border-color));
+}
 .support-open { margin-top: 0.55rem; }
 #supportForm { display: grid; gap: 0.55rem; max-width: 28rem; margin-top: 0.7rem; }
 #supportForm[hidden] { display: none; }
