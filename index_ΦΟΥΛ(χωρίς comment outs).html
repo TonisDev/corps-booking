@@ -33,6 +33,7 @@
             --card-shadow: 0 0 0 1px rgba(79, 70, 229, 0.08), 0 0 72px rgba(79, 70, 229, 0.18), 0 24px 48px rgba(15, 23, 42, 0.08);
             --glow: rgba(79, 70, 229, 0.28);
         }
+
         [data-theme="dark"] {
             color-scheme: dark;
             --bg-color: #0b1220;
@@ -47,6 +48,7 @@
             --card-shadow: 0 0 0 1px rgba(129, 140, 248, 0.18), 0 0 88px rgba(129, 140, 248, 0.22), 0 24px 48px rgba(0, 0, 0, 0.4);
             --glow: rgba(129, 140, 248, 0.32);
         }
+
         [data-theme="warm"] {
             color-scheme: light;
             --bg-color: #f3ebe2;
@@ -62,6 +64,7 @@
             --card-radius: 1.45rem;
             --glow: rgba(194, 65, 12, 0.26);
         }
+
         [data-theme="ocean"] {
             color-scheme: light;
             --bg-color: #e8f3f3;
@@ -76,14 +79,17 @@
             --card-shadow: 0 0 0 1px rgba(15, 118, 110, 0.1), 0 0 72px rgba(15, 118, 110, 0.16), 0 24px 48px rgba(15, 118, 110, 0.08);
             --glow: rgba(15, 118, 110, 0.26);
         }
+
         body {
             background-color: var(--bg-color) !important;
             color: var(--text-color);
             font-family: var(--body-font);
         }
+
         h1, h2, h3 {
             font-family: var(--heading-font);
         }
+
         #submitBtn {
             background-color: var(--brand-color) !important;
         }
@@ -96,6 +102,7 @@
 </head>
 <body class="antialiased min-h-screen">
     <div class="page-bg" aria-hidden="true"></div>
+
     <!-- [SECTION: LANDING-HTML] — φαίνεται μόνο χωρίς business_code -->
     <main class="booking-shell">
     <div class="home">
@@ -103,17 +110,19 @@
             <span class="home-mark">QuickBook</span>
             <a class="home-nav-link" href="manager.html">Είσοδος</a>
         </header>
+
         <section class="home-hero">
-            <p class="home-kicker">Έξυπνη διαχείριση online κρατήσεων</p>
-            <h1>Οργανώστε τα ραντεβού σας εύκολα, <span class="home-hero-accent">μέσα από έναν μοναδικό σύνδεσμο</span></h1>
-            <p class="home-hero-lead">Οι πελάτες σας επιλέγουν την υπηρεσία και την ώρα που επιθυμούν. Το αίτημα φτάνει αμέσως στον πίνακα ελέγχου σας για έγκριση, απόρριψη ή προσαρμογή. Όλα γίνονται άμεσα και απλά, χωρίς λήψη εφαρμογής ή δημιουργία λογαριασμού από τον πελάτη.</p>
+            <p class="home-kicker">Online κρατήσεις για επαγγελματίες</p>
+            <h1>Ραντεβού για την επιχείρησή σου, <span class="home-hero-accent">από έναν και μόνο σύνδεσμο</span></h1>
+            <p class="home-hero-lead">Ο πελάτης ανοίγει τον σύνδεσμο και ζητάει την ώρα που επιθυμεί. Το αίτημα εμφανίζεται αμέσως στον πίνακα ελέγχου σου. Από εκεί το εγκρίνεις, το απορρίπτεις ή προτείνεις νέα ώρα. Η θέση οριστικοποιείται μόνο μετά τη δική σου έγκριση — χωρίς λήψη εφαρμογής και χωρίς δημιουργία λογαριασμού για τον πελάτη.</p>
         </section>
+
         <section class="home-samples" aria-label="Παράδειγμα">
             <figure class="home-sample">
-                <figcaption>Η εμπειρία του πελάτη σας</figcaption>
+                <figcaption>Τι βλέπει και συμπληρώνει ο πελάτης</figcaption>
                 <div class="home-sample-card">
                     <strong>Barber Shop Νίκος</strong>
-                    <label>Όνομα<input readonly tabindex="-1" value="Γιώργος Παπαδόπουλος"></label>
+                    <label>Όνομα<input readonly tabindex="-1" value="Γιώργος Παπαδopoulos"></label>
                     <label>Υπηρεσία<input readonly tabindex="-1" value="Κούρεμα + περιποίηση"></label>
                     <label>Ημέρα<input readonly tabindex="-1" value="Τετάρτη 7 Οκτωβρίου"></label>
                     <label>Ώρα<input readonly tabindex="-1" value="18:30"></label>
@@ -121,7 +130,7 @@
                 </div>
             </figure>
             <figure class="home-sample home-sample-cal">
-                <figcaption>Ο δικός σας πίνακας ελέγχου — Εβδομαδιαίο ημερολόγιο</figcaption>
+                <figcaption>Τι διαχειρίζεσαι εσύ — εβδομαδιαίο ημερολόγιο</figcaption>
                 <div class="home-sample-card home-cal" aria-hidden="true">
                     <div class="home-cal-top">
                         <div>
@@ -168,15 +177,16 @@
                             </div>
                         </div>
                     </div>
-                    <p class="home-cal-caption">Έγκριση, απόρριψη ή μεταφορά ραντεβού με ένα κλικ — εύκολα, γρήγορα και οργανωμένα.</p>
+                    <p class="home-cal-caption">Έγκριση, απόρριψη ή αλλαγή ώρας με ένα κλικ — εύκολα, σαν πραγματικό ημερολόγιο.</p>
                 </div>
             </figure>
         </section>
-        <!-- [START PRICING SECTION - COMMENTED OUT]
+
         <section class="home-pricing" id="times" aria-label="Τιμές">
             <p class="home-pricing-kicker">Χωρίς προμήθειες ανά ραντεβού</p>
             <h2 class="home-pricing-title">Πόσο κοστίζει;</h2>
             <p class="home-pricing-lead">Παρακάτω βλέπετε ενδεικτικά τα πλάνα και τις τιμές. Η δήλωση ενδιαφέροντος γίνεται στη φόρμα — όχι αγορά από εδώ. Αν θέλετε, υπάρχει και δωρεάν δοκιμαστική περίοδος 2 εβδομάδων.</p>
+
             <div class="home-pricing-plans home-pricing-plans-3">
                 <article class="home-pricing-plan">
                     <span class="home-pricing-label">Ευελιξία</span>
@@ -186,6 +196,7 @@
                     <p class="home-pricing-compare">Σύνολο για ένα έτος: <strong>270 €</strong></p>
                     <p class="home-pricing-pitch">Πλήρης ευελιξία, χωρίς μακροχρόνιες δεσμεύσεις — πληρώνετε μήνα με τον μήνα.</p>
                 </article>
+
                 <article class="home-pricing-plan is-featured">
                     <span class="home-pricing-badge">Η πιο δημοφιλής &amp; συμφέρουσα επιλογή</span>
                     <span class="home-pricing-label">Ετήσιο</span>
@@ -195,6 +206,7 @@
                     <p class="home-pricing-save">Κέρδος σε σχέση με τη μηνιαία συνδρομή (270 € / έτος)</p>
                     <p class="home-pricing-pitch">Σταθερό και χαμηλότερο κόστος για όλο τον χρόνο.</p>
                 </article>
+
                 <article class="home-pricing-plan">
                     <span class="home-pricing-label">Μία για πάντα</span>
                     <h3 class="home-pricing-name">Ισόβια άδεια</h3>
@@ -204,6 +216,7 @@
                     <p class="home-pricing-pitch">Πληρώνετε μία μόνο φορά και έχετε το σύστημα για πάντα.</p>
                 </article>
             </div>
+
             <aside class="home-pricing-trial" aria-label="Δωρεάν δοκιμή">
                 <div class="home-pricing-trial-copy">
                     <p class="home-pricing-trial-kicker">Δωρεάν δοκιμή</p>
@@ -211,6 +224,7 @@
                     <p class="home-pricing-trial-text">Χωρίς πιστωτική κάρτα και χωρίς καμία δέσμευση. Αναλαμβάνουμε εμείς το αρχικό στήσιμο — μετά επιλέγετε πακέτο ή σταματάτε. Τη δηλώνετε στη φόρμα πιο κάτω.</p>
                 </div>
             </aside>
+
             <div class="home-pricing-after">
                 <ul class="home-pricing-points">
                     <li><strong>Δικός σου σύνδεσμος (Bio / QR Code):</strong> Οι πελάτες κλείνουν ραντεβού άμεσα, χωρίς λήψη εφαρμογής ή εγγραφή.</li>
@@ -220,18 +234,17 @@
                 <p class="home-pricing-fine">Οι τιμές αναγράφονται σε ευρώ. Ο ΦΠΑ προστίθεται όπου εφαρμόζεται. Η πληρωμή γίνεται αργότερα, μετά την επικοινωνία — όχι από αυτή τη φόρμα. <a href="oroi-epicheiriseis.html">Όροι επιχειρήσεων</a> · <a href="aporrito.html">Πολιτική απορρήτου</a>.</p>
             </div>
         </section>
-        [END PRICING SECTION - COMMENTED OUT] -->
+
         <section class="home-close" id="aitima">
             <div class="home-request">
                 <div class="home-request-inner">
                     <h2>Θέλω το QuickBook στην επιχείρησή μου</h2>
-                    <p id="leadFormLead">Συμπληρώστε τα στοιχεία σας και θα επικοινωνήσουμε μαζί σας για τη δωρεάν επίδειξη και το αρχικό στήσιμο.</p>
+                    <p id="leadFormLead">Διάλεξε ξεκάθαρα: <strong>μόνο δωρεάν δοκιμή 2 εβδομάδων</strong> ή <strong>πακέτο που σε ενδιαφέρει</strong> (πληρωμή αργότερα, μετά την επικοινωνία — όχι από εδώ).</p>
                     <form id="leadForm" class="home-lead">
                         <div class="home-honey" aria-hidden="true">
                             <input type="text" name="website" tabindex="-1" autocomplete="off">
                         </div>
-                        <input type="hidden" name="interest" id="leadInterest" value="demo">
-                        <!-- [START PLAN SELECTION - COMMENTED OUT]
+                        <input type="hidden" name="interest" id="leadInterest" value="">
                         <fieldset class="home-lead-plans">
                             <legend>Τι θέλεις;</legend>
                             <button type="button" class="home-lead-trial-opt" data-interest="trial" aria-pressed="false">Μόνο δωρεάν δοκιμή 2 εβδομάδων — χωρίς πακέτο ακόμα</button>
@@ -254,31 +267,34 @@
                                 </button>
                             </div>
                         </fieldset>
-                        [END PLAN SELECTION - COMMENTED OUT] -->
                         <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
                         <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
                         <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
                         <label>Email<input name="email" type="email" maxlength="120" autocomplete="email"></label>
                         <p class="home-lead-hint">Συμπληρώστε τηλέφωνο ή email επικοινωνίας.</p>
-                        <button type="submit" class="home-lead-submit">Υποβολή Αιτήματος</button>
+                        <button type="submit" class="home-lead-submit">Το θέλω — στείλε το αίτημα</button>
                         <p id="leadStatus" class="home-lead-status" role="status"></p>
                     </form>
                 </div>
             </div>
         </section>
+
         <footer class="home-foot">
             <a href="oroi.html">Όροι χρήσης φόρμας</a>
             <a href="oroi-epicheiriseis.html">Όροι επιχειρήσεων</a>
             <a href="aporrito.html">Πολιτική απορρήτου</a>
         </footer>
     </div>
+
     <!-- [SECTION: FORM-HTML] -->
     <div class="booking-card">
+
         <!-- Loading State Αρχικής Φόρτωσης Επιχείρησης -->
         <div id="initialLoader" class="form-loader">
             <span class="form-loader-dot"></span>
             <p>Φόρτωση</p>
         </div>
+
         <!-- Header Επιχείρησης -->
         <div id="businessHeader" class="brand-block hidden">
             <img id="businessLogo" class="business-logo" src="demo-logo.svg" alt="Λογότυπο επιχείρησης">
@@ -286,29 +302,37 @@
             <p id="businessSubtitle">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
             <button type="button" id="shopInfoBtn">Πληροφορίες καταστήματος</button>
         </div>
+
         <p id="welcomeText" class="welcome-text hidden"></p>
+
         <!-- Φόρμα Κράτησης -->
         <form id="bookingForm" class="booking-fields hidden">
+
             <div style="display:none !important;">
                 <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
             </div>
+
             <div class="field-block">
                 <label class="field-label" for="name">Ονοματεπώνυμο</label>
                 <input type="text" id="name" required maxlength="80" autocomplete="name" autocapitalize="words" placeholder="Το όνομά σας">
             </div>
+
             <div class="field-block" id="wrapPhone">
                 <label class="field-label" for="phone">Τηλέφωνο</label>
                 <input type="tel" id="phone" required maxlength="24" autocomplete="tel" inputmode="tel" placeholder="69XXXXXXXX">
             </div>
+
             <div class="field-block" id="wrapEmail">
                 <label class="field-label" for="email">Email</label>
                 <input type="email" id="email" required maxlength="120" autocomplete="email" inputmode="email" autocapitalize="none" placeholder="name@email.com">
                 <p class="field-help">Θα ενημερωθείτε εδώ αν το ραντεβού εγκριθεί ή απορριφθεί.</p>
             </div>
+
             <div class="field-block" id="wrapInstagram">
                 <label class="field-label" for="instagram"><span id="extraFieldLabel">Instagram</span> <span>προαιρετικό</span></label>
                 <input type="text" id="instagram" maxlength="80" autocomplete="off" autocapitalize="none" placeholder="προαιρετικό">
             </div>
+
             <div class="field-block">
                 <label class="field-label" for="service">Υπηρεσία</label>
                 <div class="service-picker" id="servicePicker">
@@ -319,10 +343,12 @@
                     <div id="servicePickerList" class="service-picker-list hidden" role="listbox"></div>
                 </div>
             </div>
+
             <div class="field-block">
                 <label class="field-label" for="date">Ημερομηνία</label>
                 <input type="text" id="date" required placeholder="Επιλέξτε ημερομηνία" readonly>
             </div>
+
             <div class="field-block">
                 <!-- Ώρα: ένα dropdown · δύο ρολάκια (ώρα | λεπτά 00/30) -->
                 <label class="field-label" id="timeLabel" for="timeDropdownBtn">Ώρα</label>
@@ -347,10 +373,12 @@
                     <button type="button" id="waitlistBtn" class="hidden">Ναι, ενημερώστε με</button>
                 </div>
             </div>
+
             <div class="field-block" id="wrapNotes">
                 <label class="field-label" for="notes">Σημειώσεις <span>προαιρετικό</span></label>
                 <textarea id="notes" rows="2" placeholder="Οτιδήποτε θέλετε να γνωρίζουμε"></textarea>
             </div>
+
             <button type="submit" id="submitBtn">
                 <span id="submitBtnText">Υποβολή Αιτήματος Κράτησης</span>
                 <svg id="submitSpinner" class="submit-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -361,19 +389,24 @@
             <p id="bookingPolicyNote" class="booking-policy-note" hidden></p>
             <p class="legal-note">Με την αποστολή αποδέχεστε τους <a href="oroi.html" target="_blank" rel="noopener">όρους χρήσης</a>.</p>
         </form>
+
         <!-- Μηνύματα Επιτυχίας / Google Calendar Action -->
         <div id="responseContainer" class="response-box hidden" aria-live="polite">
             <div id="responseMessage" tabindex="-1"></div>
             <a id="gcalBtn" href="#" target="_blank" class="hidden">Προσθήκη στο Google Calendar</a>
         </div>
+
         <div id="loadingError" class="form-error hidden">Η επιχείρηση δεν βρέθηκε ή υπάρχει πρόβλημα σύνδεσης.</div>
     </div>
     </main>
+
     <p class="powered-by rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
+
     <!-- Flatpickr JS & Ελληνική γλώσσα -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/gr.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <div id="payModal" class="success-modal hidden">
         <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="payTitle">
             <h2 id="payTitle">Πώς θέλεις να πληρώσεις;</h2>
