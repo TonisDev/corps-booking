@@ -226,11 +226,14 @@
                 <div class="home-request-inner">
                     <h2>Θέλω το QuickBook στην επιχείρησή μου</h2>
                     <p id="leadFormLead">Συμπληρώστε τα στοιχεία σας και θα επικοινωνήσουμε μαζί σας για τη δωρεάν επίδειξη και το αρχικό στήσιμο.</p>
-                    <form id="leadForm" class="home-lead">
+<form id="leadForm" class="home-lead">
                         <div class="home-honey" aria-hidden="true">
                             <input type="text" name="website" tabindex="-1" autocomplete="off">
                         </div>
-                        <input type="hidden" name="interest" id="leadInterest" value="demo">
+
+                        <!-- Προεπιλεγμένο πλάνο (Ετήσιο) για να περνάει το validation του JS χωρίς σφάλμα -->
+                        <input type="hidden" name="interest" id="leadInterest" value="year" class="is-on is-selected" aria-pressed="true">
+
                         <!-- [START PLAN SELECTION - COMMENTED OUT]
                         <fieldset class="home-lead-plans">
                             <legend>Τι θέλεις;</legend>
@@ -255,10 +258,7 @@
                             </div>
                         </fieldset>
                         [END PLAN SELECTION - COMMENTED OUT] -->
-                        <fieldset class="home-lead-plans" style="display: none !important;">
-                            <legend>Τι θέλεις;</legend>
-                            <button type="button" class="home-lead-trial-opt is-selected" data-interest="trial" aria-pressed="true">Μόνο δωρεάν δοκιμή 2 εβδομάδων — χωρίς πακέτο ακόμα</button>
-                        </fieldset>
+
                         <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
                         <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
                         <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
