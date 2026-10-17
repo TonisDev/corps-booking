@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261004h">
+    <link rel="stylesheet" href="manager_style.css?v=20261017a">
 </head>
 <body data-theme="light">
 
@@ -133,9 +133,9 @@
         <span id="storeCodeSpan"></span>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="openBookingToBucket()" title="Προσθήκη χωρίς μέρα — μπαίνει στο bucket"><i data-lucide="inbox" size="16"></i> <span class="btn-label">Στο bucket</span></button>
-        <button class="btn" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
-        <button class="btn" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
+        <button class="btn btn-outline header-desk-only" onclick="openBookingToBucket()" title="Προσθήκη χωρίς μέρα — μπαίνει στο bucket"><i data-lucide="inbox" size="16"></i> <span class="btn-label">Στο bucket</span></button>
+        <button class="btn header-desk-only" onclick="openBookingFromToolbar()"><i data-lucide="plus" size="16"></i> <span class="btn-label">Νέο Ραντεβού</span></button>
+        <button class="btn header-desk-only" onclick="openSettingsModal()" style="background: #0f172a;"><i data-lucide="settings" size="16"></i> <span class="btn-label">Ρυθμίσεις</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" id="themeToggleBtn" title="Εναλλαγή Theme"><i data-lucide="moon" size="16"></i></button>
       </div>
       <button type="button" class="btn btn-danger btn-logout" onclick="handleLogout()" title="Αποσύνδεση" aria-label="Αποσύνδεση"><i data-lucide="log-out"></i></button>
@@ -237,6 +237,45 @@
     </div><!-- /.manager-body -->
     </div><!-- /.manager-main -->
     </div><!-- /.manager-shell -->
+
+    <div class="mobile-dock" id="mobileDock">
+      <button type="button" class="mobile-fab" onclick="openBookingFromToolbar()" aria-label="Νέο ραντεβού">
+        <i data-lucide="plus" size="22"></i>
+        <span>Νέο</span>
+      </button>
+      <nav class="mobile-nav" aria-label="Κύριο μενού">
+        <button type="button" class="mobile-nav-btn is-on" onclick="scrollManagerHome()">
+          <i data-lucide="calendar" size="20"></i><span>Ημερολόγιο</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" onclick="openAppointmentList('history')">
+          <i data-lucide="history" size="20"></i><span>Ιστορικό</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" onclick="openPaymentsModal()">
+          <i data-lucide="wallet" size="20"></i><span>Πληρωμές</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" onclick="openSettingsModal()">
+          <i data-lucide="settings" size="20"></i><span>Ρυθμίσεις</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" id="mobileMoreBtn" onclick="openMobileMore()" aria-haspopup="dialog">
+          <i data-lucide="ellipsis" size="20"></i><span>Άλλα</span>
+          <span id="mobileMoreDot" class="mobile-nav-dot" hidden></span>
+        </button>
+      </nav>
+    </div>
+
+    <div id="mobileMore" class="mobile-more" hidden>
+      <button type="button" class="mobile-more-backdrop" onclick="closeMobileMore()" aria-label="Κλείσιμο"></button>
+      <div class="mobile-more-sheet" role="dialog" aria-label="Άλλες ενέργειες">
+        <div class="mobile-more-grab" aria-hidden="true"></div>
+        <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
+        <button type="button" class="mobile-more-action" data-feature="notes" onclick="closeMobileMore(); openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
+        <button type="button" class="mobile-more-action" data-feature="instagram" onclick="closeMobileMore(); copyInstagramPack()"><i data-lucide="instagram" size="18"></i><span>Για Instagram</span></button>
+        <button type="button" class="mobile-more-action" id="mobileSupportBtn" onclick="closeMobileMore(); openSupportModal()"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="mobileSupportDot" class="side-unread-dot" hidden></span></button>
+        <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openPublicPage()"><i data-lucide="external-link" size="18"></i><span>Σελίδα πελάτη</span></button>
+        <button type="button" class="mobile-more-action" data-feature="bucket" onclick="closeMobileMore(); openBookingToBucket()"><i data-lucide="inbox" size="18"></i><span>Στο bucket</span></button>
+        <button type="button" class="btn btn-outline mobile-more-close" onclick="closeMobileMore()">Κλείσιμο</button>
+      </div>
+    </div>
   </div>
 
   <!-- Settings Modal -->
@@ -923,7 +962,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20261004i"></script>
+<script src="manager.js?v=20261017a"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

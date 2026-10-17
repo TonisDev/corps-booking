@@ -348,6 +348,14 @@ function updateSupportUnreadBadge(count) {
       ? `Υποστήριξη · ${n} νέ${n === 1 ? 'α απάντηση' : 'ες απαντήσεις'}`
       : 'Chat με τον δημιουργό του QuickBook';
   }
+  const moreDot = document.getElementById('mobileMoreDot');
+  const moreBtn = document.getElementById('mobileMoreBtn');
+  const supportDot = document.getElementById('mobileSupportDot');
+  const supportBtn = document.getElementById('mobileSupportBtn');
+  if (moreDot) moreDot.hidden = n <= 0;
+  if (supportDot) supportDot.hidden = n <= 0;
+  if (moreBtn) moreBtn.classList.toggle('has-unread', n > 0);
+  if (supportBtn) supportBtn.classList.toggle('has-unread', n > 0);
   const banner = document.getElementById('supportUnreadBanner');
   const bannerText = document.getElementById('supportUnreadBannerText');
   const noticeVisible = !!(currentTenantData && currentTenantData.admin_notice && currentTenantData.admin_notice.body);
@@ -1012,7 +1020,7 @@ function applyFeatureUi() {
   const bucketOn = featureOn('bucket');
   const notesOn = featureOn('notes');
   const igOn = featureOn('instagram');
-  document.querySelectorAll('[onclick="openBookingToBucket()"]').forEach((el) => {
+  document.querySelectorAll('[onclick="openBookingToBucket()"], [data-feature="bucket"]').forEach((el) => {
     el.style.display = bucketOn ? '' : 'none';
   });
   const unsCard = document.querySelector('.stat-card[onclick*="unscheduled"]');
@@ -1026,12 +1034,31 @@ function applyFeatureUi() {
       syncBookUnscheduledFields();
     }
   }
-  document.querySelectorAll('[onclick="openStickyBoard()"]').forEach((el) => {
+  document.querySelectorAll('[onclick="openStickyBoard()"], [data-feature="notes"]').forEach((el) => {
     el.style.display = notesOn ? '' : 'none';
   });
-  document.querySelectorAll('[onclick="copyInstagramPack()"]').forEach((el) => {
+  document.querySelectorAll('[onclick="copyInstagramPack()"], [data-feature="instagram"]').forEach((el) => {
     el.style.display = igOn ? '' : 'none';
   });
+}
+
+function scrollManagerHome() {
+  closeMobileMore();
+  const el = document.querySelector('.calendar-card');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  else window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openMobileMore() {
+  const sheet = document.getElementById('mobileMore');
+  if (!sheet) return;
+  sheet.hidden = false;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeMobileMore() {
+  const sheet = document.getElementById('mobileMore');
+  if (sheet) sheet.hidden = true;
 }
 
 function openBlockFromToolbar() {
