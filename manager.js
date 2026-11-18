@@ -973,7 +973,7 @@ function renderDayClickList(dateStr) {
           ${item.customer_phone ? ' · ' + escapeHtml(item.customer_phone) : ''}
         </div>
       </div>
-      <div style="display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end;">${statusBadge(item)}</div>
+      <div class="apt-badges">${statusBadge(item)}</div>
     </button>
   `).join('');
   list.querySelectorAll('.apt-row').forEach(btn => {
@@ -1272,7 +1272,7 @@ function renderOutOfHoursExceptions() {
         <div style="font-weight:600;">${escapeHtml(formatGreekDate(item.date))} · ${escapeHtml(String(item.start_time).slice(0, 5))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
         <div class="apt-row-meta">${escapeHtml(item.service_name || '-')} · εξαιρείται από κανονικό ωράριο</div>
       </div>
-      <div>${statusBadge(item)}</div>
+      <div class="apt-badges">${statusBadge(item)}</div>
     </button>
   `).join('');
   wrap.querySelectorAll('.apt-row').forEach((btn) => {
@@ -1335,6 +1335,17 @@ function applyCalendarLayout() {
   calendar.setOption('height', calendarHeight());
   calendar.setOption('expandRows', !phone);
   calendar.setOption('displayEventTime', !phone);
+  const views = calendar.getOption('views') || {};
+  calendar.setOption('views', Object.assign({}, views, {
+    dayGridWeek: Object.assign({}, views.dayGridWeek, {
+      displayEventTime: false,
+      dayMaxEventRows: phone ? 5 : 8
+    }),
+    dayGridMonth: Object.assign({}, views.dayGridMonth, {
+      displayEventTime: false,
+      dayMaxEventRows: phone ? 3 : 4
+    })
+  }));
   applyCalendarEventTitles();
   paintMonthDayCounts();
 }
@@ -1355,9 +1366,17 @@ function blockedLabel(item) {
   return 'Κλειδωμένες ώρες';
 }
 
-function calendarEventTitle(item, compact) {
+function calendarEventTitle(item, viewType) {
   if (item && item.status === 'BLOCKED') return blockedLabel(item);
-  const name = compact ? customerFirstName(item && item.customer_name) : (item && item.customer_name || 'Χωρίς όνομα');
+  const dayGrid = viewType === 'dayGridMonth' || viewType === 'dayGridWeek';
+  const name = (dayGrid || viewType === 'timeGridWeek')
+    ? customerFirstName(item && item.customer_name)
+    : ((item && item.customer_name) || 'Χωρίς όνομα');
+  if (dayGrid) {
+    const time = item && item.start_time ? String(item.start_time).slice(0, 5) : '';
+    if (waitlistNeedsTime(item)) return time ? `${time} Ουρά` : `Ουρά · ${name}`;
+    return time ? `${time} ${name}` : name;
+  }
   if (waitlistNeedsTime(item)) return `Ουρά · ${name}`;
   const service = (item && item.service_name) || '';
   return service ? `${name} · ${service}` : name;
@@ -1365,10 +1384,10 @@ function calendarEventTitle(item, compact) {
 
 function applyCalendarEventTitles() {
   if (!calendar) return;
-  const compact = isCompactCalView(calendar.view && calendar.view.type);
+  const viewType = calendar.view && calendar.view.type;
   calendar.getEvents().forEach(ev => {
     const item = ev.extendedProps || {};
-    ev.setProp('title', calendarEventTitle(item, compact));
+    ev.setProp('title', calendarEventTitle(item, viewType));
   });
 }
 
@@ -1418,9 +1437,14 @@ function initCalendar() {
     expandRows: !phone,
     nowIndicator: true,
     locale: 'el',
+    fixedWeekCount: false,
     navLinks: false,
     allDayText: 'Ουρά',
     displayEventTime: !phone,
+    moreLinkText: (n) => `+${n}`,
+    moreLinkClick: (arg) => {
+      openSlotChoice({ date: arg.date, view: { type: arg.view.type } });
+    },
     eventShortHeight: 22,
     eventMinHeight: 28,
     eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
@@ -1474,19 +1498,18 @@ function initCalendar() {
       },
       dayGridWeek: {
         titleFormat: { month: 'short', year: 'numeric' },
-        dayHeaderFormat: { weekday: 'short', day: 'numeric' }
+        dayHeaderFormat: { weekday: 'short', day: 'numeric' },
+        displayEventTime: false,
+        dayMaxEventRows: phone ? 5 : 8
       },
       dayGridMonth: {
-        titleFormat: { month: 'short', year: 'numeric' }
+        titleFormat: { month: 'short', year: 'numeric' },
+        displayEventTime: false,
+        dayMaxEventRows: phone ? 3 : 4
       }
     },
     eventClick: info => {
       if (calendarClickIgnored()) return;
-      if (isPhoneDayGrid(info.view.type)) {
-        info.jsEvent.preventDefault();
-        openSlotChoice({ date: info.event.start, view: { type: info.view.type } });
-        return;
-      }
       const item = Object.assign({}, info.event.extendedProps, {
         id: info.event.id || (info.event.extendedProps && info.event.extendedProps.id)
       });
@@ -1542,7 +1565,7 @@ async function fetchAppointments() {
       const floating = waitlistNeedsTime(item);
       calendar.addEvent({
         id: item.id,
-        title: calendarEventTitle(item, false),
+        title: calendarEventTitle(item, calendar.view && calendar.view.type),
         allDay: floating,
         start: floating ? item.date : `${item.date}T${item.start_time}`,
         end: floating ? undefined : `${item.date}T${item.end_time}`,
@@ -1641,31 +1664,8 @@ function appointmentsOnDate(dateStr) {
 }
 
 function paintMonthDayCounts() {
-  const cells = document.querySelectorAll('#calendar .fc-daygrid-day');
-  const show = calendar && isPhoneDayGrid(calendar.view.type);
-  cells.forEach(cell => {
-    const badge = cell.querySelector('.month-day-count');
-    if (!show) {
-      if (badge) badge.remove();
-      cell.classList.remove('has-month-count');
-      return;
-    }
-    const n = appointmentsOnDate(cell.getAttribute('data-date')).length;
-    if (!n) {
-      if (badge) badge.remove();
-      cell.classList.remove('has-month-count');
-      return;
-    }
-    let mark = badge;
-    if (!mark) {
-      mark = document.createElement('span');
-      mark.className = 'month-day-count';
-      const frame = cell.querySelector('.fc-daygrid-day-frame') || cell;
-      frame.appendChild(mark);
-    }
-    mark.textContent = String(n);
-    cell.classList.add('has-month-count');
-  });
+  document.querySelectorAll('#calendar .month-day-count').forEach((badge) => badge.remove());
+  document.querySelectorAll('#calendar .has-month-count').forEach((cell) => cell.classList.remove('has-month-count'));
 }
 
 function todayISO() {
@@ -1703,7 +1703,7 @@ function renderTodayList() {
           ${item.customer_phone ? ' · <a href="tel:' + escapeHtml(item.customer_phone) + '" onclick="event.stopPropagation()">' + escapeHtml(item.customer_phone) + '</a>' : ''}
         </div>
       </div>
-      <div style="display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end;">${statusBadge(item)}</div>
+      <div class="apt-badges">${statusBadge(item)}</div>
     </button>
   `).join('');
 

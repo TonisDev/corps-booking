@@ -190,6 +190,15 @@ html[data-mode="home"] .page-bg::before {
   line-height: 1.7;
   max-width: 38rem;
 }
+.home-hero .home-free {
+  margin: 1.15rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--brand-color) 12%, #fff);
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.45;
+}
 .home-samples {
   display: grid;
   grid-template-columns: 1fr 1fr;

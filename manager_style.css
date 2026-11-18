@@ -560,6 +560,14 @@ button, input, select, textarea { font-family: inherit; }
   white-space: nowrap;
 }
 .today-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.today-list .apt-row,
+#dayAppointmentsList .apt-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.today-list .apt-row > :first-child,
+#dayAppointmentsList .apt-row > :first-child { min-width: 0; }
+.today-list .apt-badges,
+#dayAppointmentsList .apt-badges { max-width: none; }
 .day-hours-block { border: 1px solid var(--border-color); border-radius: 0.65rem; padding: 0.75rem; margin-bottom: 0.65rem; }
 .day-hours-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
 #dayAppointmentsList { display: none; flex-direction: column; gap: 0.45rem; max-height: 42vh; overflow-y: auto; margin: 1rem 0 0; }
@@ -794,6 +802,17 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 [data-theme="dark"] .fc-theme-standard td, [data-theme="dark"] .fc-theme-standard th, [data-theme="dark"] .fc-theme-standard .fc-scrollgrid { border-color: #334155; }
 [data-theme="dark"] .fc-button-primary { background-color: #4f46e5; border-color: #4f46e5; }
 .fc-timegrid-slot, .fc-daygrid-day { cursor: pointer; }
+.fc-dayGridMonth-view .fc-event-title,
+.fc-dayGridWeek-view .fc-event-title {
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fc-dayGridMonth-view .fc-daygrid-event,
+.fc-dayGridWeek-view .fc-daygrid-event { font-size: 0.72rem; }
+.fc-dayGridMonth-view .fc-daygrid-more-link,
+.fc-dayGridWeek-view .fc-daygrid-more-link { font-size: 0.72rem; font-weight: 700; }
 .slot-choice-actions { display: flex; flex-direction: column; gap: 0.65rem; margin-top: 1.25rem; }
 .slot-choice-actions .btn { width: 100%; justify-content: center; }
 
@@ -988,6 +1007,14 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   .apt-list .apt-row { grid-template-columns: auto auto minmax(0, 1fr); gap: 0.5rem; padding: 0.75rem; }
   .apt-list .apt-row.apt-row-bucket { grid-template-columns: auto minmax(0, 1fr) auto; }
   .apt-list .apt-badges { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
+  .today-list .apt-row,
+  #dayAppointmentsList .apt-row { grid-template-columns: minmax(0, 1fr); }
+  .today-list .apt-badges,
+  #dayAppointmentsList .apt-badges {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    max-width: none;
+  }
   .appearance-layout { grid-template-columns: 1fr; }
   .client-preview { position: static; }
   .modal {
@@ -1155,56 +1182,33 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   .fc .fc-scrollgrid { border-left: 0; border-right: 0; }
   .fc-dayGridMonth-view .fc-daygrid-day-frame,
   .fc-dayGridWeek-view .fc-daygrid-day-frame {
-    position: relative;
-    min-height: 3.75rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.15rem 0 1.85rem;
+    min-height: 2.5rem;
+    padding: 0.05rem 1px 0.15rem;
   }
-  .fc-dayGridWeek-view .fc-daygrid-day-frame {
-    min-height: 7.25rem;
-    padding-bottom: 2.5rem;
-  }
-  .fc-dayGridMonth-view .fc-daygrid-day-top,
-  .fc-dayGridWeek-view .fc-daygrid-day-top { justify-content: center; width: 100%; }
+  .fc-dayGridWeek-view .fc-daygrid-day-frame { min-height: 6.5rem; }
   .fc-dayGridMonth-view .fc-daygrid-day-number,
   .fc-dayGridWeek-view .fc-daygrid-day-number {
-    float: none;
-    padding: 0.1rem;
-    font-size: 0.78rem;
-    font-weight: 600;
+    padding: 0.05rem 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 700;
   }
   .fc-dayGridMonth-view .fc-daygrid-day-events,
-  .fc-dayGridMonth-view .fc-daygrid-day-bottom,
-  .fc-dayGridMonth-view .fc-event,
+  .fc-dayGridWeek-view .fc-daygrid-day-events { margin: 0; }
+  .fc-dayGridMonth-view .fc-daygrid-event,
+  .fc-dayGridWeek-view .fc-daygrid-event {
+    margin: 0 0 1px;
+    border-radius: 3px;
+  }
+  .fc-dayGridMonth-view .fc-event-main,
+  .fc-dayGridWeek-view .fc-event-main { padding: 1px 2px; }
+  .fc-dayGridMonth-view .fc-event-title,
+  .fc-dayGridWeek-view .fc-event-title { font-size: 0.62rem; }
   .fc-dayGridMonth-view .fc-daygrid-more-link,
-  .fc-dayGridWeek-view .fc-daygrid-day-events,
-  .fc-dayGridWeek-view .fc-daygrid-day-bottom,
-  .fc-dayGridWeek-view .fc-event,
   .fc-dayGridWeek-view .fc-daygrid-more-link {
-    display: none !important;
+    display: block;
+    margin: 0;
+    font-size: 0.62rem;
   }
-  .month-day-count {
-    position: absolute;
-    left: 50%;
-    bottom: 0.28rem;
-    transform: translateX(-50%);
-    margin-top: 0;
-    min-width: 1.55rem;
-    height: 1.55rem;
-    padding: 0 0.35rem;
-    border-radius: 999px;
-    background: #4f46e5;
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-  }
-  .fc-daygrid-day.has-month-count { cursor: pointer; }
 }
 
 .payment-row {
