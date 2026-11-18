@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key !== 'Escape') return;
     if (dismissTopOverlay()) e.preventDefault();
   });
+  document.getElementById('bookDate')?.addEventListener('change', () => renderBookTimePicker());
+  document.getElementById('bookOutsideToggle')?.addEventListener('click', () => {
+    renderBookTimePicker({ outside: !bookTimeOutside });
+  });
 
   if (currentBusinessCode && currentSessionToken && !new URLSearchParams(location.search).get('reset')) {
     loadDashboard(currentBusinessCode);
@@ -904,6 +908,10 @@ function addMinutesToClock(hour, minute, extra) {
 function setSelectValue(id, value) {
   const el = document.getElementById(id);
   if (!el || value == null || value === '') return;
+  if (el.tagName !== 'SELECT') {
+    el.value = value;
+    return;
+  }
   if (![...el.options].some(opt => opt.value === value)) {
     const opt = document.createElement('option');
     opt.value = value;
@@ -1088,6 +1096,7 @@ function openBookingModal(slot) {
     }
   }
   syncBookUnscheduledFields();
+  renderBookTimePicker({ outside: !!(slot && slot.outside) });
   openModal('bookingModal');
 }
 
@@ -1101,6 +1110,10 @@ function syncBookUnscheduledFields() {
     el.required = !off;
     el.disabled = !!off;
   });
+  const picker = document.getElementById('bookTimePicker');
+  const outsideBtn = document.getElementById('bookOutsideToggle');
+  if (picker) picker.hidden = !!off;
+  if (outsideBtn) outsideBtn.hidden = !!off;
 }
 
 function openBlockModal(slot) {
@@ -1218,6 +1231,189 @@ function timeWithinWorkingHours(dateStr, timeStr) {
 function timeToMinutesLocal(value) {
   const [h, m] = String(value || '0:0').split(':').map(Number);
   return (h || 0) * 60 + (m || 0);
+}
+
+function shopSchedule() {
+  let workDays = [1, 2, 3, 4, 5];
+  let hours = [{ start: '09:00', end: '21:00' }];
+  try {
+    if (currentTenantData?.work_days) workDays = JSON.parse(currentTenantData.work_days);
+    if (currentTenantData?.working_hours) hours = JSON.parse(currentTenantData.working_hours);
+  } catch (e) {}
+  return { workDays: workDays.map(Number), hours };
+}
+
+function shiftsForDate(dateStr) {
+  if (!dateStr) return [];
+  const { workDays, hours } = shopSchedule();
+  const [y, m, d] = String(dateStr).split('-').map(Number);
+  const day = new Date(y, (m || 1) - 1, d || 1).getDay();
+  if (!workDays.includes(day)) return [];
+  const shifts = Array.isArray(hours) ? hours : (hours[String(day)] || []);
+  return shifts || [];
+}
+
+function slotsFromShifts(shifts, step) {
+  const out = [];
+  (shifts || []).forEach((sh) => {
+    let t = timeToMinutesLocal(sh.start);
+    const end = timeToMinutesLocal(sh.end);
+    while (t < end) {
+      out.push(t);
+      t += step;
+    }
+  });
+  return out;
+}
+
+let bookTimeOutside = false;
+
+function renderBookTimePicker(opts) {
+  const picker = document.getElementById('bookTimePicker');
+  const hint = document.getElementById('bookTimeHint');
+  const toggle = document.getElementById('bookOutsideToggle');
+  if (!picker) return;
+  if (opts && typeof opts.outside === 'boolean') bookTimeOutside = opts.outside;
+  const date = document.getElementById('bookDate')?.value || '';
+  const selected = `${document.getElementById('bookHour')?.value || ''}:${document.getElementById('bookMinute')?.value || ''}`;
+  const working = slotsFromShifts(shiftsForDate(date), 15);
+  const extra = [];
+  for (let t = 7 * 60; t < 23 * 60; t += 15) {
+    if (!working.includes(t)) extra.push(t);
+  }
+  const chips = bookTimeOutside ? working.concat(extra) : working.slice();
+  if (toggle) toggle.classList.toggle('is-on', bookTimeOutside);
+  if (!date) {
+    picker.innerHTML = '<p class="muted" style="margin:0;">Διάλεξε πρώτα μέρα.</p>';
+    if (hint) hint.textContent = 'Διαθέσιμες οι ώρες λειτουργίας του καταστήματος.';
+    return;
+  }
+  if (!chips.length) {
+    picker.innerHTML = '<p class="muted" style="margin:0;">Κλειστή μέρα. Πάτα «Εκτός ωραρίου» για να διαλέξεις ώρα.</p>';
+  } else {
+    picker.innerHTML = chips.map((mins) => {
+      const label = clockLabel(mins);
+      const on = label === selected;
+      const isExtra = !working.includes(mins);
+      return `<button type="button" class="book-time-chip${on ? ' is-on' : ''}${isExtra ? ' is-extra' : ''}" data-mins="${mins}">${label}</button>`;
+    }).join('');
+    picker.querySelectorAll('.book-time-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mins = parseInt(btn.getAttribute('data-mins'), 10);
+        setSelectValue('bookHour', pad2(Math.floor(mins / 60)));
+        setSelectValue('bookMinute', pad2(mins % 60));
+        renderBookTimePicker();
+      });
+    });
+  }
+  if (hint) {
+    hint.textContent = bookTimeOutside
+      ? 'Φαίνονται και ώρες εκτός ωραρίου.'
+      : (working.length ? 'Διαθέσιμες οι ώρες λειτουργίας του καταστήματος.' : 'Αυτή η μέρα είναι κλειστή στο ωράριο.');
+  }
+}
+
+function shopHourWindow() {
+  const { hours } = shopSchedule();
+  let min = 24 * 60;
+  let max = 0;
+  const collect = (shifts) => {
+    (shifts || []).forEach((sh) => {
+      min = Math.min(min, timeToMinutesLocal(sh.start));
+      max = Math.max(max, timeToMinutesLocal(sh.end));
+    });
+  };
+  if (Array.isArray(hours)) collect(hours);
+  else Object.values(hours || {}).forEach(collect);
+  if (max <= min) {
+    min = 9 * 60;
+    max = 21 * 60;
+  }
+  const start = Math.floor(min / 60) * 60;
+  const end = Math.ceil(max / 60) * 60;
+  const list = [];
+  for (let t = start; t < end; t += 60) list.push(t);
+  return { start, end, hours: list };
+}
+
+function hourOverlapsShift(dateStr, hourMins) {
+  return shiftsForDate(dateStr).some((sh) => {
+    const a = timeToMinutesLocal(sh.start);
+    const b = timeToMinutesLocal(sh.end);
+    return hourMins < b && hourMins + 60 > a;
+  });
+}
+
+function syncPhoneWeekBoard() {
+  const board = document.getElementById('phoneWeekBoard');
+  if (!board || !calendar) return;
+  const show = managerIsPhone() && calendar.view && calendar.view.type === 'listWeek';
+  const harness = document.querySelector('#calendar .fc-view-harness');
+  if (harness) harness.hidden = !show ? false : true;
+  board.hidden = !show;
+  if (!show) {
+    board.innerHTML = '';
+    return;
+  }
+  const { start, end, hours } = shopHourWindow();
+  const span = Math.max(60, end - start);
+  const weekStart = new Date(calendar.view.currentStart);
+  const today = todayISO();
+  const rows = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    const dateStr = `${day.getFullYear()}-${pad2(day.getMonth() + 1)}-${pad2(day.getDate())}`;
+    const label = day.toLocaleDateString('el-GR', { weekday: 'short' }).replace('.', '');
+    const hoursHtml = hours.map((mins) => {
+      const off = !hourOverlapsShift(dateStr, mins);
+      return `<button type="button" class="week-hour${off ? ' is-off' : ''}" data-date="${dateStr}" data-mins="${mins}" data-off="${off ? '1' : '0'}">${String(Math.floor(mins / 60))}</button>`;
+    }).join('');
+    const apts = (allAppointments || [])
+      .filter((item) => item.date === dateStr && item.start_time)
+      .filter((item) => item.status !== 'REJECTED' && item.status !== 'CANCELLED' && item.status !== 'NO_SHOW');
+    const aptHtml = apts.map((item) => {
+      const s = timeToMinutesLocal(item.start_time);
+      const e = item.end_time ? timeToMinutesLocal(item.end_time) : s + (item.duration || 60);
+      const left = Math.max(0, Math.min(100, ((s - start) / span) * 100));
+      const right = Math.max(left, Math.min(100, ((e - start) / span) * 100));
+      const width = Math.max(4, right - left);
+      const name = item.status === 'BLOCKED' ? 'Κλειστό' : customerFirstName(item.customer_name);
+      return `<button type="button" class="week-apt" data-id="${escapeHtml(item.id)}" style="left:${left}%;width:${width}%;background:${monthDotColor(item.status)}">${escapeHtml(name)}</button>`;
+    }).join('');
+    rows.push(`
+      <div class="week-line${dateStr === today ? ' is-today' : ''}">
+        <button type="button" class="week-line-label" data-date="${dateStr}"><span>${escapeHtml(label)}</span><strong>${day.getDate()}</strong></button>
+        <div class="week-line-track">${hoursHtml}${aptHtml}</div>
+      </div>
+    `);
+  }
+  board.innerHTML = rows.join('');
+  board.querySelectorAll('.week-line-label').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [y, m, d] = btn.getAttribute('data-date').split('-').map(Number);
+      openSlotChoice({ date: new Date(y, m - 1, d, 12, 0, 0), view: { type: 'dayGridWeek' } });
+    });
+  });
+  board.querySelectorAll('.week-hour').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mins = parseInt(btn.getAttribute('data-mins'), 10);
+      openBookingModal({
+        date: btn.getAttribute('data-date'),
+        hour: pad2(Math.floor(mins / 60)),
+        minute: '00',
+        hasTime: true,
+        outside: btn.getAttribute('data-off') === '1'
+      });
+    });
+  });
+  board.querySelectorAll('.week-apt').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const found = (allAppointments || []).find((a) => a.id === btn.getAttribute('data-id'));
+      if (found) openAppointmentDetails(found);
+    });
+  });
 }
 
 function calendarSlotBounds() {
@@ -1355,6 +1551,7 @@ function applyCalendarLayout() {
   }
   applyCalendarEventTitles();
   paintMonthDayCounts();
+  syncPhoneWeekBoard();
 }
 
 function customerFirstName(name) {
@@ -1453,6 +1650,7 @@ function initCalendar() {
     expandRows: !phone,
     nowIndicator: true,
     locale: 'el',
+    firstDay: 1,
     fixedWeekCount: false,
     navLinks: false,
     allDayText: 'Ουρά',
@@ -1550,11 +1748,14 @@ function initCalendar() {
       }
       paintMonthDayCounts();
       applyCalendarEventTitles();
+      syncPhoneWeekBoard();
     },
     windowResize: applyCalendarLayout
   });
   calendar.render();
   bindCalendarSwipe(calendarEl);
+  const weekBoard = document.getElementById('phoneWeekBoard');
+  if (weekBoard) bindCalendarSwipe(weekBoard);
 }
 
 async function fetchAppointments() {
@@ -1623,6 +1824,7 @@ async function fetchAppointments() {
     }
     paintMonthDayCounts();
     applyCalendarEventTitles();
+    syncPhoneWeekBoard();
     renderHoldRiskBanner();
     if (document.getElementById('listModal').style.display === 'flex') {
       renderAppointmentList();
@@ -2735,7 +2937,8 @@ async function handleManualBooking(e) {
   }
   const date = document.getElementById('bookDate').value;
   const time = `${document.getElementById('bookHour').value}:${document.getElementById('bookMinute').value}`;
-  if (!unscheduled && date && time && !timeWithinWorkingHours(date, time)) {
+  const outsideOn = document.getElementById('bookOutsideToggle')?.classList.contains('is-on');
+  if (!unscheduled && date && time && !outsideOn && !timeWithinWorkingHours(date, time)) {
     if (!confirm(`Η ώρα ${time} είναι εκτός ωραρίου λειτουργίας. Να αποθηκευτεί ως εξαίρεση;`)) return;
   }
 
