@@ -1299,13 +1299,13 @@ function isPhoneDayGrid(viewType) {
 
 function calendarToolbar() {
   return managerIsPhone()
-    ? { left: 'prev,next', center: 'title', right: 'timeGridDay,dayGridWeek,dayGridMonth' }
+    ? { left: 'prev,next', center: 'title', right: 'timeGridDay,listWeek,dayGridMonth' }
     : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' };
 }
 
 function calendarButtonText() {
   return managerIsPhone()
-    ? { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδ.', day: 'Ημέρα' }
+    ? { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδ.', day: 'Ημέρα', list: 'Εβδ.' }
     : { today: 'Σήμερα', month: 'Μήνας', week: 'Εβδομάδα', day: 'Ημέρα' };
 }
 
@@ -1321,7 +1321,8 @@ function calendarPhoneHeight() {
 
 function calendarHeight() {
   if (!managerIsPhone()) return 'auto';
-  if (calendar && calendar.view && (calendar.view.type === 'dayGridMonth' || calendar.view.type === 'dayGridWeek')) {
+  const viewType = calendar && calendar.view && calendar.view.type;
+  if (viewType === 'dayGridMonth' || viewType === 'dayGridWeek' || viewType === 'listWeek') {
     return 'auto';
   }
   return calendarPhoneHeight();
@@ -1337,15 +1338,21 @@ function applyCalendarLayout() {
   calendar.setOption('displayEventTime', !phone);
   const views = calendar.getOption('views') || {};
   calendar.setOption('views', Object.assign({}, views, {
-    dayGridWeek: Object.assign({}, views.dayGridWeek, {
-      displayEventTime: false,
-      dayMaxEventRows: phone ? 5 : 8
-    }),
     dayGridMonth: Object.assign({}, views.dayGridMonth, {
       displayEventTime: false,
-      dayMaxEventRows: phone ? 3 : 4
+      dayMaxEventRows: phone ? false : 4
+    }),
+    listWeek: Object.assign({}, views.listWeek, {
+      buttonText: 'Εβδ.',
+      displayEventTime: false
     })
   }));
+  if (phone && (calendar.view.type === 'timeGridWeek' || calendar.view.type === 'dayGridWeek')) {
+    calendar.changeView('listWeek');
+  }
+  if (!phone && calendar.view.type === 'listWeek') {
+    calendar.changeView('timeGridWeek');
+  }
   applyCalendarEventTitles();
   paintMonthDayCounts();
 }
@@ -1367,11 +1374,20 @@ function blockedLabel(item) {
 }
 
 function calendarEventTitle(item, viewType) {
-  if (item && item.status === 'BLOCKED') return blockedLabel(item);
+  if (item && item.status === 'BLOCKED') {
+    const label = blockedLabel(item);
+    if (viewType === 'listWeek' && item.start_time) return `${String(item.start_time).slice(0, 5)} ${label}`;
+    return label;
+  }
   const dayGrid = viewType === 'dayGridMonth' || viewType === 'dayGridWeek';
-  const name = (dayGrid || viewType === 'timeGridWeek')
+  const name = (dayGrid || viewType === 'timeGridWeek' || viewType === 'listWeek')
     ? customerFirstName(item && item.customer_name)
     : ((item && item.customer_name) || 'Χωρίς όνομα');
+  if (viewType === 'listWeek') {
+    const time = item && item.start_time ? String(item.start_time).slice(0, 5) : '';
+    if (waitlistNeedsTime(item)) return `Ουρά · ${name}`;
+    return time ? `${time} ${name}` : name;
+  }
   if (dayGrid) {
     const time = item && item.start_time ? String(item.start_time).slice(0, 5) : '';
     if (waitlistNeedsTime(item)) return time ? `${time} Ουρά` : `Ουρά · ${name}`;
@@ -1500,12 +1516,19 @@ function initCalendar() {
         titleFormat: { month: 'short', year: 'numeric' },
         dayHeaderFormat: { weekday: 'short', day: 'numeric' },
         displayEventTime: false,
-        dayMaxEventRows: phone ? 5 : 8
+        dayMaxEventRows: 8
       },
       dayGridMonth: {
         titleFormat: { month: 'short', year: 'numeric' },
         displayEventTime: false,
-        dayMaxEventRows: phone ? 3 : 4
+        dayMaxEventRows: phone ? false : 4
+      },
+      listWeek: {
+        buttonText: 'Εβδ.',
+        displayEventTime: false,
+        listDayFormat: { weekday: 'short', day: 'numeric' },
+        listDaySideFormat: false,
+        noEventsContent: 'Δεν υπάρχουν ραντεβού αυτή την εβδομάδα.'
       }
     },
     eventClick: info => {
@@ -1663,9 +1686,42 @@ function appointmentsOnDate(dateStr) {
   });
 }
 
+function monthDotColor(status) {
+  if (status === 'PENDING') return '#d97706';
+  if (status === 'WAITLIST') return '#7c3aed';
+  if (status === 'BLOCKED') return '#64748b';
+  if (status === 'REJECTED') return '#ef4444';
+  if (status === 'CANCELLED') return '#facc15';
+  if (status === 'NO_SHOW') return '#ea580c';
+  return '#059669';
+}
+
 function paintMonthDayCounts() {
   document.querySelectorAll('#calendar .month-day-count').forEach((badge) => badge.remove());
   document.querySelectorAll('#calendar .has-month-count').forEach((cell) => cell.classList.remove('has-month-count'));
+  const cells = document.querySelectorAll('#calendar .fc-daygrid-day');
+  const show = !!(calendar && managerIsPhone() && calendar.view && calendar.view.type === 'dayGridMonth');
+  cells.forEach((cell) => {
+    const old = cell.querySelector('.month-dots');
+    if (old) old.remove();
+    cell.classList.remove('has-month-dots');
+    if (!show) return;
+    const rows = (allAppointments || [])
+      .filter((item) => item.date === cell.getAttribute('data-date'))
+      .filter((item) => item.status !== 'REJECTED' && item.status !== 'CANCELLED' && item.status !== 'NO_SHOW')
+      .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
+    if (!rows.length) return;
+    const wrap = document.createElement('span');
+    wrap.className = 'month-dots';
+    rows.slice(0, 3).forEach((item) => {
+      const dot = document.createElement('i');
+      dot.style.background = monthDotColor(item.status);
+      wrap.appendChild(dot);
+    });
+    const frame = cell.querySelector('.fc-daygrid-day-frame') || cell;
+    frame.appendChild(wrap);
+    cell.classList.add('has-month-dots');
+  });
 }
 
 function todayISO() {

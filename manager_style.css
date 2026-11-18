@@ -813,6 +813,52 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 .fc-dayGridWeek-view .fc-daygrid-event { font-size: 0.72rem; }
 .fc-dayGridMonth-view .fc-daygrid-more-link,
 .fc-dayGridWeek-view .fc-daygrid-more-link { font-size: 0.72rem; font-weight: 700; }
+.month-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  margin-top: 0.2rem;
+  min-height: 6px;
+  pointer-events: none;
+}
+.month-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: block;
+}
+.fc .fc-list {
+  border: 0;
+}
+.fc .fc-list-day-cushion {
+  background: var(--field-bg);
+  padding: 0.5rem 0.7rem;
+}
+.fc .fc-list-day-text,
+.fc .fc-list-day-side-text {
+  color: var(--text-color);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.fc .fc-list-event td {
+  padding: 0.7rem 0.65rem;
+  border-color: var(--border-color);
+  vertical-align: middle;
+}
+.fc .fc-list-event-dot { border-color: currentColor; }
+.fc .fc-list-event-title {
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+.fc .fc-list-event:hover td { background: var(--field-bg); }
+.fc .fc-list-empty {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 1.25rem 0.5rem;
+}
+[data-theme="dark"] .fc .fc-list-day-cushion { background: #0f172a; }
 .slot-choice-actions { display: flex; flex-direction: column; gap: 0.65rem; margin-top: 1.25rem; }
 .slot-choice-actions .btn { width: 100%; justify-content: center; }
 
@@ -1180,35 +1226,27 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   }
   .fc .fc-daygrid-event { font-size: 0.7rem; }
   .fc .fc-scrollgrid { border-left: 0; border-right: 0; }
-  .fc-dayGridMonth-view .fc-daygrid-day-frame,
-  .fc-dayGridWeek-view .fc-daygrid-day-frame {
-    min-height: 2.5rem;
-    padding: 0.05rem 1px 0.15rem;
+  .fc-dayGridMonth-view .fc-daygrid-day-frame {
+    min-height: 2.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.15rem 0 0.3rem;
   }
-  .fc-dayGridWeek-view .fc-daygrid-day-frame { min-height: 6.5rem; }
-  .fc-dayGridMonth-view .fc-daygrid-day-number,
-  .fc-dayGridWeek-view .fc-daygrid-day-number {
-    padding: 0.05rem 0.15rem;
-    font-size: 0.72rem;
+  .fc-dayGridMonth-view .fc-daygrid-day-top { justify-content: center; width: 100%; }
+  .fc-dayGridMonth-view .fc-daygrid-day-number {
+    float: none;
+    padding: 0.05rem;
+    font-size: 0.82rem;
     font-weight: 700;
   }
   .fc-dayGridMonth-view .fc-daygrid-day-events,
-  .fc-dayGridWeek-view .fc-daygrid-day-events { margin: 0; }
+  .fc-dayGridMonth-view .fc-daygrid-day-bottom,
   .fc-dayGridMonth-view .fc-daygrid-event,
-  .fc-dayGridWeek-view .fc-daygrid-event {
-    margin: 0 0 1px;
-    border-radius: 3px;
+  .fc-dayGridMonth-view .fc-daygrid-more-link {
+    display: none !important;
   }
-  .fc-dayGridMonth-view .fc-event-main,
-  .fc-dayGridWeek-view .fc-event-main { padding: 1px 2px; }
-  .fc-dayGridMonth-view .fc-event-title,
-  .fc-dayGridWeek-view .fc-event-title { font-size: 0.62rem; }
-  .fc-dayGridMonth-view .fc-daygrid-more-link,
-  .fc-dayGridWeek-view .fc-daygrid-more-link {
-    display: block;
-    margin: 0;
-    font-size: 0.62rem;
-  }
+  .fc .fc-list-event-time { display: none; }
 }
 
 .payment-row {
