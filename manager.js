@@ -1213,14 +1213,18 @@ function setRescheduleTimeValue(raw) {
   minEl.value = minute;
 }
 
+function readStoredJson(value, fallback) {
+  if (value == null || value === '') return fallback;
+  if (typeof value === 'string') {
+    try { return JSON.parse(value); } catch (e) { return fallback; }
+  }
+  return value;
+}
+
 function timeWithinWorkingHours(dateStr, timeStr) {
   if (!currentTenantData || !dateStr || !timeStr) return true;
-  let workDays = [1, 2, 3, 4, 5];
-  let hours = [{ start: '09:00', end: '21:00' }];
-  try {
-    if (currentTenantData.work_days) workDays = JSON.parse(currentTenantData.work_days);
-    if (currentTenantData.working_hours) hours = JSON.parse(currentTenantData.working_hours);
-  } catch (e) {}
+  const workDays = readStoredJson(currentTenantData.work_days, [1, 2, 3, 4, 5]);
+  const hours = readStoredJson(currentTenantData.working_hours, [{ start: '09:00', end: '21:00' }]);
   const [y, m, d] = String(dateStr).split('-').map(Number);
   const day = new Date(y, m - 1, d).getDay();
   if (!workDays.map(Number).includes(day)) return false;
@@ -1240,12 +1244,8 @@ function timeToMinutesLocal(value) {
 }
 
 function shopSchedule() {
-  let workDays = [1, 2, 3, 4, 5];
-  let hours = [{ start: '09:00', end: '21:00' }];
-  try {
-    if (currentTenantData?.work_days) workDays = JSON.parse(currentTenantData.work_days);
-    if (currentTenantData?.working_hours) hours = JSON.parse(currentTenantData.working_hours);
-  } catch (e) {}
+  const workDays = readStoredJson(currentTenantData?.work_days, [1, 2, 3, 4, 5]);
+  const hours = readStoredJson(currentTenantData?.working_hours, [{ start: '09:00', end: '21:00' }]);
   return { workDays: workDays.map(Number), hours };
 }
 
