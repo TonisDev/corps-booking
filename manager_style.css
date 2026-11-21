@@ -923,6 +923,20 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   padding: 0 0.15rem;
 }
 .book-time-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem; }
+.book-time-picker.is-select { display: block; }
+.book-time-select {
+  width: 100%;
+  max-width: 14rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--field-border);
+  border-radius: 0.65rem;
+  background: var(--field-bg);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 650;
+}
 .book-time-chip {
   min-height: 2.65rem;
   border: 1px solid var(--border-color);

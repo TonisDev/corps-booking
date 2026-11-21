@@ -831,8 +831,11 @@ function syncNamedChecks(name, masterId) {
 }
 
 function populateServicesDropdown() {
-  const services = currentTenantData.services || [];
+  const services = (currentTenantData && currentTenantData.services) || [];
   const serviceSelect = document.getElementById('bookingService');
+  if (!serviceSelect) return;
+  const modalOpen = document.getElementById('bookingModal')?.style.display === 'flex';
+  const previous = modalOpen ? serviceSelect.value : '';
   serviceSelect.innerHTML = '';
   services.forEach(s => {
     const opt = document.createElement('option');
@@ -846,9 +849,12 @@ function populateServicesDropdown() {
     const selectedOpt = e.target.options[e.target.selectedIndex];
     document.getElementById('bookDuration').value = selectedOpt.getAttribute('data-duration') || 60;
   };
-  if (services.length > 0) {
-    document.getElementById('bookDuration').value = services[0].duration;
+  if (previous && [...serviceSelect.options].some((opt) => opt.value === previous)) {
+    serviceSelect.value = previous;
   }
+  const selected = serviceSelect.selectedOptions[0];
+  const duration = document.getElementById('bookDuration');
+  if (duration && selected) duration.value = selected.getAttribute('data-duration') || 60;
 }
 
 function bucketServiceOptionsHtml(currentName, currentDuration) {
@@ -1268,6 +1274,27 @@ function slotsFromShifts(shifts, step) {
 
 let bookTimeOutside = false;
 
+function selectedBookMinutes() {
+  const hour = document.getElementById('bookHour')?.value;
+  const minute = document.getElementById('bookMinute')?.value;
+  if (hour === '' || hour == null || minute === '' || minute == null) return null;
+  const mins = Number(hour) * 60 + Number(minute);
+  return Number.isFinite(mins) ? mins : null;
+}
+
+function applyBookTime(mins) {
+  const hour = document.getElementById('bookHour');
+  const minute = document.getElementById('bookMinute');
+  if (!hour || !minute) return;
+  if (!Number.isFinite(mins)) {
+    hour.value = '';
+    minute.value = '';
+    return;
+  }
+  hour.value = pad2(Math.floor(mins / 60));
+  minute.value = pad2(mins % 60);
+}
+
 function renderBookTimePicker(opts) {
   const picker = document.getElementById('bookTimePicker');
   const hint = document.getElementById('bookTimeHint');
@@ -1275,33 +1302,42 @@ function renderBookTimePicker(opts) {
   if (!picker) return;
   if (opts && typeof opts.outside === 'boolean') bookTimeOutside = opts.outside;
   const date = document.getElementById('bookDate')?.value || '';
-  const selected = `${document.getElementById('bookHour')?.value || ''}:${document.getElementById('bookMinute')?.value || ''}`;
   const working = slotsFromShifts(shiftsForDate(date), 15);
   const extra = [];
   for (let t = 7 * 60; t < 23 * 60; t += 15) {
     if (!working.includes(t)) extra.push(t);
   }
-  const chips = bookTimeOutside ? working.concat(extra) : working.slice();
+  const visible = bookTimeOutside ? working.concat(extra) : working.slice();
+  const selectedMins = selectedBookMinutes();
+  if (selectedMins != null && date && !visible.includes(selectedMins)) applyBookTime(NaN);
+  const chosen = selectedBookMinutes();
   if (toggle) toggle.classList.toggle('is-on', bookTimeOutside);
+  picker.classList.toggle('is-select', !managerIsPhone());
   if (!date) {
     picker.innerHTML = '<p class="muted" style="margin:0;">Διάλεξε πρώτα μέρα.</p>';
     if (hint) hint.textContent = 'Διαθέσιμες οι ώρες λειτουργίας του καταστήματος.';
     return;
   }
-  if (!chips.length) {
+  if (!visible.length) {
     picker.innerHTML = '<p class="muted" style="margin:0;">Κλειστή μέρα. Πάτα «Εκτός ωραρίου» για να διαλέξεις ώρα.</p>';
+  } else if (!managerIsPhone()) {
+    picker.innerHTML = `<select class="book-time-select" id="bookTimeSelect" aria-label="Ώρα έναρξης">
+      <option value="">Ώρα</option>
+      ${visible.map((mins) => `<option value="${mins}"${mins === chosen ? ' selected' : ''}>${clockLabel(mins)}</option>`).join('')}
+    </select>`;
+    picker.querySelector('select').addEventListener('change', (event) => {
+      const mins = parseInt(event.target.value, 10);
+      applyBookTime(Number.isFinite(mins) ? mins : NaN);
+    });
   } else {
-    picker.innerHTML = chips.map((mins) => {
-      const label = clockLabel(mins);
-      const on = label === selected;
+    picker.innerHTML = visible.map((mins) => {
+      const on = mins === chosen;
       const isExtra = !working.includes(mins);
-      return `<button type="button" class="book-time-chip${on ? ' is-on' : ''}${isExtra ? ' is-extra' : ''}" data-mins="${mins}">${label}</button>`;
+      return `<button type="button" class="book-time-chip${on ? ' is-on' : ''}${isExtra ? ' is-extra' : ''}" data-mins="${mins}">${clockLabel(mins)}</button>`;
     }).join('');
     picker.querySelectorAll('.book-time-chip').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const mins = parseInt(btn.getAttribute('data-mins'), 10);
-        setSelectValue('bookHour', pad2(Math.floor(mins / 60)));
-        setSelectValue('bookMinute', pad2(mins % 60));
+        applyBookTime(parseInt(btn.getAttribute('data-mins'), 10));
         renderBookTimePicker();
       });
     });
@@ -1355,7 +1391,11 @@ function syncPhoneWeekBoard() {
     board.innerHTML = '';
     return;
   }
-  const { start, end, hours } = shopHourWindow();
+  const range = calendarVisibleRange();
+  const start = Math.floor(range.start / 60) * 60;
+  const end = Math.ceil(range.end / 60) * 60;
+  const hours = [];
+  for (let t = start; t < end; t += 60) hours.push(t);
   const span = Math.max(60, end - start);
   const weekStart = new Date(calendar.view.currentStart);
   const today = todayISO();
@@ -1416,36 +1456,30 @@ function syncPhoneWeekBoard() {
   });
 }
 
-function calendarSlotBounds() {
-  let min = 8 * 60;
-  let max = 22 * 60;
-  let workDays = [1, 2, 3, 4, 5];
-  let hours = [{ start: '09:00', end: '21:00' }];
-  try {
-    if (currentTenantData?.work_days) workDays = JSON.parse(currentTenantData.work_days);
-    if (currentTenantData?.working_hours) hours = JSON.parse(currentTenantData.working_hours);
-  } catch (e) {}
-  const collect = (shifts) => {
-    (shifts || []).forEach((sh) => {
-      min = Math.min(min, timeToMinutesLocal(sh.start));
-      max = Math.max(max, timeToMinutesLocal(sh.end));
-    });
-  };
-  if (Array.isArray(hours)) collect(hours);
-  else Object.values(hours || {}).forEach(collect);
+function calendarVisibleRange() {
+  const base = shopHourWindow();
+  let min = base.start;
+  let max = base.end;
   (allAppointments || []).forEach((item) => {
-    if (!item.start_time || item.status === 'BLOCKED') return;
+    if (!item.date || !item.start_time) return;
+    if (item.status === 'REJECTED' || item.status === 'CANCELLED' || item.status === 'NO_SHOW') return;
+    if (timeWithinWorkingHours(item.date, String(item.start_time).slice(0, 5))) return;
     const s = timeToMinutesLocal(item.start_time);
-    const e = item.end_time ? timeToMinutesLocal(item.end_time) : s + (item.duration || 60);
+    const e = item.end_time ? timeToMinutesLocal(item.end_time) : s + (Number(item.duration) || 60);
     min = Math.min(min, s);
-    max = Math.max(max, e);
+    max = Math.max(max, Math.max(e, s + 30));
   });
   min = Math.max(0, Math.floor(min / 30) * 30);
   max = Math.min(24 * 60, Math.ceil(max / 30) * 30);
   if (max <= min) max = min + 60;
+  return { start: min, end: max };
+}
+
+function calendarSlotBounds() {
+  const { start, end } = calendarVisibleRange();
   return {
-    slotMinTime: `${pad2(Math.floor(min / 60))}:${pad2(min % 60)}:00`,
-    slotMaxTime: `${pad2(Math.floor(max / 60))}:${pad2(max % 60)}:00`
+    slotMinTime: `${pad2(Math.floor(start / 60))}:${pad2(start % 60)}:00`,
+    slotMaxTime: `${pad2(Math.floor(end / 60))}:${pad2(end % 60)}:00`
   };
 }
 
