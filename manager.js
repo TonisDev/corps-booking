@@ -15,7 +15,7 @@ function optionalPriceInputValue(price) {
 function formatServiceLabel(service) {
   const duration = service.duration || 60;
   const price = parseOptionalPrice(service && service.price);
-  if (price === null) return `${service.name} (${duration} min · κατόπιν συνεννόησης)`;
+  if (price === null) return `${service.name} (${duration} min)`;
   return `${service.name} (${duration} min · ${price}€)`;
 }
 
@@ -3547,7 +3547,7 @@ function openSettingsModal() {
     row.innerHTML = `
       <input class="field" type="text" value="${s.name}" placeholder="Όνομα" style="flex:2">
       <input class="field" type="number" value="${s.duration}" placeholder="Min" min="5" style="flex:1">
-      <input class="field" type="number" value="${optionalPriceInputValue(s.price)}" placeholder="Κενό = κατόπιν συνεννόησης" min="0" step="any" style="flex:1">
+      <input class="field" type="number" value="${optionalPriceInputValue(s.price)}" placeholder="Κενό = χωρίς τιμή" min="0" step="any" style="flex:1">
       <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
     `;
     servicesList.appendChild(row);
@@ -3829,7 +3829,7 @@ function addModalService() {
   row.innerHTML = `
     <input class="field" type="text" placeholder="Όνομα Υπηρεσίας" style="flex:2">
     <input class="field" type="number" value="60" placeholder="Min" min="5" style="flex:1">
-    <input class="field" type="number" placeholder="Κενό = κατόπιν συνεννόησης" min="0" step="any" style="flex:1">
+    <input class="field" type="number" placeholder="Κενό = χωρίς τιμή" min="0" step="any" style="flex:1">
     <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:0.5rem;"><i data-lucide="trash-2" size="14"></i></button>
   `;
   list.appendChild(row);

@@ -977,6 +977,69 @@ html[data-mode="home"] .page-bg::before {
   filter: brightness(1.08);
   box-shadow: 0 0 30px color-mix(in srgb, var(--brand-color) 52%, transparent);
 }
+.ask-shop-btn {
+  position: fixed;
+  right: 1rem;
+  bottom: 1.25rem;
+  z-index: 40;
+  width: 3.15rem;
+  height: 3.15rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--brand-color);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--brand-color) 35%, transparent);
+}
+.ask-shop-btn.hidden,
+.ask-shop-sheet.hidden,
+html[data-mode="home"] .ask-shop-btn,
+html[data-mode="home"] .ask-shop-sheet { display: none !important; }
+.ask-shop-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  max-height: min(82vh, 36rem);
+  overflow: auto;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  border-radius: 1.15rem 1.15rem 0 0;
+  background: var(--card-bg);
+  color: var(--text-color);
+  box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.18);
+}
+.ask-shop-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; }
+.ask-shop-head button { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-weight: 650; cursor: pointer; }
+.ask-shop-sheet textarea,
+.ask-shop-sheet input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.3rem 0 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--field-border);
+  border-radius: 0.75rem;
+  background: var(--field-bg);
+  color: var(--text-color);
+  font: inherit;
+}
+.ask-shop-sheet #askShopSend {
+  width: 100%;
+  border: 0;
+  border-radius: 0.8rem;
+  padding: 0.8rem 1rem;
+  background: var(--brand-color);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ask-honeypot { position: absolute; left: -9999px; height: 0; width: 0; opacity: 0; }
+@media (max-width: 640px) {
+  .ask-shop-btn { bottom: 5.5rem; }
+}
 
 .welcome-text {
   margin: 0.15rem 0 1.35rem;

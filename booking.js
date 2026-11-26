@@ -13,7 +13,7 @@
         function formatServiceLabel(service) {
             const duration = service.duration || 60;
             const price = parseOptionalPrice(service && service.price);
-            if (price === null) return `${service.name} (${duration} min · κατόπιν συνεννόησης)`;
+            if (price === null) return `${service.name} (${duration} min)`;
             return `${service.name} (${duration} min · ${price}€)`;
         }
 
@@ -554,6 +554,8 @@
                     serviceSelect.appendChild(opt);
                 });
                 syncServicePicker();
+                const askBtn = document.getElementById('askShopBtn');
+                if (askBtn && businessData.questions_enabled) askBtn.classList.remove('hidden');
 
                 initialLoader.classList.add('hidden');
                 bookingForm.classList.remove('hidden');
@@ -968,6 +970,70 @@
                 button.disabled = false;
             }
         });
+
+function openAskSheet() {
+    const sheet = document.getElementById('askShopSheet');
+    const btn = document.getElementById('askShopBtn');
+    if (!sheet) return;
+    const phone = document.getElementById('phone');
+    const email = document.getElementById('email');
+    const askPhone = document.getElementById('askPhone');
+    const askEmail = document.getElementById('askEmail');
+    if (askPhone && phone && !askPhone.value) askPhone.value = phone.value || '';
+    if (askEmail && email && !askEmail.value) askEmail.value = email.value || '';
+    sheet.hidden = false;
+    sheet.classList.remove('hidden');
+    if (btn) {
+        btn.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+    document.getElementById('askMessage')?.focus();
+}
+
+function closeAskSheet() {
+    const sheet = document.getElementById('askShopSheet');
+    const btn = document.getElementById('askShopBtn');
+    if (sheet) {
+        sheet.hidden = true;
+        sheet.classList.add('hidden');
+    }
+    if (btn && businessData && businessData.questions_enabled) {
+        btn.classList.remove('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+}
+
+document.getElementById('askShopBtn')?.addEventListener('click', openAskSheet);
+document.getElementById('askShopClose')?.addEventListener('click', closeAskSheet);
+document.getElementById('askShopForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!business_code) return;
+    const note = document.getElementById('askShopNote');
+    const button = document.getElementById('askShopSend');
+    if (note) note.textContent = '';
+    if (button) button.disabled = true;
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/${business_code}/questions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: document.getElementById('askMessage').value.trim(),
+                phone: document.getElementById('askPhone').value.trim(),
+                email: document.getElementById('askEmail').value.trim(),
+                website: document.getElementById('askWebsite').value
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Το μήνυμα δεν στάλθηκε.');
+        document.getElementById('askMessage').value = '';
+        if (note) note.textContent = 'Στάλθηκε. Η απάντηση θα έρθει στο email σου.';
+        setTimeout(closeAskSheet, 1200);
+    } catch (err) {
+        if (note) note.textContent = err.message || 'Το μήνυμα δεν στάλθηκε.';
+    } finally {
+        if (button) button.disabled = false;
+    }
+});
 
 document.getElementById('shopInfoBtn')?.addEventListener('click', openShopInfo);
 document.getElementById('successOk')?.addEventListener('click', closeSuccessDialog);
