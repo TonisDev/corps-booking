@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261126p">
+    <link rel="stylesheet" href="manager_style.css?v=20261126x">
 </head>
 <body data-theme="light">
 
@@ -150,8 +150,8 @@
       <button type="button" class="manager-side-btn" onclick="openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
       <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
       <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
-      <button type="button" class="manager-side-btn" onclick="copyInstagramPack()" title="Κείμενο + σύνδεσμος για Instagram story/bio"><i data-lucide="instagram" size="18"></i><span>Για Instagram</span></button>
       <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
+      <button type="button" class="manager-side-btn" onclick="copyInstagramPack()" title="Αντιγραφή κειμένου και συνδέσμου κράτησης"><i data-lucide="link" size="18"></i><span>Σύνδεσμος κράτησης</span></button>
       <button type="button" class="manager-side-btn manager-side-btn-bottom" id="supportSideBtn" onclick="openSupportModal()" title="Chat με τον δημιουργό του QuickBook"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="supportUnreadDot" class="side-unread-dot" hidden></span></button>
       <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
     </aside>
@@ -159,9 +159,9 @@
     <div class="container">
       <!-- Στατιστικά -->
       <div class="stats-grid">
-        <button type="button" class="stat-card clickable" onclick="openAppointmentList('all')">
+        <button type="button" class="stat-card clickable" onclick="openAppointmentList('all')" title="Εκκρεμή και εγκεκριμένα της σημερινής μέρας">
           <div>
-            <div class="stat-label">Συνολικά</div>
+            <div class="stat-label">Σήμερα</div>
             <div class="stat-value" id="statTotal">0</div>
           </div>
           <div class="stat-icon-total"><i data-lucide="calendar-check-2" size="24"></i></div>
@@ -273,7 +273,7 @@
         <div class="mobile-more-grab" aria-hidden="true"></div>
         <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
         <button type="button" class="mobile-more-action" data-feature="notes" onclick="closeMobileMore(); openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
-        <button type="button" class="mobile-more-action" data-feature="instagram" onclick="closeMobileMore(); copyInstagramPack()"><i data-lucide="instagram" size="18"></i><span>Για Instagram</span></button>
+        <button type="button" class="mobile-more-action" data-feature="instagram" onclick="closeMobileMore(); copyInstagramPack()"><i data-lucide="link" size="18"></i><span>Σύνδεσμος κράτησης</span></button>
         <button type="button" class="mobile-more-action" id="mobileSupportBtn" onclick="closeMobileMore(); openSupportModal()"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="mobileSupportDot" class="side-unread-dot" hidden></span></button>
         <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openPublicPage()"><i data-lucide="external-link" size="18"></i><span>Σελίδα πελάτη</span></button>
         <button type="button" class="mobile-more-action" data-feature="bucket" onclick="closeMobileMore(); openBookingToBucket()"><i data-lucide="inbox" size="18"></i><span>Στο bucket</span></button>
@@ -288,7 +288,7 @@
     <div class="modal-content settings-modal-content">
       <div class="settings-head">
         <h2 style="margin:0; display:flex; align-items:center; gap:0.45rem;"><i data-lucide="settings" size="22"></i> Ρυθμίσεις</h2>
-        <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Κλείσιμο</button>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('settingsModal')">Κλείσιμο</button>
       </div>
       <form id="settingsForm" class="settings-shell" onsubmit="saveSettings(event)">
         <nav class="settings-nav" aria-label="Θέματα ρυθμίσεων">
@@ -522,7 +522,7 @@
             </label>
             <label class="remember-me" style="margin-top:0.65rem;">
               <input type="checkbox" id="featInstagram" checked>
-              Κουμπί «Για Instagram»
+              Κουμπί «Σύνδεσμος κράτησης»
             </label>
           </div>
 
@@ -608,8 +608,7 @@
           </div>
 
           <div class="settings-save-bar">
-            <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Ακύρωση</button>
-            <button type="submit" class="btn" id="saveSettingsBtn" style="background: #059669;">Αποθήκευση</button>
+            <button type="submit" class="btn" id="saveSettingsBtn" disabled>Αποθήκευση</button>
           </div>
         </div>
       </form>
@@ -620,13 +619,15 @@
   <!-- [SECTION: HTML-MODALS] επιλογή slot / νέα κράτηση / block / λίστα / ενέργεια -->
   <div class="modal" id="slotChoiceModal">
     <div class="modal-content">
-      <h3 id="slotChoiceTitle" style="margin-top:0;">Νέα ενέργεια</h3>
+      <div class="modal-head">
+        <h3 id="slotChoiceTitle">Νέα ενέργεια</h3>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('slotChoiceModal')">Κλείσιμο</button>
+      </div>
       <p id="slotChoiceHint" style="margin: 0;"></p>
       <div id="dayAppointmentsList"></div>
       <div class="slot-choice-actions">
         <button type="button" class="btn" onclick="chooseSlotBooking()"><i data-lucide="plus" size="16"></i> Νέο Ραντεβού</button>
         <button type="button" class="btn btn-outline" onclick="chooseSlotBlock()"><i data-lucide="lock" size="16"></i> Κλείδωσε ώρες</button>
-        <button type="button" class="btn btn-outline" onclick="closeModal('slotChoiceModal')">Κλείσιμο</button>
       </div>
     </div>
   </div>
@@ -634,7 +635,10 @@
   <!-- Modal: Νέο Ραντεβού -->
   <div class="modal" id="bookingModal">
     <div class="modal-content">
-      <h3 style="margin-top:0;">Νέο Ραντεβού</h3>
+      <div class="modal-head">
+        <h3>Νέο Ραντεβού</h3>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('bookingModal')">Κλείσιμο</button>
+      </div>
       <form onsubmit="handleManualBooking(event)">
         <div class="book-form-body">
         <div class="form-group">
@@ -681,7 +685,6 @@
         </div>
         </div>
         <div class="modal-form-actions">
-          <button type="button" class="btn btn-outline" onclick="closeModal('bookingModal')">Ακύρωση</button>
           <button type="submit" class="btn">Αποθήκευση</button>
         </div>
       </form>
@@ -691,7 +694,10 @@
   <!-- Modal: κλείδωμα εύρους ωρών -->
   <div class="modal" id="blockModal">
     <div class="modal-content">
-      <h3 style="margin-top:0;">Κλείδωσε ώρες</h3>
+      <div class="modal-head">
+        <h3>Κλείδωσε ώρες</h3>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('blockModal')">Κλείσιμο</button>
+      </div>
       <p id="blockLead" hidden>Από την ώρα που πάτησες. Διάλεξε μέχρι πότε μένουν κλειστές.</p>
       <form onsubmit="handleBlockSlot(event)">
         <div class="form-group">
@@ -748,7 +754,6 @@
           <input class="field" type="text" id="blockReason" placeholder="π.χ. Διάλειμμα">
         </div>
         <div class="modal-form-actions">
-          <button type="button" class="btn btn-outline" onclick="closeModal('blockModal')">Ακύρωση</button>
           <button type="submit" class="btn btn-danger">Κλείδωμα</button>
         </div>
       </form>
@@ -792,7 +797,6 @@
         <div id="bulkActions" class="bulk-actions"></div>
       </div>
       <div id="aptList" class="apt-list"></div>
-      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('listModal')">Κλείσιμο</button>
     </div>
   </div>
 
@@ -821,14 +825,16 @@
       <div id="paymentsNet" class="payments-net">Καθαρά έσοδα: υπολογισμός…</div>
       <p class="guide-note" style="margin:0.55rem 0 0;">Τα καθαρά έσοδα είναι χρεώσεις μείον επιστροφές. Οι δεσμεύσεις κάρτας δεν μετρούν. Το CSV είναι η αναλυτική κίνηση.</p>
       <div id="paymentsList" class="apt-list"></div>
-      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('paymentsModal')">Κλείσιμο</button>
     </div>
   </div>
 
   <!-- Modal: Διαχείριση/Επισκόπηση Υπάρχοντος Ραντεβού -->
   <div class="modal" id="actionModal">
     <div class="modal-content">
-      <h3 id="actTitle" style="margin-top:0;">Διαχείριση Ραντεβού</h3>
+      <div class="modal-head">
+        <h3 id="actTitle">Διαχείριση Ραντεβού</h3>
+        <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeModal('actionModal')">Κλείσιμο</button>
+      </div>
       <div id="actDetails" style="margin-bottom: 1rem;"></div>
       <div id="overlapBox" class="overlap-box" style="display:none;">
         <p id="overlapText" style="margin:0 0 0.6rem;"></p>
@@ -893,7 +899,6 @@
           <button type="button" class="btn btn-outline" id="btnHoldRefund" onclick="settleHold('refund')" style="display:none;">Επιστροφή</button>
         </div>
         <button type="button" class="btn btn-quiet-danger" id="btnDeleteAppt" onclick="deleteAppointment()"><i data-lucide="trash-2" size="16"></i> Διαγραφή οριστικά</button>
-        <button type="button" class="btn btn-outline btn-sheet-close" onclick="closeModal('actionModal')">Κλείσιμο</button>
       </div>
     </div>
   </div>
@@ -925,7 +930,6 @@
         </div>
         <p id="supportNote" hidden style="margin:0.65rem 0 0;"></p>
       </form>
-      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('supportModal')">Κλείσιμο</button>
     </div>
   </div>
 
@@ -953,7 +957,6 @@
         </div>
       </form>
       <div id="notesBoard" class="notes-board"></div>
-      <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('notesModal')">Κλείσιμο</button>
     </div>
   </div>
 
@@ -965,10 +968,9 @@
       <button type="button" class="btn btn-outline sheet-close-desktop" onclick="closeClientDrawer()">Κλείσιμο</button>
     </div>
     <div id="clientDrawerBody"></div>
-    <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20261126n"></script>
+<script src="manager.js?v=20261126x"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

@@ -60,6 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBookTimePicker({ outside: !bookTimeOutside });
   });
   bindToastSwipe();
+  const settingsForm = document.getElementById('settingsForm');
+  if (settingsForm) {
+    settingsForm.addEventListener('input', syncSettingsSaveState);
+    settingsForm.addEventListener('change', syncSettingsSaveState);
+    settingsForm.addEventListener('click', () => setTimeout(syncSettingsSaveState, 0));
+  }
 
   if (currentBusinessCode && currentSessionToken && !new URLSearchParams(location.search).get('reset')) {
     loadDashboard(currentBusinessCode);
@@ -1305,18 +1311,21 @@ function bookQuarterMinutes() {
   return [0, 15, 30, 45];
 }
 
+function bookOutsideSlots() {
+  const out = [];
+  for (let mins = 7 * 60; mins <= 23 * 60; mins += 15) out.push(mins);
+  return out;
+}
+
 function bookHourChoices(working, outside) {
-  if (outside) {
-    const hours = [];
-    for (let hour = 7; hour <= 22; hour++) hours.push(hour);
-    return hours;
-  }
+  if (outside) return [...new Set(bookOutsideSlots().map((mins) => Math.floor(mins / 60)))];
   return [...new Set(working.map((mins) => Math.floor(mins / 60)))];
 }
 
 function bookMinuteChoices(hour, working, outside) {
   const quarters = bookQuarterMinutes();
-  if (outside || hour == null) return quarters;
+  if (hour == null) return quarters;
+  if (outside) return quarters.filter((minute) => bookOutsideSlots().includes(hour * 60 + minute));
   return quarters.filter((minute) => working.includes(hour * 60 + minute));
 }
 
@@ -1337,10 +1346,62 @@ function syncBookPastWarning() {
   dateInput.classList.toggle('is-past', pastDay);
 }
 
+let bookWheelLock = 0;
+
+function paintBookDrum(col) {
+  if (!col || !col.closest('.is-wheel')) return;
+  const mid = col.scrollTop + col.clientHeight / 2;
+  col.querySelectorAll('.book-tick').forEach((btn) => {
+    const center = btn.offsetTop + btn.offsetHeight / 2;
+    const dist = (center - mid) / (btn.offsetHeight || 48);
+    const abs = Math.min(Math.abs(dist), 2.2);
+    btn.style.transform = `rotateX(${dist * -34}deg)`;
+    btn.style.opacity = String(Math.max(0.2, 1 - abs * 0.4));
+  });
+}
+
 function centerClockColumn(col) {
   const on = col.querySelector('.is-on');
-  if (!on) return;
-  col.scrollTop = Math.max(0, on.offsetTop - (col.clientHeight - on.offsetHeight) / 2);
+  bookWheelLock += 1;
+  if (on) col.scrollTop = Math.max(0, on.offsetTop - (col.clientHeight - on.offsetHeight) / 2);
+  requestAnimationFrame(() => {
+    paintBookDrum(col);
+    requestAnimationFrame(() => { bookWheelLock = Math.max(0, bookWheelLock - 1); });
+  });
+}
+
+function bookTickFromWheel(col) {
+  const mid = col.scrollTop + col.clientHeight / 2;
+  let best = null;
+  let bestDist = Infinity;
+  col.querySelectorAll('.book-tick').forEach((btn) => {
+    const dist = Math.abs(btn.offsetTop + btn.offsetHeight / 2 - mid);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = btn;
+    }
+  });
+  return best;
+}
+
+function bindBookWheels(picker, onPick) {
+  picker.querySelectorAll('.book-clock-col').forEach((col) => {
+    let timer = 0;
+    col.addEventListener('scroll', () => {
+      if (bookWheelLock) {
+        paintBookDrum(col);
+        return;
+      }
+      paintBookDrum(col);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const btn = bookTickFromWheel(col);
+        if (!btn || btn.classList.contains('is-on')) return;
+        onPick(btn);
+      }, 140);
+    }, { passive: true });
+    paintBookDrum(col);
+  });
 }
 
 function renderBookTimePicker(opts) {
@@ -1351,9 +1412,7 @@ function renderBookTimePicker(opts) {
   if (opts && typeof opts.outside === 'boolean') bookTimeOutside = opts.outside;
   const date = document.getElementById('bookDate')?.value || '';
   const working = slotsFromShifts(shiftsForDate(date), 15);
-  const allowed = bookTimeOutside
-    ? bookHourChoices(working, true).flatMap((hour) => bookQuarterMinutes().map((minute) => hour * 60 + minute))
-    : working.slice();
+  const allowed = bookTimeOutside ? bookOutsideSlots() : working.slice();
   const selectedMins = selectedBookMinutes();
   if (selectedMins != null && date && !allowed.includes(selectedMins)) applyBookTime(NaN);
   const chosen = selectedBookMinutes();
@@ -1384,36 +1443,34 @@ function renderBookTimePicker(opts) {
     const extra = bookTimeOutside && chosenHour != null && !working.includes(chosenHour * 60 + minute);
     return `<button type="button" class="book-tick${on ? ' is-on' : ''}${extra ? ' is-extra' : ''}" data-m="${pad2(minute)}">${pad2(minute)}</button>`;
   }).join('');
+  const column = (cap, ticks) =>
+    `<div class="book-wheel-wrap"><div class="book-clock-cap">${cap}</div><div class="book-wheel"><div class="book-wheel-band" aria-hidden="true"></div><div class="book-wheel-shade" aria-hidden="true"></div><div class="book-clock-col">${ticks}</div></div></div>`;
+  const pickTick = (btn) => {
+    const hourAttr = btn.getAttribute('data-h');
+    const minuteAttr = btn.getAttribute('data-m');
+    if (hourAttr != null) {
+      const hour = parseInt(hourAttr, 10);
+      const prev = selectedBookMinutes();
+      const minute = prev == null ? null : prev % 60;
+      const choices = bookMinuteChoices(hour, working, bookTimeOutside);
+      const keep = minute != null && choices.includes(minute) ? minute : choices[0];
+      applyBookTime(hour * 60 + keep);
+    } else if (minuteAttr != null) {
+      const prev = selectedBookMinutes();
+      const hour = prev == null ? hours[0] : Math.floor(prev / 60);
+      applyBookTime(hour * 60 + parseInt(minuteAttr, 10));
+    }
+    renderBookTimePicker();
+  };
   picker.innerHTML = `
-    <div class="book-clock" role="group" aria-label="Ώρα έναρξης">
-      <div>
-        <div class="book-clock-cap">Ώρα</div>
-        <div class="book-clock-col">${hourBtns}</div>
-      </div>
-      <div>
-        <div class="book-clock-cap">Λεπτά</div>
-        <div class="book-clock-col">${minuteBtns}</div>
-      </div>
+    <div class="book-clock is-wheel" role="group" aria-label="Ώρα έναρξης">
+      ${column('Ώρα', hourBtns)}
+      ${column('Λεπτά', minuteBtns)}
     </div>`;
   picker.querySelectorAll('.book-tick').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const hourAttr = btn.getAttribute('data-h');
-      const minuteAttr = btn.getAttribute('data-m');
-      if (hourAttr != null) {
-        const hour = parseInt(hourAttr, 10);
-        const prev = selectedBookMinutes();
-        const minute = prev == null ? null : prev % 60;
-        const choices = bookMinuteChoices(hour, working, bookTimeOutside);
-        const keep = minute != null && choices.includes(minute) ? minute : choices[0];
-        applyBookTime(hour * 60 + keep);
-      } else if (minuteAttr != null) {
-        const prev = selectedBookMinutes();
-        const hour = prev == null ? hours[0] : Math.floor(prev / 60);
-        applyBookTime(hour * 60 + parseInt(minuteAttr, 10));
-      }
-      renderBookTimePicker();
-    });
+    btn.addEventListener('click', () => pickTick(btn));
   });
+  bindBookWheels(picker, pickTick);
   picker.querySelectorAll('.book-clock-col').forEach(centerClockColumn);
   if (hint) {
     hint.textContent = bookTimeOutside
@@ -1959,8 +2016,7 @@ async function fetchAppointments() {
       });
     });
 
-    const realAppointments = allAppointments.filter(item => item.status !== 'BLOCKED');
-    document.getElementById('statTotal').innerText = realAppointments.length;
+    document.getElementById('statTotal').innerText = allAppointments.filter(isTodayOpenAppointment).length;
     const pendingEl = document.getElementById('statPending');
     const waitEl = document.getElementById('statWaitlist');
     pendingEl.innerText = pending;
@@ -2145,12 +2201,17 @@ function statusBadge(item) {
   return bits.join(' ');
 }
 
+function isTodayOpenAppointment(item) {
+  if (!item || item.date !== todayISO() || isUnscheduled(item)) return false;
+  return item.status === 'PENDING' || item.status === 'BOOKED' || item.status === 'CONFIRMED';
+}
+
 function appointmentsForKind(kind) {
   return allAppointments.filter(item => {
     if (kind === 'unscheduled') {
       return isActiveBucketItem(item);
     }
-    if (kind === 'all') return item.status !== 'BLOCKED';
+    if (kind === 'all') return isTodayOpenAppointment(item);
     if (kind === 'pending') {
       return !isUnscheduled(item) && (item.status === 'PENDING' || item.status === 'WAITLIST');
     }
@@ -2219,14 +2280,14 @@ function openAppointmentList(kind) {
   }
   currentListKind = kind;
   const titles = {
-    all: 'Συνολικά',
+    all: 'Σήμερα',
     pending: 'Εκκρεμή ραντεβού',
     booked: 'Εγκεκριμένα ραντεβού',
     history: 'Ιστορικό ραντεβού',
     unscheduled: 'Χωρίς μέρα'
   };
   const subtitles = {
-    all: 'Όλα τα ραντεβού της επιχείρησης, χωρίς τα κλειστά slots.',
+    all: 'Εκκρεμή και εγκεκριμένα της σημερινής μέρας.',
     pending: 'Αιτήματα που περιμένουν έγκριση.',
     booked: 'Μόνο μελλοντικά εγκεκριμένα.',
     history: 'Παρελθόντα, απορριφθέντα και ακυρωμένα.',
@@ -2280,6 +2341,7 @@ function renderAppointmentList() {
   }
 
   const list = document.getElementById('aptList');
+  list.classList.toggle('is-history', currentListKind === 'history');
   if (!rows.length) {
     list.innerHTML = '<div class="list-empty">Δεν βρέθηκαν ραντεβού.</div>';
     syncBulkBar();
@@ -2807,9 +2869,9 @@ async function copyInstagramPack() {
   ].join('\n');
   try {
     await navigator.clipboard.writeText(text);
-    showToast('Αντιγράφηκε κείμενο + σύνδεσμος για Instagram.');
+    showToast('Αντιγράφηκε ο σύνδεσμος κράτησης.');
   } catch (err) {
-    window.prompt('Αντίγραψε αυτό για Instagram:', text);
+    window.prompt('Αντίγραψε τον σύνδεσμο κράτησης:', text);
   }
 }
 
@@ -3479,6 +3541,36 @@ function syncDepositModeUi() {
   if (fixedWrap) fixedWrap.style.display = fixed ? 'block' : 'none';
 }
 
+let settingsSnapshot = '';
+
+function settingsFormState() {
+  const form = document.getElementById('settingsForm');
+  if (!form) return '';
+  const parts = [];
+  form.querySelectorAll('input, select, textarea').forEach((el) => {
+    if (el.id === 'currentPassword' || el.id === 'newPassword' || el.id === 'newPassword2') return;
+    if (el.type === 'button' || el.type === 'submit' || el.type === 'file') return;
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      parts.push(`${el.name || el.id}:${el.value}:${el.checked ? '1' : '0'}`);
+    } else {
+      parts.push(`${el.name || el.id}:${el.value}`);
+    }
+  });
+  parts.push(`draft:${JSON.stringify(window._perDayHoursDraft || {})}`);
+  return parts.join('\n');
+}
+
+function syncSettingsSaveState() {
+  const btn = document.getElementById('saveSettingsBtn');
+  if (!btn) return;
+  btn.disabled = settingsFormState() === settingsSnapshot;
+}
+
+function captureSettingsSnapshot() {
+  settingsSnapshot = settingsFormState();
+  syncSettingsSaveState();
+}
+
 function openSettingsModal() {
   if (!currentTenantData) return;
   const search = document.getElementById('settingsSearch');
@@ -3599,6 +3691,7 @@ function openSettingsModal() {
   });
 
   updateAppearancePreview();
+  captureSettingsSnapshot();
   openModal('settingsModal');
   lucide.createIcons();
 }
@@ -3825,6 +3918,7 @@ function addShiftRow(listId) {
   if (!list) return;
   list.insertAdjacentHTML('beforeend', shiftRowHtml('09:00', '17:00'));
   lucide.createIcons();
+  syncSettingsSaveState();
 }
 
 function syncHoursEditors(fromOpen) {
@@ -3861,6 +3955,7 @@ function syncHoursEditors(fromOpen) {
   window._perDayHoursDraft = draft;
   syncNamedChecks('w_day', 'selectAllDays');
   lucide.createIcons();
+  if (!fromOpen) syncSettingsSaveState();
 }
 
 function addModalShift() {
@@ -3879,10 +3974,12 @@ function addModalService() {
   `;
   list.appendChild(row);
   lucide.createIcons();
+  syncSettingsSaveState();
 }
 
 async function saveSettings(e) {
   e.preventDefault();
+  if (settingsFormState() === settingsSnapshot) return;
   await withLock(async () => {
   const name = document.getElementById('setName').value.trim();
   const email = document.getElementById('setEmail').value.trim();
