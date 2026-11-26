@@ -863,9 +863,18 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 #calendar .fc-view-harness[hidden] { display: none !important; }
 .phone-week { display: flex; flex-direction: column; gap: 0.28rem; }
 .phone-week[hidden] { display: none !important; }
+.outside-mark {
+  display: block;
+  margin-top: 0.08rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #b45309;
+}
+.fc-daygrid-day-number .outside-mark { display: inline; margin: 0 0 0 0.2rem; }
 .week-line {
   display: grid;
-  grid-template-columns: 2.55rem minmax(0, 1fr);
+  grid-template-columns: 2.9rem minmax(0, 1fr);
   gap: 0.28rem;
   align-items: stretch;
 }

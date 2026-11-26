@@ -1405,6 +1405,7 @@ function syncPhoneWeekBoard() {
     day.setDate(weekStart.getDate() + i);
     const dateStr = `${day.getFullYear()}-${pad2(day.getMonth() + 1)}-${pad2(day.getDate())}`;
     const label = day.toLocaleDateString('el-GR', { weekday: 'short' }).replace('.', '');
+    const outside = upcomingOutsideAppointments().some((item) => item.date === dateStr);
     const hoursHtml = hours.map((mins) => {
       const off = !hourOverlapsShift(dateStr, mins);
       return `<button type="button" class="week-hour${off ? ' is-off' : ''}" data-date="${dateStr}" data-mins="${mins}" data-off="${off ? '1' : '0'}">${String(Math.floor(mins / 60))}</button>`;
@@ -1423,7 +1424,7 @@ function syncPhoneWeekBoard() {
     }).join('');
     rows.push(`
       <div class="week-line${dateStr === today ? ' is-today' : ''}">
-        <button type="button" class="week-line-label" data-date="${dateStr}"><span>${escapeHtml(label)}</span><strong>${day.getDate()}</strong></button>
+        <button type="button" class="week-line-label" data-date="${dateStr}">${outside ? '<span class="outside-mark">εκτός</span>' : ''}<span>${escapeHtml(label)}</span><strong>${day.getDate()}</strong></button>
         <div class="week-line-track">${hoursHtml}${aptHtml}</div>
       </div>
     `);
@@ -1456,10 +1457,32 @@ function syncPhoneWeekBoard() {
   });
 }
 
+function isOutsideHoursAppointment(item) {
+  if (!item || !item.date || !item.start_time) return false;
+  if (item.status === 'REJECTED' || item.status === 'CANCELLED' || item.status === 'NO_SHOW' || item.status === 'BLOCKED') return false;
+  return !timeWithinWorkingHours(item.date, String(item.start_time).slice(0, 5));
+}
+
+function upcomingOutsideAppointments() {
+  return (allAppointments || []).filter((item) => isOutsideHoursAppointment(item) && !isPastAppointment(item));
+}
+
 function calendarVisibleRange() {
   const base = shopHourWindow();
-  let min = Math.max(0, Math.floor(base.start / 30) * 30);
-  let max = Math.min(24 * 60, Math.ceil(base.end / 30) * 30);
+  let min = base.start;
+  let max = base.end;
+  const view = calendar && calendar.view;
+  if (view && view.activeStart && view.activeEnd) upcomingOutsideAppointments().forEach((item) => {
+    const [y, m, d] = String(item.date).split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    if (dt < view.activeStart || dt >= view.activeEnd) return;
+    const s = timeToMinutesLocal(item.start_time);
+    const e = item.end_time ? timeToMinutesLocal(item.end_time) : s + (Number(item.duration) || 60);
+    if (s < min) min = s;
+    if (e > max) max = e;
+  });
+  min = Math.max(0, Math.floor(min / 60) * 60);
+  max = Math.min(24 * 60, Math.ceil(max / 60) * 60);
   if (max <= min) max = Math.min(24 * 60, min + 60);
   return { start: min, end: max };
 }
@@ -1472,34 +1495,40 @@ function calendarSlotBounds() {
   };
 }
 
-function renderOutOfHoursExceptions() {
-  const wrap = document.getElementById('outOfHoursList');
-  if (!wrap) return;
-  const rows = (allAppointments || []).filter((item) => {
-    if (!item.date || !item.start_time || item.status === 'BLOCKED' || item.status === 'CANCELLED' || item.status === 'REJECTED') return false;
-    return !timeWithinWorkingHours(item.date, item.start_time);
-  }).sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.start_time).localeCompare(String(b.start_time)));
-  if (!rows.length) {
-    wrap.hidden = true;
-    wrap.innerHTML = '';
-    return;
-  }
-  wrap.hidden = false;
-  wrap.innerHTML = `<h4 style="margin:0 0 0.5rem;">Εκτός ωραρίου (${rows.length})</h4>` + rows.map((item) => `
-    <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
-      <div>
-        <div style="font-weight:600;">${escapeHtml(formatGreekDate(item.date))} · ${escapeHtml(String(item.start_time).slice(0, 5))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
-        <div class="apt-row-meta">${escapeHtml(item.service_name || '-')} · εξαιρείται από κανονικό ωράριο</div>
-      </div>
-      <div class="apt-badges">${statusBadge(item)}</div>
-    </button>
-  `).join('');
-  wrap.querySelectorAll('.apt-row').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const found = allAppointments.find((a) => a.id === btn.getAttribute('data-id'));
-      openAppointmentDetails(found);
-    });
+function dayHeaderHasOutside(date) {
+  if (!date) return false;
+  const dateStr = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  return upcomingOutsideAppointments().some((item) => item.date === dateStr);
+}
+
+function paintOutsideDayMarks() {
+  document.querySelectorAll('#calendar .fc-daygrid-day').forEach((cell) => {
+    const date = cell.getAttribute('data-date');
+    const has = !!date && upcomingOutsideAppointments().some((item) => item.date === date);
+    cell.classList.toggle('has-outside', has);
+    const num = cell.querySelector('.fc-daygrid-day-number');
+    if (!num) return;
+    const mark = num.querySelector('.outside-mark');
+    if (has && !mark) {
+      const badge = document.createElement('span');
+      badge.className = 'outside-mark';
+      badge.textContent = 'εκτός';
+      num.appendChild(badge);
+    } else if (!has && mark) {
+      mark.remove();
+    }
   });
+}
+
+let slotBoundsLock = false;
+function applyVisibleSlotBounds() {
+  if (!calendar || slotBoundsLock) return;
+  const bounds = calendarSlotBounds();
+  if (calendar.getOption('slotMinTime') === bounds.slotMinTime && calendar.getOption('slotMaxTime') === bounds.slotMaxTime) return;
+  slotBoundsLock = true;
+  calendar.setOption('slotMinTime', bounds.slotMinTime);
+  calendar.setOption('slotMaxTime', bounds.slotMaxTime);
+  slotBoundsLock = false;
 }
 
 function applyBlockEndMinutes(mins) {
@@ -1727,6 +1756,12 @@ function initCalendar() {
       setRescheduleEditorUi(true);
       showToast('Νέο slot από drag — πάτα «Αποθήκευση ώρας» ή Κλείσιμο για αναίρεση.');
     },
+    dayHeaderContent: (arg) => {
+      const type = arg.view && arg.view.type;
+      const timed = type === 'timeGridWeek' || type === 'timeGridDay' || type === 'listWeek';
+      if (!timed || !dayHeaderHasOutside(arg.date)) return arg.text;
+      return { html: `${arg.text}<span class="outside-mark">εκτός</span>` };
+    },
     headerToolbar: calendarToolbar(),
     buttonText: calendarButtonText(),
     views: {
@@ -1771,7 +1806,9 @@ function initCalendar() {
       if (calendar.getOption('height') !== nextHeight) {
         calendar.setOption('height', nextHeight);
       }
+      applyVisibleSlotBounds();
       paintMonthDayCounts();
+      paintOutsideDayMarks();
       applyCalendarEventTitles();
       syncPhoneWeekBoard();
     },
@@ -1841,7 +1878,6 @@ async function fetchAppointments() {
     const unsEl = document.getElementById('statUnscheduled');
     if (unsEl) unsEl.innerText = unscheduled;
     renderTodayList();
-    renderOutOfHoursExceptions();
     if (calendar) {
       const bounds = calendarSlotBounds();
       calendar.setOption('slotMinTime', bounds.slotMinTime);
@@ -1849,6 +1885,7 @@ async function fetchAppointments() {
       calendar.setOption('scrollTime', calendarScrollTime());
     }
     paintMonthDayCounts();
+    paintOutsideDayMarks();
     applyCalendarEventTitles();
     syncPhoneWeekBoard();
     renderHoldRiskBanner();
