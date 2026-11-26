@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261121a">
+    <link rel="stylesheet" href="manager_style.css?v=20261126b">
 </head>
 <body data-theme="light">
 
@@ -157,14 +157,14 @@
       <div class="stats-grid">
         <button type="button" class="stat-card clickable" onclick="openAppointmentList('all')">
           <div>
-            <div style="font-size: 0.875rem; color: var(--text-muted);">Συνολικά Ραντεβού</div>
+            <div class="stat-label">Συνολικά</div>
             <div class="stat-value" id="statTotal">0</div>
           </div>
           <div class="stat-icon-total"><i data-lucide="calendar-check-2" size="24"></i></div>
         </button>
         <button type="button" class="stat-card clickable" onclick="openAppointmentList('pending')">
           <div>
-            <div style="font-size: 0.875rem; color: var(--text-muted);">Εκκρεμή</div>
+            <div class="stat-label">Εκκρεμή</div>
             <div class="stat-pending-row">
               <div class="stat-value" id="statPending" style="color: #d97706;">0</div>
               <div class="stat-value stat-wait" id="statWaitlist" hidden>ουρά 0</div>
@@ -175,28 +175,28 @@
         </button>
         <button type="button" class="stat-card clickable" onclick="openAppointmentList('booked')">
           <div>
-            <div style="font-size: 0.875rem; color: var(--text-muted);">Εγκεκριμένα</div>
+            <div class="stat-label">Εγκεκριμένα</div>
             <div class="stat-value" id="statBooked" style="color: #059669;">0</div>
           </div>
           <div style="color: #059669;"><i data-lucide="badge-check" size="24"></i></div>
         </button>
         <button type="button" class="stat-card clickable" onclick="openAppointmentList('history')">
           <div>
-            <div style="font-size: 0.875rem; color: var(--text-muted);">Ιστορικό</div>
+            <div class="stat-label">Ιστορικό</div>
             <div class="stat-value" id="statHistory" style="color: #64748b;">0</div>
           </div>
           <div style="color: #64748b;"><i data-lucide="history" size="24"></i></div>
         </button>
         <button type="button" class="stat-card clickable" onclick="openAppointmentList('unscheduled')" title="Ραντεβού που δεν έχουν μπει ακόμα σε μέρα">
           <div>
-            <div style="font-size: 0.875rem; color: var(--text-muted);">Χωρίς μέρα</div>
+            <div class="stat-label">Χωρίς μέρα</div>
             <div class="stat-value" id="statUnscheduled" style="color: #0ea5e9;">0</div>
           </div>
           <div style="color: #0ea5e9;"><i data-lucide="inbox" size="24"></i></div>
         </button>
       </div>
 
-      <div class="card">
+      <div class="card today-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h3 style="margin:0;">Σήμερα</h3>
           <span id="todayDateLabel" style="font-size: 0.8rem; color: var(--text-muted);"></span>
@@ -946,7 +946,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20261121b"></script>
+<script src="manager.js?v=20261126b"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

@@ -1458,20 +1458,9 @@ function syncPhoneWeekBoard() {
 
 function calendarVisibleRange() {
   const base = shopHourWindow();
-  let min = base.start;
-  let max = base.end;
-  (allAppointments || []).forEach((item) => {
-    if (!item.date || !item.start_time) return;
-    if (item.status === 'REJECTED' || item.status === 'CANCELLED' || item.status === 'NO_SHOW') return;
-    if (timeWithinWorkingHours(item.date, String(item.start_time).slice(0, 5))) return;
-    const s = timeToMinutesLocal(item.start_time);
-    const e = item.end_time ? timeToMinutesLocal(item.end_time) : s + (Number(item.duration) || 60);
-    min = Math.min(min, s);
-    max = Math.max(max, Math.max(e, s + 30));
-  });
-  min = Math.max(0, Math.floor(min / 30) * 30);
-  max = Math.min(24 * 60, Math.ceil(max / 30) * 30);
-  if (max <= min) max = min + 60;
+  let min = Math.max(0, Math.floor(base.start / 30) * 30);
+  let max = Math.min(24 * 60, Math.ceil(base.end / 30) * 30);
+  if (max <= min) max = Math.min(24 * 60, min + 60);
   return { start: min, end: max };
 }
 
@@ -1540,9 +1529,11 @@ function calendarButtonText() {
 }
 
 function calendarScrollTime() {
+  const win = shopHourWindow();
   const n = new Date();
-  const hour = Math.min(20, Math.max(8, n.getHours() - 1));
-  return `${String(hour).padStart(2, '0')}:00:00`;
+  let minutes = (n.getHours() - 1) * 60;
+  minutes = Math.max(win.start, Math.min(minutes, Math.max(win.start, win.end - 60)));
+  return `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}:00`;
 }
 
 function calendarPhoneHeight() {
@@ -1855,6 +1846,7 @@ async function fetchAppointments() {
       const bounds = calendarSlotBounds();
       calendar.setOption('slotMinTime', bounds.slotMinTime);
       calendar.setOption('slotMaxTime', bounds.slotMaxTime);
+      calendar.setOption('scrollTime', calendarScrollTime());
     }
     paintMonthDayCounts();
     applyCalendarEventTitles();
@@ -2098,7 +2090,7 @@ function openAppointmentList(kind) {
   }
   currentListKind = kind;
   const titles = {
-    all: 'Συνολικά ραντεβού',
+    all: 'Συνολικά',
     pending: 'Εκκρεμή ραντεβού',
     booked: 'Εγκεκριμένα ραντεβού',
     history: 'Ιστορικό ραντεβού',

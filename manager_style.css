@@ -246,6 +246,7 @@ button, input, select, textarea { font-family: inherit; }
 /* [SECTION: CSS-LISTS] */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.stat-label { font-size: 0.875rem; color: var(--text-muted); }
 .stat-card.clickable { cursor: pointer; text-align: left; width: 100%; font: inherit; color: inherit; }
 .stat-card.clickable:hover { border-color: #4f46e5; background: color-mix(in srgb, #4f46e5 6%, var(--card-bg)); }
 .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 0.25rem; }
@@ -1145,12 +1146,31 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
     display: flex;
     flex-direction: column;
   }
-  .calendar-card { order: -1; }
+  .container > .stats-grid { order: 1; }
+  .container > .today-card { order: 2; }
+  .container > .calendar-card { order: 3; }
   .card { padding: 1rem; margin-bottom: 0.9rem; border-radius: 0.85rem; }
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-bottom: 0.9rem; }
-  .stat-card { padding: 0.85rem; }
+  .stats-grid {
+    grid-template-columns: repeat(3, max-content);
+    justify-content: start;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+  .stats-grid .stat-card {
+    width: 6.6rem;
+    height: 6.6rem;
+    min-width: 6.6rem;
+    padding: 0.45rem 0.4rem;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .stat-label { font-size: 0.72rem; line-height: 1.15; }
   .stat-card > div:last-child { display: none; }
-  .stat-value { font-size: 1.35rem; }
+  .stat-value { font-size: 1.25rem; margin-top: 0; }
+  .stat-pending-row { gap: 0.25rem; }
+  .stat-wait { font-size: 0.72rem; }
+  .today-card { margin-bottom: 0.75rem; }
   .list-filters { grid-template-columns: 1fr; }
   .apt-list .apt-row { grid-template-columns: auto auto minmax(0, 1fr); gap: 0.5rem; padding: 0.75rem; }
   .apt-list .apt-row.apt-row-bucket { grid-template-columns: auto minmax(0, 1fr) auto; }
