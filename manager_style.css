@@ -330,6 +330,12 @@ button, input, select, textarea { font-family: inherit; }
 .settings-head { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.75rem; }
 .settings-shell { display:grid; grid-template-columns: 11.5rem 1fr; gap: 0; min-height: min(70vh, 640px); border: 1px solid var(--border-color, #e2e8f0); border-radius: 0.75rem; overflow: hidden; }
 .settings-nav { display:flex; flex-direction:column; gap:0.2rem; padding:0.55rem; background: var(--bg-muted, #f8fafc); border-right: 1px solid var(--border-color, #e2e8f0); }
+.settings-search { width:100%; margin-bottom:0.35rem; font-size:0.82rem; }
+.settings-nav-btn.is-filtered-out { display:none; }
+.payments-net { margin-top:0.85rem; padding:0.85rem 1rem; border-radius:0.75rem; background:#f8fafc; border:1px solid var(--border-color, #e2e8f0); display:flex; flex-direction:column; gap:0.2rem; }
+.payments-net strong { font-size:0.78rem; letter-spacing:0.02em; color:var(--text-muted, #64748b); font-weight:600; }
+.payments-net .payments-net-sum { font-size:1.35rem; font-weight:700; color:var(--text-color, #0f172a); }
+.payments-net small { color:var(--text-muted, #64748b); font-size:0.78rem; }
 .settings-nav-btn { text-align:left; border:0; background:transparent; color: var(--text-muted, #64748b); border-radius:0.5rem; padding:0.55rem 0.65rem; font-size:0.82rem; font-weight:600; cursor:pointer; }
 .settings-nav-btn:hover { background: rgba(79,70,229,0.08); color: var(--text-color, #0f172a); }
 .settings-nav-btn.active { background:#4f46e5; color:#fff; }
@@ -1156,6 +1162,7 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   .mobile-more-close { width: 100%; justify-content: center; min-height: 44px; margin-top: 0.35rem; }
   .settings-shell { grid-template-columns: 1fr; min-height: 0; }
   .settings-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border-color, #e2e8f0); }
+  .settings-search { flex: 1 1 100%; }
   .settings-nav-btn { flex: 1 1 auto; text-align: center; font-size: 0.75rem; padding: 0.45rem 0.5rem; }
   .settings-main { max-height: min(62vh, 560px); }
   html, body { overflow-x: hidden; }

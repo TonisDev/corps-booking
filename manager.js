@@ -2622,7 +2622,29 @@ function openPaymentsModal() {
   if (filter) filter.value = 'all';
   renderPaymentsList();
   openModal('paymentsModal');
+  loadShopNet();
   lucide.createIcons();
+}
+
+async function loadShopNet() {
+  const el = document.getElementById('paymentsNet');
+  if (!el || !currentBusinessCode) return;
+  const from = (document.getElementById('paymentsExportFrom') || {}).value || '';
+  const to = (document.getElementById('paymentsExportTo') || {}).value || '';
+  const range = from || to ? ` (${from || '…'} – ${to || '…'})` : '';
+  el.innerHTML = '<strong>Καθαρά έσοδα</strong><span class="payments-net-sum">…</span>';
+  try {
+    const params = new URLSearchParams({ format: 'json', mode: 'accountant', by: 'settled' });
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/payments/export?${params}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Τα έσοδα δεν φορτώθηκαν.');
+    const totals = data.totals || {};
+    el.innerHTML = `<strong>Καθαρά έσοδα${escapeHtml(range)}</strong><span class="payments-net-sum">${escapeHtml(totals.net_eur || '0.00')} €</span><small>Χρεώσεις ${escapeHtml(totals.income_eur || '0.00')} € · επιστροφές ${escapeHtml(totals.refund_eur || '0.00')} €</small>`;
+  } catch (err) {
+    el.innerHTML = `<strong>Καθαρά έσοδα</strong><small>${escapeHtml(err.message || 'Δεν φορτώθηκαν.')}</small>`;
+  }
 }
 
 function renderPaymentsList() {
@@ -3195,6 +3217,30 @@ function renderPlatformBanners() {
       platformNoticeOkStep = 0;
     }
   }
+  const trialEl = document.getElementById('trialBanner');
+  if (trialEl) {
+    const endMs = currentTenantData.trial_ends_at ? Date.parse(currentTenantData.trial_ends_at) : NaN;
+    const paid = currentTenantData.billing_status === 'active' || currentTenantData.billing_status === 'trialing';
+    const days = Number.isFinite(endMs) ? Math.ceil((endMs - Date.now()) / (24 * 60 * 60 * 1000)) : null;
+    const title = document.getElementById('trialBannerTitle');
+    const text = document.getElementById('trialBannerText');
+    if (!paid && days != null && days <= 3 && days >= -14) {
+      const billingOn = currentTenantData.billing_enabled === true;
+      const next = billingOn
+        ? 'Για να συνεχίσει το κατάστημα χρειάζεται συνδρομή QuickBook.'
+        : 'Θα επικοινωνήσουμε για τη συνέχεια.';
+      if (days > 0) {
+        if (title) title.textContent = 'Η δοκιμαστική περίοδος τελειώνει';
+        if (text) text.textContent = `Απομένουν ${days} μέρες. ${next}`;
+      } else {
+        if (title) title.textContent = 'Η δοκιμαστική περίοδος έληξε';
+        if (text) text.textContent = `Η δοκιμή έχει τελειώσει. ${next}`;
+      }
+      trialEl.hidden = false;
+    } else {
+      trialEl.hidden = true;
+    }
+  }
   if (warnEl) {
     const warn = currentTenantData.billing_warning;
     if (currentTenantData.billing_enabled && warn) {
@@ -3341,6 +3387,52 @@ function showSettingsPanel(name) {
   });
 }
 
+function filterSettingsNav() {
+  const input = document.getElementById('settingsSearch');
+  const q = String(input && input.value || '').trim().toLocaleLowerCase('el');
+  let first = null;
+  let currentVisible = false;
+  document.querySelectorAll('.settings-nav-btn').forEach((btn) => {
+    if (btn.hidden) {
+      btn.classList.remove('is-filtered-out');
+      return;
+    }
+    const panel = document.getElementById(`settingsPanel-${btn.getAttribute('data-settings-panel')}`);
+    const hay = `${btn.textContent || ''} ${panel ? panel.innerText : ''}`.toLocaleLowerCase('el');
+    const match = !q || hay.includes(q);
+    btn.classList.toggle('is-filtered-out', !match);
+    if (!match) return;
+    if (!first) first = btn;
+    if (btn.classList.contains('active')) currentVisible = true;
+  });
+  if (q && !currentVisible && first) showSettingsPanel(first.getAttribute('data-settings-panel'));
+}
+
+function embedSnippetFor(code) {
+  const shop = String(code || '').trim();
+  return `<div id="quickbook-${shop}"></div>\n<script src="https://quickbook.gr/widget.js?v=20261126f" data-shop="${shop}" data-target="quickbook-${shop}"></script>`;
+}
+
+function fillEmbedSnippet() {
+  const box = document.getElementById('embedSnippet');
+  if (box) box.value = embedSnippetFor(currentBusinessCode);
+}
+
+async function copyEmbedSnippet() {
+  const box = document.getElementById('embedSnippet');
+  const text = box ? box.value : embedSnippetFor(currentBusinessCode);
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Ο κώδικας αντιγράφηκε.');
+  } catch (err) {
+    if (box) {
+      box.focus();
+      box.select();
+    }
+    showToast('Επίλεξε τον κώδικα και αντέγραψέ τον.', true);
+  }
+}
+
 function syncDepositModeUi() {
   const fixed = document.getElementById('depositModeFixed')?.checked === true;
   const pctWrap = document.getElementById('depositPercentWrap');
@@ -3351,7 +3443,11 @@ function syncDepositModeUi() {
 
 function openSettingsModal() {
   if (!currentTenantData) return;
+  const search = document.getElementById('settingsSearch');
+  if (search) search.value = '';
+  filterSettingsNav();
   showSettingsPanel('profile');
+  fillEmbedSnippet();
   document.getElementById('setName').value = currentTenantData.name || '';
   document.getElementById('setEmail').value = currentTenantData.email || '';
   const emailNotify = document.getElementById('setEmailNotify');

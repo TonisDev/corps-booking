@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261126e">
+    <link rel="stylesheet" href="manager_style.css?v=20261126f">
 </head>
 <body data-theme="light">
 
@@ -118,6 +118,10 @@
     <div id="billingWarnBanner" class="billing-warn-banner" hidden>
       <strong id="billingWarnTitle">Πρόβλημα συνδρομής</strong>
       <p id="billingWarnText"></p>
+    </div>
+    <div id="trialBanner" class="billing-warn-banner" hidden>
+      <strong id="trialBannerTitle">Δοκιμαστική περίοδος</strong>
+      <p id="trialBannerText"></p>
     </div>
     <div id="holdRiskBanner" class="hold-risk-banner" hidden>
       <strong>Εγγύηση σε αναμονή χρέωσης</strong>
@@ -288,6 +292,7 @@
       </div>
       <form id="settingsForm" class="settings-shell" onsubmit="saveSettings(event)">
         <nav class="settings-nav" aria-label="Θέματα ρυθμίσεων">
+          <input class="field settings-search" id="settingsSearch" type="search" placeholder="Αναζήτηση ρυθμίσεων" autocomplete="off" oninput="filterSettingsNav()">
           <button type="button" class="settings-nav-btn active" data-settings-panel="profile" onclick="showSettingsPanel('profile')">Επιχείρηση</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="payments" onclick="showSettingsPanel('payments')">Πληρωμές πελατών</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="hours" onclick="showSettingsPanel('hours')">Ωράριο</button>
@@ -544,6 +549,14 @@
                 <button type="button" class="btn btn-outline" onclick="copyCalendarLink()">Αντιγραφή συνδέσμου</button>
               </div>
             </div>
+            <div class="help-box">
+              <h3>Ιστοσελίδα</h3>
+              <p class="settings-hint">Βάλε αυτόν τον κώδικα στη σελίδα σου, εκεί που θες να φαίνεται η φόρμα κράτησης. Η φόρμα κρατά το χρώμα και το λογότυπο του καταστήματος.</p>
+              <textarea class="field readonly-url" id="embedSnippet" readonly rows="4" style="min-height:6.5rem; resize:vertical; font-family:ui-monospace,monospace; font-size:0.78rem;"></textarea>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
+                <button type="button" class="btn" onclick="copyEmbedSnippet()">Αντιγραφή κώδικα</button>
+              </div>
+            </div>
           </div>
 
           <div class="settings-panel" id="settingsPanel-billing">
@@ -790,12 +803,13 @@
           <option value="refunded">Επιστροφές</option>
           <option value="released">Αποδεσμευμένες</option>
         </select>
-        <input class="field" type="date" id="paymentsExportFrom" title="Από" style="max-width:10rem;">
-        <input class="field" type="date" id="paymentsExportTo" title="Έως" style="max-width:10rem;">
+        <input class="field" type="date" id="paymentsExportFrom" title="Από" style="max-width:10rem;" onchange="loadShopNet()">
+        <input class="field" type="date" id="paymentsExportTo" title="Έως" style="max-width:10rem;" onchange="loadShopNet()">
         <button type="button" class="btn btn-outline" onclick="exportPaymentsCsv()">Εξαγωγή CSV</button>
         <button type="button" class="btn" onclick="exportAccountantNote()">Σημείωμα λογιστή</button>
       </div>
-      <p class="guide-note" style="margin:0.55rem 0 0;">Το σημείωμα έχει σύνολα (χρεώσεις − επιστροφές). Το CSV είναι η αναλυτική κίνηση από το ledger. Οι δεσμεύσεις κάρτας δεν είναι έσοδα.</p>
+      <div id="paymentsNet" class="payments-net">Καθαρά έσοδα: υπολογισμός…</div>
+      <p class="guide-note" style="margin:0.55rem 0 0;">Τα καθαρά έσοδα είναι χρεώσεις μείον επιστροφές. Οι δεσμεύσεις κάρτας δεν μετρούν. Το CSV είναι η αναλυτική κίνηση.</p>
       <div id="paymentsList" class="apt-list"></div>
       <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeModal('paymentsModal')">Κλείσιμο</button>
     </div>
@@ -945,7 +959,7 @@
     <button type="button" class="btn btn-outline btn-sheet-close sheet-close-mobile" onclick="closeClientDrawer()">Κλείσιμο</button>
   </aside>
 
-<script src="manager.js?v=20261126e"></script>
+<script src="manager.js?v=20261126f"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

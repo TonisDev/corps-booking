@@ -69,6 +69,12 @@ h1, h2, h3 {
 html[data-mode="home"] .booking-shell > .booking-card,
 html[data-mode="home"] .rhapsodus-stamp { display: none !important; }
 html[data-mode="book"] .home { display: none !important; }
+html[data-embed="1"] .page-bg,
+html[data-embed="1"] .rhapsodus-stamp { display: none !important; }
+html[data-embed="1"],
+html[data-embed="1"] body { background: transparent !important; min-height: 0 !important; }
+html[data-embed="1"] .booking-shell { padding: 0 !important; }
+html[data-embed="1"] .booking-card { margin: 0 auto; box-shadow: none; }
 html[data-mode="home"] .booking-shell {
   display: block;
   min-height: 100vh;
