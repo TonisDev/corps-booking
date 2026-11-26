@@ -1444,8 +1444,7 @@ function syncPhoneWeekBoard() {
       const right = Math.max(left, Math.min(100, ((e - start) / span) * 100));
       const width = Math.max(4, right - left);
       const name = item.status === 'BLOCKED' ? 'Κλειστό' : customerFirstName(item.customer_name);
-      const gap = timeHitsMiddayGap(dateStr, s, e);
-      return `<button type="button" class="week-apt${gap ? ' is-gap' : ''}" data-id="${escapeHtml(item.id)}" style="left:${left}%;width:${width}%;background-color:${monthDotColor(item.status)}">${escapeHtml(name)}</button>`;
+      return `<button type="button" class="week-apt" data-id="${escapeHtml(item.id)}" style="left:${left}%;width:${width}%;background-color:${monthDotColor(item.status)}">${escapeHtml(name)}</button>`;
     }).join('');
     rows.push(`
       <div class="week-line${dateStr === today ? ' is-today' : ''}">
@@ -1835,13 +1834,7 @@ function initCalendar() {
         noEventsContent: 'Δεν υπάρχουν ραντεβού αυτή την εβδομάδα.'
       }
     },
-    eventClassNames: (arg) => {
-      const item = arg.event.extendedProps || {};
-      if (!item.date || !item.start_time) return [];
-      const start = timeToMinutesLocal(item.start_time);
-      const end = item.end_time ? timeToMinutesLocal(item.end_time) : start + (Number(item.duration) || 60);
-      return timeHitsMiddayGap(item.date, start, end) ? ['is-gap'] : [];
-    },
+    eventClassNames: () => [],
     eventClick: info => {
       if (calendarClickIgnored()) return;
       const item = Object.assign({}, info.event.extendedProps, {

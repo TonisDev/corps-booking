@@ -881,11 +881,14 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   line-height: 1.15;
 }
 .fc-daygrid-day-number .outside-mark { margin: 0 0 0 0.2rem; }
+.fc .fc-timegrid-col-events {
+  z-index: 4;
+}
 .midday-gap {
   position: absolute;
   left: 0;
   right: 0;
-  z-index: 5;
+  z-index: 1;
   pointer-events: none;
   background: repeating-linear-gradient(
     -45deg,
@@ -893,13 +896,9 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
     rgba(37, 99, 235, 0.30) 7px 12px
   );
 }
-.fc-timegrid-event.is-gap,
-.fc-timegrid-event.is-gap .fc-event-main {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent 0 6px,
-    rgba(37, 99, 235, 0.42) 6px 11px
-  );
+.fc-timegrid-event,
+.fc-timegrid-event .fc-event-main {
+  background-image: none;
 }
 .week-line {
   display: grid;
@@ -969,13 +968,7 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 0.15rem;
-}
-.week-apt.is-gap {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent 0 4px,
-    rgba(37, 99, 235, 0.45) 4px 7px
-  );
+  background-image: none;
 }
 .book-time-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem; }
 .book-time-picker.is-select { display: block; }
