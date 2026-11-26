@@ -864,14 +864,37 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 .phone-week { display: flex; flex-direction: column; gap: 0.28rem; }
 .phone-week[hidden] { display: none !important; }
 .outside-mark {
-  display: block;
-  margin-top: 0.08rem;
+  display: inline-block;
+  margin-top: 0.12rem;
+  padding: 0.08rem 0.32rem;
+  border-radius: 0.28rem;
+  background: #f97316;
+  color: #fff;
   font-size: 0.58rem;
   font-weight: 700;
-  line-height: 1;
-  color: #b45309;
+  line-height: 1.15;
 }
-.fc-daygrid-day-number .outside-mark { display: inline; margin: 0 0 0 0.2rem; }
+.fc-daygrid-day-number .outside-mark { margin: 0 0 0 0.2rem; }
+.midday-gap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(59, 130, 246, 0.10) 0 7px,
+    rgba(37, 99, 235, 0.30) 7px 12px
+  );
+}
+.fc-timegrid-event.is-gap,
+.fc-timegrid-event.is-gap .fc-event-main {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 6px,
+    rgba(37, 99, 235, 0.42) 6px 11px
+  );
+}
 .week-line {
   display: grid;
   grid-template-columns: 2.9rem minmax(0, 1fr);
@@ -916,6 +939,15 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   padding: 0;
 }
 .week-hour.is-off { opacity: 0.38; }
+.week-hour.is-gap {
+  opacity: 1;
+  color: #1e3a8a;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(59, 130, 246, 0.14) 0 4px,
+    rgba(37, 99, 235, 0.34) 4px 7px
+  );
+}
 .week-apt {
   position: absolute;
   top: 3px;
@@ -931,6 +963,13 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 0.15rem;
+}
+.week-apt.is-gap {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 4px,
+    rgba(37, 99, 235, 0.45) 4px 7px
+  );
 }
 .book-time-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem; }
 .book-time-picker.is-select { display: block; }

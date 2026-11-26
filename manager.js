@@ -1380,6 +1380,29 @@ function hourOverlapsShift(dateStr, hourMins) {
   });
 }
 
+function middayGapsForDate(dateStr) {
+  const range = calendarVisibleRange();
+  const shifts = shiftsForDate(dateStr)
+    .map((sh) => ({
+      start: Math.max(timeToMinutesLocal(sh.start), range.start),
+      end: Math.min(timeToMinutesLocal(sh.end), range.end)
+    }))
+    .filter((sh) => sh.end > sh.start)
+    .sort((a, b) => a.start - b.start);
+  const gaps = [];
+  let cursor = range.start;
+  shifts.forEach((sh) => {
+    if (sh.start > cursor) gaps.push({ start: cursor, end: sh.start });
+    if (sh.end > cursor) cursor = sh.end;
+  });
+  if (cursor < range.end) gaps.push({ start: cursor, end: range.end });
+  return gaps.filter((gap) => gap.end - gap.start >= 15);
+}
+
+function timeHitsMiddayGap(dateStr, startMins, endMins) {
+  return middayGapsForDate(dateStr).some((gap) => startMins < gap.end && endMins > gap.start);
+}
+
 function syncPhoneWeekBoard() {
   const board = document.getElementById('phoneWeekBoard');
   if (!board || !calendar) return;
@@ -1408,7 +1431,8 @@ function syncPhoneWeekBoard() {
     const outside = upcomingOutsideAppointments().some((item) => item.date === dateStr);
     const hoursHtml = hours.map((mins) => {
       const off = !hourOverlapsShift(dateStr, mins);
-      return `<button type="button" class="week-hour${off ? ' is-off' : ''}" data-date="${dateStr}" data-mins="${mins}" data-off="${off ? '1' : '0'}">${String(Math.floor(mins / 60))}</button>`;
+      const cls = off ? ' is-gap' : '';
+      return `<button type="button" class="week-hour${cls}" data-date="${dateStr}" data-mins="${mins}" data-off="${off ? '1' : '0'}">${String(Math.floor(mins / 60))}</button>`;
     }).join('');
     const apts = (allAppointments || [])
       .filter((item) => item.date === dateStr && item.start_time)
@@ -1420,7 +1444,8 @@ function syncPhoneWeekBoard() {
       const right = Math.max(left, Math.min(100, ((e - start) / span) * 100));
       const width = Math.max(4, right - left);
       const name = item.status === 'BLOCKED' ? 'Κλειστό' : customerFirstName(item.customer_name);
-      return `<button type="button" class="week-apt" data-id="${escapeHtml(item.id)}" style="left:${left}%;width:${width}%;background:${monthDotColor(item.status)}">${escapeHtml(name)}</button>`;
+      const gap = timeHitsMiddayGap(dateStr, s, e);
+      return `<button type="button" class="week-apt${gap ? ' is-gap' : ''}" data-id="${escapeHtml(item.id)}" style="left:${left}%;width:${width}%;background-color:${monthDotColor(item.status)}">${escapeHtml(name)}</button>`;
     }).join('');
     rows.push(`
       <div class="week-line${dateStr === today ? ' is-today' : ''}">
@@ -1499,6 +1524,27 @@ function dayHeaderHasOutside(date) {
   if (!date) return false;
   const dateStr = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
   return upcomingOutsideAppointments().some((item) => item.date === dateStr);
+}
+
+function paintMiddayGaps() {
+  const root = document.getElementById('calendar');
+  if (!root) return;
+  root.querySelectorAll('.midday-gap').forEach((el) => el.remove());
+  const view = calendar && calendar.view;
+  if (!view || (view.type !== 'timeGridWeek' && view.type !== 'timeGridDay')) return;
+  const range = calendarVisibleRange();
+  const span = Math.max(1, range.end - range.start);
+  root.querySelectorAll('.fc-timegrid-col[data-date]').forEach((col) => {
+    const frame = col.querySelector('.fc-timegrid-col-frame');
+    if (!frame) return;
+    middayGapsForDate(col.getAttribute('data-date')).forEach((gap) => {
+      const band = document.createElement('div');
+      band.className = 'midday-gap';
+      band.style.top = `${((gap.start - range.start) / span) * 100}%`;
+      band.style.height = `${((gap.end - gap.start) / span) * 100}%`;
+      frame.appendChild(band);
+    });
+  });
 }
 
 function paintOutsideDayMarks() {
@@ -1789,6 +1835,13 @@ function initCalendar() {
         noEventsContent: 'Δεν υπάρχουν ραντεβού αυτή την εβδομάδα.'
       }
     },
+    eventClassNames: (arg) => {
+      const item = arg.event.extendedProps || {};
+      if (!item.date || !item.start_time) return [];
+      const start = timeToMinutesLocal(item.start_time);
+      const end = item.end_time ? timeToMinutesLocal(item.end_time) : start + (Number(item.duration) || 60);
+      return timeHitsMiddayGap(item.date, start, end) ? ['is-gap'] : [];
+    },
     eventClick: info => {
       if (calendarClickIgnored()) return;
       const item = Object.assign({}, info.event.extendedProps, {
@@ -1809,6 +1862,7 @@ function initCalendar() {
       applyVisibleSlotBounds();
       paintMonthDayCounts();
       paintOutsideDayMarks();
+      paintMiddayGaps();
       applyCalendarEventTitles();
       syncPhoneWeekBoard();
     },
