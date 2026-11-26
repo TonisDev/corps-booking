@@ -28,6 +28,8 @@ let pendingSlot = null;
 let allAppointments = [];
 let currentListKind = 'all';
 let toastTimer;
+let toastHideTimer;
+let toastBlockClick = false;
 let searchRelaxed = false;
 let pendingResetToken = '';
 let lastUndo = null;
@@ -57,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('bookOutsideToggle')?.addEventListener('click', () => {
     renderBookTimePicker({ outside: !bookTimeOutside });
   });
+  bindToastSwipe();
 
   if (currentBusinessCode && currentSessionToken && !new URLSearchParams(location.search).get('reset')) {
     loadDashboard(currentBusinessCode);
@@ -1102,8 +1105,8 @@ function openBookingModal(slot) {
     }
   }
   syncBookUnscheduledFields();
-  renderBookTimePicker({ outside: !!(slot && slot.outside) });
   openModal('bookingModal');
+  renderBookTimePicker({ outside: !!(slot && slot.outside) });
 }
 
 function syncBookUnscheduledFields() {
@@ -1118,8 +1121,11 @@ function syncBookUnscheduledFields() {
   });
   const picker = document.getElementById('bookTimePicker');
   const outsideBtn = document.getElementById('bookOutsideToggle');
+  const hint = document.getElementById('bookTimeHint');
   if (picker) picker.hidden = !!off;
   if (outsideBtn) outsideBtn.hidden = !!off;
+  if (hint) hint.hidden = !!off;
+  syncBookPastWarning();
 }
 
 function openBlockModal(slot) {
@@ -1295,6 +1301,48 @@ function applyBookTime(mins) {
   minute.value = pad2(mins % 60);
 }
 
+function bookQuarterMinutes() {
+  return [0, 15, 30, 45];
+}
+
+function bookHourChoices(working, outside) {
+  if (outside) {
+    const hours = [];
+    for (let hour = 7; hour <= 22; hour++) hours.push(hour);
+    return hours;
+  }
+  return [...new Set(working.map((mins) => Math.floor(mins / 60)))];
+}
+
+function bookMinuteChoices(hour, working, outside) {
+  const quarters = bookQuarterMinutes();
+  if (outside || hour == null) return quarters;
+  return quarters.filter((minute) => working.includes(hour * 60 + minute));
+}
+
+function syncBookPastWarning() {
+  const dateWarn = document.getElementById('bookDateWarn');
+  const timeWarn = document.getElementById('bookTimeWarn');
+  const dateInput = document.getElementById('bookDate');
+  if (!dateWarn || !timeWarn || !dateInput) return;
+  const off = !!document.getElementById('bookUnscheduled')?.checked;
+  const date = dateInput.value || '';
+  const today = todayISO();
+  const pastDay = !off && !!date && date < today;
+  const mins = selectedBookMinutes();
+  const now = new Date();
+  const pastTime = !off && date === today && mins != null && mins < now.getHours() * 60 + now.getMinutes();
+  dateWarn.hidden = !pastDay;
+  timeWarn.hidden = !pastTime;
+  dateInput.classList.toggle('is-past', pastDay);
+}
+
+function centerClockColumn(col) {
+  const on = col.querySelector('.is-on');
+  if (!on) return;
+  col.scrollTop = Math.max(0, on.offsetTop - (col.clientHeight - on.offsetHeight) / 2);
+}
+
 function renderBookTimePicker(opts) {
   const picker = document.getElementById('bookTimePicker');
   const hint = document.getElementById('bookTimeHint');
@@ -1303,50 +1351,76 @@ function renderBookTimePicker(opts) {
   if (opts && typeof opts.outside === 'boolean') bookTimeOutside = opts.outside;
   const date = document.getElementById('bookDate')?.value || '';
   const working = slotsFromShifts(shiftsForDate(date), 15);
-  const extra = [];
-  for (let t = 7 * 60; t < 23 * 60; t += 15) {
-    if (!working.includes(t)) extra.push(t);
-  }
-  const visible = bookTimeOutside ? working.concat(extra) : working.slice();
+  const allowed = bookTimeOutside
+    ? bookHourChoices(working, true).flatMap((hour) => bookQuarterMinutes().map((minute) => hour * 60 + minute))
+    : working.slice();
   const selectedMins = selectedBookMinutes();
-  if (selectedMins != null && date && !visible.includes(selectedMins)) applyBookTime(NaN);
+  if (selectedMins != null && date && !allowed.includes(selectedMins)) applyBookTime(NaN);
   const chosen = selectedBookMinutes();
+  const chosenHour = chosen == null ? null : Math.floor(chosen / 60);
+  const chosenMinute = chosen == null ? null : chosen % 60;
   if (toggle) toggle.classList.toggle('is-on', bookTimeOutside);
-  picker.classList.toggle('is-select', !managerIsPhone());
   if (!date) {
     picker.innerHTML = '<p class="muted" style="margin:0;">Διάλεξε πρώτα μέρα.</p>';
     if (hint) hint.textContent = 'Διαθέσιμες οι ώρες λειτουργίας του καταστήματος.';
+    syncBookPastWarning();
     return;
   }
-  if (!visible.length) {
+  const hours = bookHourChoices(working, bookTimeOutside);
+  if (!hours.length) {
     picker.innerHTML = '<p class="muted" style="margin:0;">Κλειστή μέρα. Πάτα «Εκτός ωραρίου» για να διαλέξεις ώρα.</p>';
-  } else if (!managerIsPhone()) {
-    picker.innerHTML = `<select class="book-time-select" id="bookTimeSelect" aria-label="Ώρα έναρξης">
-      <option value="">Ώρα</option>
-      ${visible.map((mins) => `<option value="${mins}"${mins === chosen ? ' selected' : ''}>${clockLabel(mins)}</option>`).join('')}
-    </select>`;
-    picker.querySelector('select').addEventListener('change', (event) => {
-      const mins = parseInt(event.target.value, 10);
-      applyBookTime(Number.isFinite(mins) ? mins : NaN);
-    });
-  } else {
-    picker.innerHTML = visible.map((mins) => {
-      const on = mins === chosen;
-      const isExtra = !working.includes(mins);
-      return `<button type="button" class="book-time-chip${on ? ' is-on' : ''}${isExtra ? ' is-extra' : ''}" data-mins="${mins}">${clockLabel(mins)}</button>`;
-    }).join('');
-    picker.querySelectorAll('.book-time-chip').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        applyBookTime(parseInt(btn.getAttribute('data-mins'), 10));
-        renderBookTimePicker();
-      });
-    });
+    if (hint) hint.textContent = 'Αυτή η μέρα είναι κλειστή στο ωράριο.';
+    syncBookPastWarning();
+    return;
   }
+  const minutes = bookMinuteChoices(chosenHour, working, bookTimeOutside);
+  const hourBtns = hours.map((hour) => {
+    const on = hour === chosenHour;
+    const extra = bookTimeOutside && !bookQuarterMinutes().some((minute) => working.includes(hour * 60 + minute));
+    return `<button type="button" class="book-tick${on ? ' is-on' : ''}${extra ? ' is-extra' : ''}" data-h="${hour}">${pad2(hour)}</button>`;
+  }).join('');
+  const minuteBtns = minutes.map((minute) => {
+    const on = minute === chosenMinute;
+    const extra = bookTimeOutside && chosenHour != null && !working.includes(chosenHour * 60 + minute);
+    return `<button type="button" class="book-tick${on ? ' is-on' : ''}${extra ? ' is-extra' : ''}" data-m="${pad2(minute)}">${pad2(minute)}</button>`;
+  }).join('');
+  picker.innerHTML = `
+    <div class="book-clock" role="group" aria-label="Ώρα έναρξης">
+      <div>
+        <div class="book-clock-cap">Ώρα</div>
+        <div class="book-clock-col">${hourBtns}</div>
+      </div>
+      <div>
+        <div class="book-clock-cap">Λεπτά</div>
+        <div class="book-clock-col">${minuteBtns}</div>
+      </div>
+    </div>`;
+  picker.querySelectorAll('.book-tick').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const hourAttr = btn.getAttribute('data-h');
+      const minuteAttr = btn.getAttribute('data-m');
+      if (hourAttr != null) {
+        const hour = parseInt(hourAttr, 10);
+        const prev = selectedBookMinutes();
+        const minute = prev == null ? null : prev % 60;
+        const choices = bookMinuteChoices(hour, working, bookTimeOutside);
+        const keep = minute != null && choices.includes(minute) ? minute : choices[0];
+        applyBookTime(hour * 60 + keep);
+      } else if (minuteAttr != null) {
+        const prev = selectedBookMinutes();
+        const hour = prev == null ? hours[0] : Math.floor(prev / 60);
+        applyBookTime(hour * 60 + parseInt(minuteAttr, 10));
+      }
+      renderBookTimePicker();
+    });
+  });
+  picker.querySelectorAll('.book-clock-col').forEach(centerClockColumn);
   if (hint) {
     hint.textContent = bookTimeOutside
       ? 'Φαίνονται και ώρες εκτός ωραρίου.'
-      : (working.length ? 'Διαθέσιμες οι ώρες λειτουργίας του καταστήματος.' : 'Αυτή η μέρα είναι κλειστή στο ωράριο.');
+      : 'Διαθέσιμες οι ώρες λειτουργίας του καταστήματος.';
   }
+  syncBookPastWarning();
 }
 
 function shopHourWindow() {
@@ -4101,6 +4175,80 @@ function showNewNotice() {
 }
 
 // [SECTION: JS-TOAST] — αναίρεση επαναφέρει previous_status
+function hideToast() {
+  const toast = document.getElementById('toast');
+  const undoBtn = document.getElementById('toastUndo');
+  clearTimeout(toastTimer);
+  clearTimeout(toastHideTimer);
+  if (!toast) return;
+  toast.style.display = 'none';
+  toast.classList.remove('show');
+  toast.style.transition = 'none';
+  toast.style.transform = 'none';
+  toast.style.opacity = '1';
+  if (undoBtn) undoBtn.style.display = 'none';
+}
+
+function bindToastSwipe() {
+  const toast = document.getElementById('toast');
+  if (!toast || toast.dataset.swipeBound) return;
+  toast.dataset.swipeBound = '1';
+  let drag = null;
+  const point = (touch) => ({ x: touch.clientX, y: touch.clientY });
+  toast.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 1) return;
+    drag = { ...point(event.touches[0]), dx: 0, dy: 0, swiping: false };
+    toast.style.transition = 'none';
+  }, { passive: true });
+  toast.addEventListener('touchmove', (event) => {
+    if (!drag || event.touches.length !== 1) return;
+    const next = point(event.touches[0]);
+    drag.dx = next.x - drag.x;
+    drag.dy = next.y - drag.y;
+    if (!drag.swiping) {
+      if (Math.abs(drag.dx) < 8 && Math.abs(drag.dy) < 8) return;
+      if (drag.dy < 0 && Math.abs(drag.dy) > Math.abs(drag.dx)) return;
+      drag.swiping = true;
+    }
+    if (event.cancelable) event.preventDefault();
+    const travel = Math.max(Math.abs(drag.dx), Math.max(0, drag.dy));
+    toast.style.transform = `translate(${drag.dx}px, ${Math.max(0, drag.dy)}px)`;
+    toast.style.opacity = String(Math.max(0.3, 1 - travel / 180));
+  }, { passive: false });
+  const finish = () => {
+    if (!drag) return;
+    const { dx, dy, swiping } = drag;
+    drag = null;
+    const away = swiping && (Math.abs(dx) > 72 || dy > 56);
+    if (swiping) {
+      toastBlockClick = true;
+      setTimeout(() => { toastBlockClick = false; }, 400);
+    }
+    if (!away) {
+      toast.style.transition = 'transform 0.16s ease, opacity 0.16s ease';
+      toast.style.transform = 'none';
+      toast.style.opacity = '1';
+      return;
+    }
+    toastBlockClick = true;
+    setTimeout(() => { toastBlockClick = false; }, 400);
+    const offX = Math.abs(dx) >= dy ? Math.sign(dx || 1) * window.innerWidth : 0;
+    const offY = dy > Math.abs(dx) ? 180 : 0;
+    toast.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
+    toast.style.transform = `translate(${offX}px, ${offY}px)`;
+    toast.style.opacity = '0';
+    clearTimeout(toastHideTimer);
+    toastHideTimer = setTimeout(hideToast, 180);
+  };
+  toast.addEventListener('touchend', finish);
+  toast.addEventListener('touchcancel', () => {
+    drag = null;
+    toast.style.transition = 'transform 0.16s ease, opacity 0.16s ease';
+    toast.style.transform = 'none';
+    toast.style.opacity = '1';
+  });
+}
+
 function showToast(text, isError = false, undoable = false) {
   const toast = document.getElementById('toast');
   const toastText = document.getElementById('toastText');
@@ -4113,7 +4261,9 @@ function showToast(text, isError = false, undoable = false) {
   toast.style.right = '1.25rem';
   toast.style.bottom = '1.25rem';
   toast.style.left = 'auto';
+  toast.style.transition = 'none';
   toast.style.transform = 'none';
+  toast.style.opacity = '1';
   toast.style.zIndex = '99999';
   toast.style.background = isError ? '#ef4444' : '#0f172a';
   toast.style.color = '#fff';
@@ -4126,6 +4276,7 @@ function showToast(text, isError = false, undoable = false) {
   if (undoBtn) {
     undoBtn.style.display = canUndo ? 'inline-flex' : 'none';
     undoBtn.onclick = () => {
+      if (toastBlockClick) return;
       if (!lastUndo) return;
       const undo = lastUndo;
       lastUndo = null;
@@ -4150,11 +4301,8 @@ function showToast(text, isError = false, undoable = false) {
   }
 
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.style.display = 'none';
-    toast.classList.remove('show');
-    if (undoBtn) undoBtn.style.display = 'none';
-  }, canUndo ? 12000 : 3000);
+  clearTimeout(toastHideTimer);
+  toastTimer = setTimeout(hideToast, canUndo ? 12000 : 3000);
 }
 
 // [SECTION: JS-NOTES] — sticky notes board ανά επιχείρηση

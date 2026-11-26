@@ -1005,6 +1005,7 @@ function closeAskSheet() {
 
 document.getElementById('askShopBtn')?.addEventListener('click', openAskSheet);
 document.getElementById('askShopClose')?.addEventListener('click', closeAskSheet);
+document.getElementById('askShopBackdrop')?.addEventListener('click', closeAskSheet);
 document.getElementById('askShopForm')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!business_code) return;

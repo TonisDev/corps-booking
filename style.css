@@ -999,17 +999,37 @@ html[data-mode="home"] .ask-shop-btn,
 html[data-mode="home"] .ask-shop-sheet { display: none !important; }
 .ask-shop-sheet {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 50;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.ask-shop-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.ask-shop-sheet form {
+  position: relative;
+  z-index: 1;
+  width: min(28rem, 100%);
   max-height: min(82vh, 36rem);
   overflow: auto;
-  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
-  border-radius: 1.15rem 1.15rem 0 0;
+  margin: 0;
+  padding: 1.1rem 1rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 1.15rem;
   background: var(--card-bg);
   color: var(--text-color);
-  box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
 }
 .ask-shop-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; }
 .ask-shop-head button { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-weight: 650; cursor: pointer; }
@@ -1037,6 +1057,9 @@ html[data-mode="home"] .ask-shop-sheet { display: none !important; }
   cursor: pointer;
 }
 .ask-honeypot { position: absolute; left: -9999px; height: 0; width: 0; opacity: 0; }
+@media (min-width: 641px) {
+  .ask-shop-sheet { align-items: center; }
+}
 @media (max-width: 640px) {
   .ask-shop-btn { bottom: 5.5rem; }
 }
