@@ -1414,12 +1414,6 @@ function syncPhoneWeekBoard() {
     board.innerHTML = '';
     return;
   }
-  const range = calendarVisibleRange();
-  const start = Math.floor(range.start / 60) * 60;
-  const end = Math.ceil(range.end / 60) * 60;
-  const hours = [];
-  for (let t = start; t < end; t += 60) hours.push(t);
-  const span = Math.max(60, end - start);
   const weekStart = new Date(calendar.view.currentStart);
   const today = todayISO();
   const rows = [];
@@ -1429,27 +1423,21 @@ function syncPhoneWeekBoard() {
     const dateStr = `${day.getFullYear()}-${pad2(day.getMonth() + 1)}-${pad2(day.getDate())}`;
     const label = day.toLocaleDateString('el-GR', { weekday: 'short' }).replace('.', '');
     const outside = upcomingOutsideAppointments().some((item) => item.date === dateStr);
-    const hoursHtml = hours.map((mins) => {
-      const off = !hourOverlapsShift(dateStr, mins);
-      const cls = off ? ' is-gap' : '';
-      return `<button type="button" class="week-hour${cls}" data-date="${dateStr}" data-mins="${mins}" data-off="${off ? '1' : '0'}">${String(Math.floor(mins / 60))}</button>`;
-    }).join('');
     const apts = (allAppointments || [])
       .filter((item) => item.date === dateStr && item.start_time)
-      .filter((item) => item.status !== 'REJECTED' && item.status !== 'CANCELLED' && item.status !== 'NO_SHOW');
-    const aptHtml = apts.map((item) => {
-      const s = timeToMinutesLocal(item.start_time);
-      const e = item.end_time ? timeToMinutesLocal(item.end_time) : s + (item.duration || 60);
-      const left = Math.max(0, Math.min(100, ((s - start) / span) * 100));
-      const right = Math.max(left, Math.min(100, ((e - start) / span) * 100));
-      const width = Math.max(4, right - left);
-      const name = item.status === 'BLOCKED' ? 'Κλειστό' : customerFirstName(item.customer_name);
-      return `<button type="button" class="week-apt" data-id="${escapeHtml(item.id)}" style="left:${left}%;width:${width}%;background-color:${monthDotColor(item.status)}">${escapeHtml(name)}</button>`;
-    }).join('');
+      .filter((item) => item.status !== 'REJECTED' && item.status !== 'CANCELLED' && item.status !== 'NO_SHOW')
+      .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
+    const aptHtml = apts.length
+      ? apts.map((item) => {
+        const time = String(item.start_time || '').slice(0, 5);
+        const name = item.status === 'BLOCKED' ? 'Κλειστό' : customerFirstName(item.customer_name);
+        return `<button type="button" class="week-chip" data-id="${escapeHtml(item.id)}" style="background-color:${monthDotColor(item.status)}">${escapeHtml(name)} ${escapeHtml(time)}</button>`;
+      }).join('')
+      : '<span class="week-empty">—</span>';
     rows.push(`
       <div class="week-line${dateStr === today ? ' is-today' : ''}">
         <button type="button" class="week-line-label" data-date="${dateStr}">${outside ? '<span class="outside-mark">εκτός</span>' : ''}<span>${escapeHtml(label)}</span><strong>${day.getDate()}</strong></button>
-        <div class="week-line-track">${hoursHtml}${aptHtml}</div>
+        <div class="week-day-apts">${aptHtml}</div>
       </div>
     `);
   }
@@ -1460,19 +1448,7 @@ function syncPhoneWeekBoard() {
       openSlotChoice({ date: new Date(y, m - 1, d, 12, 0, 0), view: { type: 'dayGridWeek' } });
     });
   });
-  board.querySelectorAll('.week-hour').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const mins = parseInt(btn.getAttribute('data-mins'), 10);
-      openBookingModal({
-        date: btn.getAttribute('data-date'),
-        hour: pad2(Math.floor(mins / 60)),
-        minute: '00',
-        hasTime: true,
-        outside: btn.getAttribute('data-off') === '1'
-      });
-    });
-  });
-  board.querySelectorAll('.week-apt').forEach((btn) => {
+  board.querySelectorAll('.week-chip').forEach((btn) => {
     btn.addEventListener('click', (event) => {
       event.stopPropagation();
       const found = (allAppointments || []).find((a) => a.id === btn.getAttribute('data-id'));
@@ -2062,20 +2038,15 @@ function renderTodayList() {
     return;
   }
 
-  list.innerHTML = rows.map(item => `
-    <button type="button" class="apt-row" data-id="${escapeHtml(item.id)}">
-      <div>
-        <div style="font-weight:600;">${escapeHtml(appointmentTimeLabel(item))} · ${escapeHtml(item.customer_name || 'Χωρίς όνομα')}</div>
-        <div class="apt-row-meta">
-          ${escapeHtml(item.service_name || '-')}
-          ${item.customer_phone ? ' · <a href="tel:' + escapeHtml(item.customer_phone) + '" onclick="event.stopPropagation()">' + escapeHtml(item.customer_phone) + '</a>' : ''}
-        </div>
-      </div>
-      <div class="apt-badges">${statusBadge(item)}</div>
-    </button>
-  `).join('');
+  list.innerHTML = rows.map(item => {
+    const name = customerFirstName(item.customer_name);
+    const time = item.start_time ? String(item.start_time).slice(0, 5) : '';
+    const service = String(item.service_name || '').trim();
+    const line = `${name}${time ? ' ' + time : ''}${service ? ' (' + service + ')' : ''}`;
+    return `<button type="button" class="today-line" data-id="${escapeHtml(item.id)}"><i style="background:${monthDotColor(item.status)}"></i><span>${escapeHtml(line)}</span></button>`;
+  }).join('');
 
-  list.querySelectorAll('.apt-row').forEach(btn => {
+  list.querySelectorAll('.today-line').forEach(btn => {
     btn.addEventListener('click', () => {
       const found = allAppointments.find(a => a.id === btn.getAttribute('data-id'));
       openAppointmentDetails(found);
