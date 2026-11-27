@@ -940,7 +940,7 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 }
 [data-theme="dark"] .fc .fc-list-day-cushion { background: #0f172a; }
 #calendar .fc-view-harness[hidden] { display: none !important; }
-.phone-week { display: flex; flex-direction: column; gap: 0.28rem; }
+.phone-week { display: flex; flex-direction: column; gap: 0; }
 .phone-week[hidden] { display: none !important; }
 .outside-mark {
   display: inline-block;
@@ -978,6 +978,13 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   grid-template-columns: 2.9rem minmax(0, 1fr);
   gap: 0.28rem;
   align-items: stretch;
+  padding: 0.32rem 0.12rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.week-line:last-child { border-bottom: 0; }
+.week-line.is-today {
+  background: rgba(79, 70, 229, 0.07);
+  border-radius: 0.45rem;
 }
 .week-line-label {
   display: flex;

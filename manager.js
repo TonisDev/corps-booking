@@ -2497,9 +2497,11 @@ function openAppointmentDetails(item) {
   const hold = item.hold_status || '';
   const holdRiskNote = hold === 'authorized' && (item.status === 'BOOKED' || item.status === 'CONFIRMED')
     ? (isPastAppointment(item)
-      ? '<p class="guide-note guide-note-warn">Η εγγύηση είναι δεσμευμένη αλλά το ραντεβού πέρασε. Πάτα «Δεν προσήλθε» για χρέωση — αλλιώς θα απελευθερωθεί αυτόματα.</p>'
+      ? '<p class="guide-note">Η εγγύηση είναι δεσμευμένη. «Ακύρωση · χωρίς χρέωση» την αποδεσμεύει. «Δεν προσήλθε» τη χρεώνει.</p>'
       : '<p class="guide-note">Εγγύηση δεσμευμένη. Αν δεν έρθει, πάτα «Δεν προσήλθε» (χρεώνει). Χωρίς ενέργεια μετά τη μέρα, απελευθερώνεται αυτόματα.</p>')
-    : '';
+    : (isPastAppointment(item) && hold === 'captured' && (item.status === 'BOOKED' || item.status === 'CONFIRMED')
+      ? '<p class="guide-note">Η πληρωμή έχει χρεωθεί. Η ακύρωση την επιστρέφει, χωρίς χρέωση στον πελάτη.</p>'
+      : '');
 
   document.getElementById('actTitle').innerHTML = item.status === 'BLOCKED'
     ? escapeHtml(blockedLabel(item))
@@ -2549,7 +2551,9 @@ function openAppointmentDetails(item) {
   const missingSlot = needsDayOrTime(item);
   document.getElementById('btnApprove').style.display = (item.status === 'BLOCKED' || approved || missingSlot || item.status === 'CANCELLED' || item.status === 'REJECTED' || item.status === 'NO_SHOW') ? 'none' : 'inline-flex';
   document.getElementById('btnReject').style.display = actionable && !past ? 'inline-flex' : 'none';
-  document.getElementById('btnCancelAppt').style.display = approved && !past ? 'inline-flex' : 'none';
+  const cancelBtn = document.getElementById('btnCancelAppt');
+  cancelBtn.style.display = approved ? 'inline-flex' : 'none';
+  cancelBtn.textContent = past ? 'Ακύρωση · χωρίς χρέωση' : 'Ακύρωση ραντεβού';
   const captureBtn = document.getElementById('btnHoldCapture');
   const refundBtn = document.getElementById('btnHoldRefund');
   const noShowBtn = document.getElementById('btnNoShow');
@@ -2582,7 +2586,7 @@ function openAppointmentDetails(item) {
     : (reviveItem
       ? '<i data-lucide="calendar-check" size="16"></i> Νέα ώρα · επανενεργοποίηση'
       : '<i data-lucide="clock" size="16"></i> Αλλαγή ώρας');
-  document.getElementById('reasonGroup').style.display = (actionable || (approved && !past)) ? 'block' : 'none';
+  document.getElementById('reasonGroup').style.display = (actionable || approved) ? 'block' : 'none';
   document.getElementById('actReason').value = item.status_reason || '';
   openModal('actionModal');
   if (missingSlot && canReschedule) setRescheduleEditorUi(true);
@@ -4135,14 +4139,14 @@ function renderBulkActions(ids) {
   }
   const pending = selected.filter((item) => item.status === 'PENDING' || item.status === 'WAITLIST');
   const rejectable = pending.filter((item) => !isPastAppointment(item));
-  const cancellable = selected.filter((item) => (item.status === 'BOOKED' || item.status === 'CONFIRMED') && !isPastAppointment(item));
+  const cancellable = selected.filter((item) => item.status === 'BOOKED' || item.status === 'CONFIRMED');
   const removable = selected.filter((item) => canDeleteAppointment(item));
   const buttons = [];
   if (currentListKind === 'pending' || currentListKind === 'all') {
     if (pending.length) buttons.push(`<button type="button" class="btn" onclick="bulkSetStatus('BOOKED')">Έγκριση (${pending.length})</button>`);
     if (rejectable.length) buttons.push(`<button type="button" class="btn btn-outline" onclick="bulkSetStatus('REJECTED')">Απόρριψη (${rejectable.length})</button>`);
   }
-  if ((currentListKind === 'booked' || currentListKind === 'all') && cancellable.length) {
+  if ((currentListKind === 'booked' || currentListKind === 'all' || currentListKind === 'history') && cancellable.length) {
     buttons.push(`<button type="button" class="btn btn-warning" onclick="bulkCancelSelected()">Ακύρωση (${cancellable.length})</button>`);
   }
   if ((currentListKind === 'history' || currentListKind === 'all' || currentListKind === 'unscheduled') && removable.length) {
@@ -4158,7 +4162,9 @@ function selectedBulkIds() {
 async function bulkCancelSelected() {
   const ids = selectedBulkIds();
   if (!ids.length) return;
-  if (!confirm(`Ακύρωση ${ids.length} εγκεκριμένων ραντεβού;`)) return;
+  const pastCount = selectedAppointments(ids).filter((item) => (item.status === 'BOOKED' || item.status === 'CONFIRMED') && isPastAppointment(item)).length;
+  const pastNote = pastCount ? ' Τα περασμένα ακυρώνονται χωρίς χρέωση.' : '';
+  if (!confirm(`Ακύρωση ${ids.length} εγκεκριμένων ραντεβού;${pastNote}`)) return;
   await withLock(async () => {
     try {
       const res = await adminFetch(`/api/${currentBusinessCode}/admin/bulk-cancel`, {
