@@ -41,6 +41,12 @@ let silentPop = 0;     // close από κουμπί → history.back() χωρί�
 document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('admin_theme') || 'light';
   setAdminTheme(savedTheme);
+  document.getElementById('setLogoFile')?.addEventListener('change', (event) => {
+    const input = event.target;
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (file) uploadShopLogo(file);
+  });
   document.querySelectorAll('.appearance-input, input[name="clientTheme"], #setName').forEach(control => {
     control.addEventListener('input', updateAppearancePreview);
     control.addEventListener('change', updateAppearancePreview);
@@ -3619,6 +3625,7 @@ function openSettingsModal() {
   document.getElementById('setPhone').value = currentTenantData.phone || '';
   document.getElementById('setAddress').value = currentTenantData.address || '';
   document.getElementById('setLogo').value = currentTenantData.logo_url || '';
+  logoLocalPreview = '';
   document.getElementById('setColor').value = currentTenantData.brand_color || '#4f46e5';
   document.getElementById('setBookingSubtitle').value = currentTenantData.booking_subtitle || '';
   document.getElementById('setWelcomeText').value = currentTenantData.welcome_text || '';
@@ -3700,6 +3707,8 @@ function openSettingsModal() {
   lucide.createIcons();
 }
 
+let logoLocalPreview = '';
+
 function displayLogoUrl(value) {
   let text = String(value || '').trim();
   if (!text) return '';
@@ -3727,7 +3736,8 @@ function updateAppearancePreview() {
 
   const theme = (document.querySelector('input[name="clientTheme"]:checked') || {}).value || 'light';
   const brandColor = document.getElementById('setColor').value || '#4f46e5';
-  const logoUrl = displayLogoUrl(document.getElementById('setLogo').value.trim()) || 'logos/quickbook_cropped.png';
+  const remoteLogo = displayLogoUrl(document.getElementById('setLogo').value.trim());
+  const logoUrl = logoLocalPreview || remoteLogo || 'logos/quickbook_cropped.png';
   const logo = document.getElementById('previewLogo');
   const welcome = document.getElementById('setWelcomeText').value.trim();
 
@@ -3748,6 +3758,53 @@ function updateAppearancePreview() {
     logo.src = 'logos/quickbook_cropped.png';
   };
   logo.src = logoUrl;
+}
+
+async function uploadShopLogo(file) {
+  if (!file || !currentBusinessCode) return;
+  if (file.size > 1500000) {
+    showToast('Η εικόνα είναι μεγάλη. Μέχρι 1,5 MB.', true);
+    return;
+  }
+  let dataUrl = '';
+  try {
+    dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('read'));
+      reader.readAsDataURL(file);
+    });
+  } catch (err) {
+    showToast('Η εικόνα δεν διαβάστηκε.', true);
+    return;
+  }
+  if (!/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(dataUrl)) {
+    showToast('Μόνο PNG, JPG ή WEBP.', true);
+    return;
+  }
+  logoLocalPreview = dataUrl;
+  updateAppearancePreview();
+  const wasClean = settingsFormState() === settingsSnapshot;
+  showToast('Ανεβαίνει το λογότυπο…');
+  try {
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/logo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Το λογότυπο δεν ανέβηκε.');
+    document.getElementById('setLogo').value = data.logo_url || '';
+    if (currentTenantData) currentTenantData.logo_url = data.logo_url || '';
+    updateAppearancePreview();
+    if (wasClean) captureSettingsSnapshot();
+    else syncSettingsSaveState();
+    showToast('Ανέβηκε. Στη φόρμα του πελάτη φαίνεται σε ένα-δύο λεπτά.');
+  } catch (err) {
+    logoLocalPreview = '';
+    updateAppearancePreview();
+    if (err.message !== 'Unauthorized') showToast(err.message || 'Το λογότυπο δεν ανέβηκε.', true);
+  }
 }
 
 // [SECTION: JS-OVERLAY] — στοίβα overlay + history.back() για Android/iOS Back
