@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://corporate-bookings.tonisdevv.workers.dev">
   <title>Πολιτική απορρήτου — QuickBook</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +28,19 @@
     .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.82rem; color: var(--muted); text-decoration: none; }
     .back:hover { text-decoration: underline; }
     .nav-legal { display: flex; flex-wrap: wrap; gap: 0.75rem 1.1rem; margin: 2rem 0 0; font-size: 0.85rem; color: var(--muted); }
+    .legal-open { margin: 0 0.15rem; padding: 0.15rem 0.55rem; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; color: #0f172a; font: inherit; font-size: 0.82rem; font-weight: 650; cursor: pointer; }
+    .legal-open:hover { border-color: #4f46e5; color: #4f46e5; }
+    .legal-contact { display: flex; flex-direction: column; gap: 0.7rem; margin: 1.25rem 0 0; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 0.9rem; background: #fff; }
+    .legal-contact[hidden] { display: none; }
+    .legal-contact-title { margin: 0; font-size: 0.95rem; font-weight: 700; }
+    .legal-contact label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.82rem; font-weight: 650; }
+    .legal-contact input, .legal-contact textarea { width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 0.6rem; font: inherit; font-weight: 450; }
+    .legal-contact button[type="submit"] { align-self: flex-start; padding: 0.5rem 0.9rem; border: 0; border-radius: 0.65rem; background: #0f172a; color: #fff; font: inherit; font-size: 0.88rem; font-weight: 650; cursor: pointer; }
+    .legal-contact button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
+    .legal-honey { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+    .legal-status { min-height: 1.2rem; margin: 0; font-size: 0.88rem; }
+    .legal-status.is-ok { color: #166534; }
+    .legal-status.is-err { color: #991b1b; }
   </style>
 </head>
 <body>
@@ -36,7 +49,7 @@
     <h1>Πολιτική απορρήτου (ΓΚΠΔ)</h1>
     <p class="meta">Πλατφόρμα QuickBook · Τελευταία ενημέρωση: 27 Νοεμβρίου 2026</p>
 
-    <p>Για λογαριασμούς καταστημάτων, συνδρομές και αιτήματα εγκατάστασης, υπεύθυνος επεξεργασίας είναι ο πάροχος της πλατφόρμας QuickBook. Επικοινωνία απορρήτου: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a>.</p>
+    <p>Για λογαριασμούς καταστημάτων, συνδρομές και αιτήματα εγκατάστασης, υπεύθυνος επεξεργασίας είναι ο πάροχος της πλατφόρμας QuickBook. Επικοινωνία απορρήτου: <button type="button" class="legal-open" data-legal-open="Απόρρητο">Επικοινωνία</button>.</p>
 
     <h2>1. Πεδίο εφαρμογής</h2>
     <p>Η παρούσα πολιτική περιγράφει πώς επεξεργαζόμαστε δεδομένα στην πλατφόρμα QuickBook (ιστότοπος, φόρμες lead, λογαριασμοί επιχειρήσεων, τεχνική υποδομή κρατήσεων). Δεν αντικαθιστά την πολιτική απορρήτου κάθε καταστήματος προς τους δικούς του πελάτες.</p>
@@ -74,7 +87,7 @@
     <h2>7. Δικαιώματα</h2>
     <ul>
       <li>Για δεδομένα <strong>ως πελάτης καταστήματος</strong>: απευθυνθείτε πρώτα στο κατάστημα (υπεύθυνος).</li>
-      <li>Για δεδομένα <strong>ως επιχείρηση / lead προς QuickBook</strong>: γράψτε στο <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a> για πρόσβαση, διόρθωση, διαγραφή, περιορισμό, εναντίωση ή φορητότητα, όπου εφαρμόζεται.</li>
+      <li>Για δεδομένα <strong>ως επιχείρηση / lead προς QuickBook</strong>: στείλτε μήνυμα από το κουμπί <button type="button" class="legal-open" data-legal-open="Δικαιώματα">Επικοινωνία</button> για πρόσβαση, διόρθωση, διαγραφή, περιορισμό, εναντίωση ή φορητότητα, όπου εφαρμόζεται.</li>
       <li>Δικαίωμα καταγγελίας στην Αρχή Προστασίας Δεδομένων Προσωπικού Χαρακτήρα (Ελλάδα).</li>
     </ul>
 
@@ -87,10 +100,22 @@
     <h2>10. Αλλαγές</h2>
     <p>Η πολιτική μπορεί να ενημερώνεται· ισχύει η αναρτημένη έκδοση σε αυτή τη σελίδα.</p>
 
+    <form id="legalContact" class="legal-contact" hidden>
+      <p class="legal-contact-title" id="legalContactTitle">Επικοινωνία</p>
+      <p class="meta" style="margin:0;">Γράψε το email σου, για να απαντήσουμε εκεί. Το μήνυμα έρχεται στο Telegram του παρόχου.</p>
+      <div class="legal-honey" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+      <input type="hidden" name="page" value="Πολιτική απορρήτου">
+      <input type="hidden" name="topic" id="legalTopic" value="Απόρρητο">
+      <label>Email<input type="email" name="email" required maxlength="120" autocomplete="email"></label>
+      <label>Μήνυμα<textarea name="message" required maxlength="1000" rows="4"></textarea></label>
+      <button type="submit">Αποστολή</button>
+      <p class="legal-status" role="status"></p>
+    </form>
     <nav class="nav-legal" aria-label="Νομικά">
       <a href="oroi.html">Όροι φόρμας πελάτη</a>
       <a href="oroi-epicheiriseis.html">Όροι επιχειρήσεων (B2B)</a>
     </nav>
   </main>
+  <script src="legal-contact.js"></script>
 </body>
 </html>

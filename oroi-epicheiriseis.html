@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://corporate-bookings.tonisdevv.workers.dev">
   <title>Όροι για επιχειρήσεις — QuickBook</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +28,19 @@
     .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.82rem; color: var(--muted); text-decoration: none; }
     .back:hover { text-decoration: underline; }
     .nav-legal { display: flex; flex-wrap: wrap; gap: 0.75rem 1.1rem; margin: 2rem 0 0; font-size: 0.85rem; color: var(--muted); }
+    .legal-open { margin: 0 0.15rem; padding: 0.15rem 0.55rem; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; color: #0f172a; font: inherit; font-size: 0.82rem; font-weight: 650; cursor: pointer; }
+    .legal-open:hover { border-color: #4f46e5; color: #4f46e5; }
+    .legal-contact { display: flex; flex-direction: column; gap: 0.7rem; margin: 1.25rem 0 0; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 0.9rem; background: #fff; }
+    .legal-contact[hidden] { display: none; }
+    .legal-contact-title { margin: 0; font-size: 0.95rem; font-weight: 700; }
+    .legal-contact label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.82rem; font-weight: 650; }
+    .legal-contact input, .legal-contact textarea { width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 0.6rem; font: inherit; font-weight: 450; }
+    .legal-contact button[type="submit"] { align-self: flex-start; padding: 0.5rem 0.9rem; border: 0; border-radius: 0.65rem; background: #0f172a; color: #fff; font: inherit; font-size: 0.88rem; font-weight: 650; cursor: pointer; }
+    .legal-contact button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
+    .legal-honey { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+    .legal-status { min-height: 1.2rem; margin: 0; font-size: 0.88rem; }
+    .legal-status.is-ok { color: #166534; }
+    .legal-status.is-err { color: #991b1b; }
   </style>
 </head>
 <body>
@@ -36,7 +49,7 @@
     <h1>Όροι για επιχειρήσεις (B2B)</h1>
     <p class="meta">Σύμβαση καταστήματος ↔ QuickBook · Τελευταία ενημέρωση: 27 Νοεμβρίου 2026</p>
 
-    <p>Οι παρόντες όροι διέπουν τη σχέση ανάμεσα στην επιχείρηση που χρησιμοποιεί την πλατφόρμα QuickBook («Κατάστημα») και τον πάροχο της πλατφόρμας («QuickBook», «εμείς»). Αφορούν <strong>B2B</strong> χρήση (επαγγελματική). Επικοινωνία με τον πάροχο: <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a>. Οι όροι προς τελικούς πελάτες της φόρμας κράτησης περιγράφονται χωριστά στους <a href="oroi.html">Όρους χρήσης φόρμας</a>.</p>
+    <p>Οι παρόντες όροι διέπουν τη σχέση ανάμεσα στην επιχείρηση που χρησιμοποιεί την πλατφόρμα QuickBook («Κατάστημα») και τον πάροχο της πλατφόρμας («QuickBook», «εμείς»). Αφορούν <strong>B2B</strong> χρήση (επαγγελματική). Επικοινωνία με τον πάροχο: <button type="button" class="legal-open" data-legal-open="Επικοινωνία">Επικοινωνία</button>. Οι όροι προς τελικούς πελάτες της φόρμας κράτησης περιγράφονται χωριστά στους <a href="oroi.html">Όρους χρήσης φόρμας</a>.</p>
 
     <h2>1. Υπηρεσία</h2>
     <p>Το QuickBook παρέχει λογισμικό ως υπηρεσία για online αιτήματα ραντεβού, πίνακα διαχείρισης, ειδοποιήσεις και (όπου ενεργοποιηθεί) πληρωμές/εγγυήσεις καρτών μέσω Stripe. Δεν είμαστε μεσάζοντες της υπηρεσίας που πουλάει το κατάστημα στον πελάτη του.</p>
@@ -76,7 +89,7 @@
     <p>Η υπηρεσία παρέχεται «ως έχει». Επιδιώκουμε εύλογη διαθεσιμότητα χωρίς εγγύηση αδιάλειπτης λειτουργίας. Στο μέγιστο βαθμό που επιτρέπει ο νόμος, η ευθύνη του παρόχου περιορίζεται στα ποσά που κατέβαλε το κατάστημα για την πλατφόρμα τους τελευταίους 12 μήνες.</p>
 
     <h2>8. Παύση / διαγραφή</h2>
-    <p>Μπορούμε να παύσουμε ή να διαγράψουμε λογαριασμό σε παράβαση όρων, μη πληρωμή (μετά από περίοδο χάριτος όπου εφαρμόζεται) ή κατόπιν αιτήματος. Αίτημα διαγραφής στο <a href="mailto:tonisdevv@gmail.com">tonisdevv@gmail.com</a>.</p>
+    <p>Μπορούμε να παύσουμε ή να διαγράψουμε λογαριασμό σε παράβαση όρων, μη πληρωμή (μετά από περίοδο χάριτος όπου εφαρμόζεται) ή κατόπιν αιτήματος. Αίτημα διαγραφής από το κουμπί <button type="button" class="legal-open" data-legal-open="Διαγραφή λογαριασμού">Επικοινωνία</button>.</p>
 
     <h2>9. Εφαρμοστέο δίκαιο</h2>
     <p>Εφαρμοστέο δίκαιο: ελληνικό. Για διαφορές αρμόδια είναι τα ελληνικά δικαστήρια, εκτός αν ο νόμος ορίζει άλλως.</p>
@@ -84,11 +97,23 @@
     <h2>10. Αλλαγές</h2>
     <p>Μπορούμε να ενημερώνουμε τους όρους· η ισχύουσα έκδοση είναι αυτή που αναρτάται εδώ. Ουσιώδεις αλλαγές μπορεί να γνωστοποιούνται με email ή ειδοποίηση στον πίνακα.</p>
 
+    <form id="legalContact" class="legal-contact" hidden>
+      <p class="legal-contact-title" id="legalContactTitle">Επικοινωνία</p>
+      <p class="meta" style="margin:0;">Γράψε το email σου, για να απαντήσουμε εκεί. Το μήνυμα έρχεται στο Telegram του παρόχου.</p>
+      <div class="legal-honey" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+      <input type="hidden" name="page" value="Όροι επιχειρήσεων">
+      <input type="hidden" name="topic" id="legalTopic" value="Επικοινωνία">
+      <label>Email<input type="email" name="email" required maxlength="120" autocomplete="email"></label>
+      <label>Μήνυμα<textarea name="message" required maxlength="1000" rows="4"></textarea></label>
+      <button type="submit">Αποστολή</button>
+      <p class="legal-status" role="status"></p>
+    </form>
     <nav class="nav-legal" aria-label="Νομικά">
       <a href="oroi.html">Όροι φόρμας πελάτη</a>
       <a href="aporrito.html">Απόρρητο / ΓΚΠΔ</a>
       <a href="manager.html">Είσοδος καταστήματος</a>
     </nav>
   </main>
+  <script src="legal-contact.js"></script>
 </body>
 </html>
