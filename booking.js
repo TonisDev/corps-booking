@@ -960,11 +960,43 @@
                 .slice(0, 48);
         });
 
-        document.getElementById('signupForm')?.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const form = event.currentTarget;
+        function signupRow(kind) {
+            const row = document.createElement('div');
+            row.className = kind === 'shift' ? 'signup-shift' : 'signup-service';
+            if (kind === 'shift') {
+                row.innerHTML = '<input type="time" value="09:00" aria-label="Από"><span>–</span><input type="time" value="17:00" aria-label="Έως"><button type="button" class="home-lead-mini" aria-label="Αφαίρεση">Αφαίρεση</button>';
+            } else {
+                row.innerHTML = '<input type="text" placeholder="Όνομα" maxlength="80"><input type="number" min="15" max="480" value="60" aria-label="Διάρκεια λεπτά"><input type="number" min="0" step="0.5" placeholder="Τιμή €" aria-label="Τιμή"><button type="button" class="home-lead-mini" aria-label="Αφαίρεση">Αφαίρεση</button>';
+            }
+            row.querySelector('button').addEventListener('click', () => row.remove());
+            return row;
+        }
+        document.getElementById('signupAddShift')?.addEventListener('click', () => {
+            document.getElementById('signupShifts')?.appendChild(signupRow('shift'));
+        });
+        document.getElementById('signupAddService')?.addEventListener('click', () => {
+            document.getElementById('signupServices')?.appendChild(signupRow('service'));
+        });
+
+        function readSignupLogo() {
+            const file = document.getElementById('signupLogo')?.files?.[0];
+            if (!file) return Promise.resolve('');
+            if (file.size > 1_500_000) return Promise.reject(new Error('Η εικόνα είναι μεγάλη. Μέχρι 1,5 MB.'));
+            if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+                return Promise.reject(new Error('Μόνο PNG, JPG ή WEBP.'));
+            }
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('Η εικόνα δεν διαβάστηκε.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function submitSignup(skipSetup) {
+            const form = document.getElementById('signupForm');
             const status = document.getElementById('signupStatus');
-            const button = form.querySelector('.home-lead-submit');
+            const buttons = form.querySelectorAll('.home-lead-submit, .home-lead-skip');
             const body = Object.fromEntries(new FormData(form).entries());
             status.textContent = '';
             status.className = 'home-lead-status';
@@ -984,21 +1016,71 @@
                 status.textContent = 'Οι δύο κωδικοί δεν ταιριάζουν.';
                 return;
             }
-            button.disabled = true;
+            if (!form.accept_terms.checked) {
+                status.classList.add('is-err');
+                status.textContent = 'Χρειάζεται αποδοχή των όρων επιχειρήσεων.';
+                return;
+            }
+            const payload = {
+                name: body.name,
+                business_code: code,
+                email: body.email,
+                phone: body.phone,
+                address: body.address,
+                password: body.password,
+                accept_terms: true,
+                website: body.website || '',
+                skip_setup: !!skipSetup
+            };
+            if (!skipSetup) {
+                const days = [...form.querySelectorAll('#signupDays input:checked')].map((box) => parseInt(box.value, 10));
+                if (!days.length) {
+                    status.classList.add('is-err');
+                    status.textContent = 'Διάλεξε τουλάχιστον μία ημέρα λειτουργίας.';
+                    return;
+                }
+                const shifts = [...form.querySelectorAll('#signupShifts .signup-shift')].map((row) => {
+                    const inputs = row.querySelectorAll('input');
+                    return { start: inputs[0].value, end: inputs[1].value };
+                }).filter((shift) => shift.start && shift.end);
+                if (!shifts.length) {
+                    status.classList.add('is-err');
+                    status.textContent = 'Βάλε τουλάχιστον μία βάρδια.';
+                    return;
+                }
+                if (shifts.some((shift) => shift.end <= shift.start)) {
+                    status.classList.add('is-err');
+                    status.textContent = 'Κάθε βάρδια πρέπει να τελειώνει μετά την έναρξή της.';
+                    return;
+                }
+                const services = [...form.querySelectorAll('#signupServices .signup-service')].map((row) => {
+                    const inputs = row.querySelectorAll('input');
+                    const service = {
+                        name: inputs[0].value.trim(),
+                        duration: parseInt(inputs[1].value, 10) || 60
+                    };
+                    if (inputs[2].value !== '') service.price = Number(inputs[2].value);
+                    return service;
+                }).filter((service) => service.name);
+                payload.work_days = days;
+                payload.working_hours = shifts;
+                payload.services = services;
+                payload.brand_color = body.brand_color || '#4f46e5';
+                payload.logo_url = body.logo_url || '';
+                try {
+                    payload.logo_image = await readSignupLogo();
+                } catch (err) {
+                    status.classList.add('is-err');
+                    status.textContent = err.message;
+                    return;
+                }
+            }
+            buttons.forEach((button) => { button.disabled = true; });
             try {
                 const res = await fetch(`${API_BASE_URL}/api/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: body.name,
-                        business_code: code,
-                        email: body.email,
-                        phone: body.phone,
-                        address: body.address,
-                        password: body.password,
-                        accept_terms: true,
-                        website: body.website || ''
-                    })
+                    body: JSON.stringify(payload)
                 });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(data.error || 'Το προφίλ δεν δημιουργήθηκε.');
@@ -1013,9 +1095,15 @@
                 status.classList.add('is-err');
                 status.textContent = err.message || 'Το προφίλ δεν δημιουργήθηκε.';
             } finally {
-                button.disabled = false;
+                buttons.forEach((button) => { button.disabled = false; });
             }
+        }
+
+        document.getElementById('signupForm')?.addEventListener('submit', (event) => {
+            event.preventDefault();
+            submitSignup(false);
         });
+        document.getElementById('signupSkip')?.addEventListener('click', () => submitSignup(true));
 
 function openAskSheet() {
     const sheet = document.getElementById('askShopSheet');
