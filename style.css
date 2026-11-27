@@ -140,6 +140,11 @@ html[data-mode="home"] .page-bg::before {
   height: 48px;
   width: auto;
 }
+.home-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
 .home-nav-link,
 .home-nav a {
   color: #334155;
@@ -750,6 +755,14 @@ html[data-mode="home"] .page-bg::before {
   font-weight: 650;
   color: #334155;
 }
+.home-lead label.home-lead-check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+.home-lead label.home-lead-check input { width: auto; margin-top: 0.15rem; }
 .home-lead input,
 .home-lead textarea {
   text-align: left !important;

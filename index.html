@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20261127c">
+    <link rel="stylesheet" href="style.css?v=20261127e">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -102,7 +102,10 @@
     <div class="home">
         <header class="home-nav">
             <img class="home-mark" src="logos/quickbook_logo.png" alt="QuickBook">
-            <a class="home-nav-link" href="manager.html">Είσοδος</a>
+            <span class="home-nav-actions">
+                <a class="home-nav-link" href="#aitima">Δημιουργία</a>
+                <a class="home-nav-link" href="manager.html">Είσοδος</a>
+            </span>
         </header>
         <section class="home-hero">
             <p class="home-kicker">Έξυπνη διαχείριση online κρατήσεων</p>
@@ -226,51 +229,25 @@
         <section class="home-close" id="aitima">
             <div class="home-request">
                 <div class="home-request-inner">
-                    <h2>Θέλω το QuickBook στην επιχείρησή μου</h2>
-                    <p id="leadFormLead">Το στήσιμο είναι δωρεάν και οι 2 πρώτες εβδομάδες επίσης — χωρίς κάρτα, χωρίς δέσμευση. Συμπληρώστε τα στοιχεία σας και θα επικοινωνήσουμε μαζί σας.</p>
-<form id="leadForm" class="home-lead">
+                    <h2>Φτιάξε το προφίλ σου</h2>
+                    <p id="leadFormLead">Βάζεις τα βασικά και το προφίλ ανοίγει αμέσως. Έγκριση ραντεβού και 14 μέρες δοκιμή, χωρίς κάρτα. Λογότυπο, ωράριο, υπηρεσίες και πληρωμές τα αλλάζεις μετά από τις ρυθμίσεις.</p>
+                    <form id="signupForm" class="home-lead">
                         <div class="home-honey" aria-hidden="true">
                             <input type="text" name="website" tabindex="-1" autocomplete="off">
                         </div>
-
-                        <!-- Προεπιλεγμένο πλάνο (Ετήσιο) για να περνάει το validation του JS χωρίς σφάλμα -->
-                        <input type="hidden" name="interest" id="leadInterest" value="year" class="is-on is-selected" aria-pressed="true">
-
-                        <!-- [START PLAN SELECTION - COMMENTED OUT]
-                        <fieldset class="home-lead-plans">
-                            <legend>Τι θέλεις;</legend>
-                            <button type="button" class="home-lead-trial-opt" data-interest="trial" aria-pressed="false">Μόνο δωρεάν δοκιμή 2 εβδομάδων — χωρίς πακέτο ακόμα</button>
-                            <p class="home-lead-hint" style="margin:0.75rem 0 0.4rem;">Ή διάλεξε πακέτο που σε ενδιαφέρει (πληρωμή μετά την επικοινωνία μας):</p>
-                            <div class="home-lead-plan-grid" role="radiogroup" aria-label="Επιλογή πλάνου">
-                                <button type="button" class="home-lead-plan" data-interest="month" aria-pressed="false">
-                                    <span class="home-lead-plan-name">Μηνιαία</span>
-                                    <span class="home-lead-plan-price">22,50€<small>/μήνα</small></span>
-                                    <span class="home-lead-plan-tag">Το θέλω</span>
-                                </button>
-                                <button type="button" class="home-lead-plan is-featured" data-interest="year" aria-pressed="false">
-                                    <span class="home-lead-plan-name">Ετήσια</span>
-                                    <span class="home-lead-plan-price">19,99€<small>/μήνα</small></span>
-                                    <span class="home-lead-plan-tag">Το θέλω</span>
-                                </button>
-                                <button type="button" class="home-lead-plan" data-interest="lifetime" aria-pressed="false">
-                                    <span class="home-lead-plan-name">Ισόβια</span>
-                                    <span class="home-lead-plan-price">360€<small>εφάπαξ</small></span>
-                                    <span class="home-lead-plan-tag">Το θέλω</span>
-                                </button>
-                            </div>
-                        </fieldset>
-                        [END PLAN SELECTION - COMMENTED OUT] -->
-
-                        <label>Όνομα<input name="contact_name" required maxlength="80" autocomplete="name"></label>
-                        <label>Επιχείρηση<input name="business_name" required maxlength="80" autocomplete="organization"></label>
-                        <div class="home-lead-either" role="group" aria-labelledby="leadEitherLabel">
-                            <p id="leadEitherLabel" class="home-lead-either-title">Επικοινωνία <span>υποχρεωτικό ένα από τα δύο</span></p>
-                            <label>Τηλέφωνο<input name="phone" maxlength="24" autocomplete="tel" inputmode="tel"></label>
-                            <label>Email<input name="email" type="email" maxlength="120" autocomplete="email"></label>
-                            <p class="home-lead-hint">Αρκεί τηλέφωνο ή email. Δεν χρειάζονται και τα δύο.</p>
-                        </div>
-                        <button type="submit" class="home-lead-submit">Υποβολή Αιτήματος</button>
-                        <p id="leadStatus" class="home-lead-status" role="status"></p>
+                        <label>Όνομα επιχείρησης<input name="name" required maxlength="80" autocomplete="organization"></label>
+                        <label>Κωδικός URL<input name="business_code" id="signupCode" required maxlength="48" autocapitalize="none" spellcheck="false" placeholder="studio-name" pattern="[a-z0-9]+(?:-[a-z0-9]+)*"></label>
+                        <p class="home-lead-hint">Πεζά λατινικά, αριθμοί και παύλες. Γίνεται μέρος του συνδέσμου των πελατών.</p>
+                        <label>Email<input name="email" type="email" required maxlength="120" autocomplete="email"></label>
+                        <p class="home-lead-hint">Εδώ έρχεται ο σύνδεσμος αν ξεχάσεις τον κωδικό.</p>
+                        <label>Τηλέφωνο<input name="phone" maxlength="40" autocomplete="tel" inputmode="tel"></label>
+                        <label>Διεύθυνση<input name="address" maxlength="160" autocomplete="street-address"></label>
+                        <label>Κωδικός<input name="password" type="password" required minlength="8" maxlength="200" autocomplete="new-password"></label>
+                        <label>Επιβεβαίωση κωδικού<input name="password2" type="password" required minlength="8" maxlength="200" autocomplete="new-password"></label>
+                        <label class="home-lead-check"><input type="checkbox" name="accept_terms" required> Αποδέχομαι τους <a href="oroi-epicheiriseis.html" target="_blank" rel="noopener">όρους επιχειρήσεων</a></label>
+                        <button type="submit" class="home-lead-submit">Δημιουργία προφίλ</button>
+                        <p id="signupStatus" class="home-lead-status" role="status"></p>
+                        <p class="home-lead-hint">Έχεις ήδη προφίλ; <a href="manager.html">Είσοδος</a></p>
                     </form>
                 </div>
             </div>
@@ -439,6 +416,6 @@
             <button type="button" class="shop-info-close">Κλείσιμο</button>
         </div>
     </div>
-    <script src="booking.js?v=20261127i"></script>
+    <script src="booking.js?v=20261127j"></script>
 </body>
 </html>

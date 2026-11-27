@@ -945,66 +945,73 @@
             await sendBooking(buildBookingPayload('shop'));
         });
 
-        const LEAD_INTEREST_LABELS = {
-            month: 'Μηνιαία συνδρομή',
-            year: 'Ετήσια συνδρομή',
-            lifetime: 'Ισόβια άδεια',
-            trial: 'Δωρεάν δοκιμή 2 εβδομάδων'
-        };
-
-        function setLeadInterest(interest) {
-            const key = LEAD_INTEREST_LABELS[interest] ? interest : '';
-            const input = document.getElementById('leadInterest');
-            if (input) input.value = key;
-            document.querySelectorAll('#leadForm [data-interest]').forEach((el) => {
-                const on = key && el.getAttribute('data-interest') === key;
-                el.classList.toggle('is-selected', on);
-                el.setAttribute('aria-pressed', on ? 'true' : 'false');
-            });
-        }
-
-        document.querySelectorAll('#leadForm [data-interest]').forEach((el) => {
-            el.addEventListener('click', () => {
-                setLeadInterest(el.getAttribute('data-interest') || '');
-            });
+        const signupCode = document.getElementById('signupCode');
+        const signupName = document.querySelector('#signupForm [name="name"]');
+        let signupCodeEdited = false;
+        signupCode?.addEventListener('input', () => { signupCodeEdited = true; });
+        signupName?.addEventListener('input', () => {
+            if (signupCodeEdited || !signupCode) return;
+            signupCode.value = String(signupName.value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 48);
         });
 
-        document.getElementById('leadForm')?.addEventListener('submit', async (event) => {
+        document.getElementById('signupForm')?.addEventListener('submit', async (event) => {
             event.preventDefault();
             const form = event.currentTarget;
-            const status = document.getElementById('leadStatus');
+            const status = document.getElementById('signupStatus');
             const button = form.querySelector('.home-lead-submit');
             const body = Object.fromEntries(new FormData(form).entries());
             status.textContent = '';
             status.className = 'home-lead-status';
-            if (!LEAD_INTEREST_LABELS[body.interest]) {
+            const code = String(body.business_code || '').trim().toLowerCase();
+            if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code) || code.length < 2) {
                 status.classList.add('is-err');
-                status.textContent = 'Επιλέξτε με ποιο πλάνο το θέλετε (ή δοκιμή).';
+                status.textContent = 'Ο κωδικός URL θέλει πεζά λατινικά, αριθμούς και παύλες, π.χ. studio-name.';
                 return;
             }
-            const leadPhone = String(body.phone || '').trim();
-            const leadEmail = String(body.email || '').trim();
-            if (!leadPhone && !leadEmail) {
+            if (String(body.password || '').length < 8) {
                 status.classList.add('is-err');
-                status.textContent = 'Συμπληρώστε τηλέφωνο ή email. Αρκεί ένα από τα δύο.';
+                status.textContent = 'Ο κωδικός θέλει τουλάχιστον 8 χαρακτήρες.';
+                return;
+            }
+            if (body.password !== body.password2) {
+                status.classList.add('is-err');
+                status.textContent = 'Οι δύο κωδικοί δεν ταιριάζουν.';
                 return;
             }
             button.disabled = true;
             try {
-                const res = await fetch(`${API_BASE_URL}/api/install-requests`, {
+                const res = await fetch(`${API_BASE_URL}/api/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify({
+                        name: body.name,
+                        business_code: code,
+                        email: body.email,
+                        phone: body.phone,
+                        address: body.address,
+                        password: body.password,
+                        accept_terms: true,
+                        website: body.website || ''
+                    })
                 });
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || 'Το αίτημα δεν στάλθηκε.');
+                if (!res.ok) throw new Error(data.error || 'Το προφίλ δεν δημιουργήθηκε.');
                 form.reset();
-                setLeadInterest('');
+                signupCodeEdited = false;
                 status.classList.add('is-ok');
-                status.textContent = 'Το αίτημα καταχωρήθηκε. Θα επικοινωνήσουμε μαζί σας.';
+                const link = document.createElement('a');
+                link.href = `manager.html?code=${encodeURIComponent(data.business_code || code)}`;
+                link.textContent = 'Είσοδος στον πίνακα';
+                status.append(data.message || 'Το προφίλ είναι έτοιμο. ', ' ', link, '.');
             } catch (err) {
                 status.classList.add('is-err');
-                status.textContent = err.message || 'Το αίτημα δεν στάλθηκε.';
+                status.textContent = err.message || 'Το προφίλ δεν δημιουργήθηκε.';
             } finally {
                 button.disabled = false;
             }
