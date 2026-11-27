@@ -507,11 +507,11 @@
                 document.getElementById('businessName').textContent = businessData.name;
                 document.getElementById('pageTitle').textContent = `Κράτηση Ραντεβού | ${businessData.name}`;
                 const businessLogo = document.getElementById('businessLogo');
-                businessLogo.src = businessData.logo_url || 'demo-logo.svg';
+                businessLogo.src = businessData.logo_url || 'logos/quickbook_logo.png';
                 businessLogo.alt = `Λογότυπο ${businessData.name}`;
                 businessLogo.onerror = () => {
                     businessLogo.onerror = null;
-                    businessLogo.src = 'demo-logo.svg';
+                    businessLogo.src = 'logos/quickbook_logo.png';
                 };
                 document.getElementById('businessSubtitle').textContent =
                     businessData.booking_subtitle || 'Κλείστε το ραντεβού σας εύκολα και γρήγορα';

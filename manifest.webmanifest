@@ -7,9 +7,9 @@
   "theme_color": "#f8fafc",
   "icons": [
     {
-      "src": "demo-logo.svg",
+      "src": "logos/quickbook_logo.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
