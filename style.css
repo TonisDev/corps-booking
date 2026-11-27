@@ -625,10 +625,9 @@ html[data-mode="home"] .page-bg::before {
   min-height: 11.5rem;
 }
 .home-cal-times {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 0.15rem 0;
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  align-items: start;
   font-size: 0.58rem;
   color: #94a3b8;
   text-align: right;
@@ -777,6 +776,35 @@ html[data-mode="home"] .page-bg::before {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 16%, transparent) !important;
 }
 .home-lead-hint { margin: 0 !important; font-size: 0.8rem !important; color: #64748b !important; }
+.home-lead-either {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0.85rem 0.9rem 0.95rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: rgba(248, 250, 252, 0.72);
+}
+.home-lead-either-title {
+  margin: 0 !important;
+  font-size: 0.82rem !important;
+  font-weight: 650;
+  color: #334155 !important;
+  line-height: 1.4 !important;
+}
+.home-lead-either-title span {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  vertical-align: 0.05em;
+}
 .home-lead-plans {
   margin: 0;
   padding: 0;
@@ -915,12 +943,33 @@ html[data-mode="home"] .page-bg::before {
 .home-lead-status.is-err { color: #991b1b !important; }
 .home-foot { margin-top: 2.35rem; display: flex; flex-wrap: wrap; gap: 0.65rem 1.15rem; }
 .home-foot a {
-  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  color: #334155;
   font-size: 0.8rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  transition: color 0.2s ease;
 }
 .home-foot a:hover { color: var(--brand-color); }
+.home-foot-ext {
+  width: 0.78rem;
+  height: 0.78rem;
+  flex: 0 0 auto;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* [SECTION: CSS-BRAND] */
 .brand-block {

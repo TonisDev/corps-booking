@@ -151,7 +151,7 @@
       <button type="button" class="manager-side-btn" onclick="openAppointmentList('history')"><i data-lucide="history" size="18"></i><span>Ιστορικό</span></button>
       <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
       <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
-      <button type="button" class="manager-side-btn" onclick="copyInstagramPack()" title="Αντιγραφή κειμένου και συνδέσμου κράτησης"><i data-lucide="link" size="18"></i><span>Σύνδεσμος κράτησης</span></button>
+      <button type="button" class="manager-side-btn" onclick="copyInstagramPack()" title="Share — αντιγραφή κειμένου και συνδέσμου"><i data-lucide="share-2" size="18"></i><span>Share</span></button>
       <button type="button" class="manager-side-btn manager-side-btn-bottom" id="supportSideBtn" onclick="openSupportModal()" title="Chat με τον δημιουργό του QuickBook"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="supportUnreadDot" class="side-unread-dot" hidden></span></button>
       <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
     </aside>
@@ -273,7 +273,7 @@
         <div class="mobile-more-grab" aria-hidden="true"></div>
         <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
         <button type="button" class="mobile-more-action" data-feature="notes" onclick="closeMobileMore(); openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
-        <button type="button" class="mobile-more-action" data-feature="instagram" onclick="closeMobileMore(); copyInstagramPack()"><i data-lucide="link" size="18"></i><span>Σύνδεσμος κράτησης</span></button>
+        <button type="button" class="mobile-more-action" data-feature="instagram" onclick="closeMobileMore(); copyInstagramPack()"><i data-lucide="share-2" size="18"></i><span>Share</span></button>
         <button type="button" class="mobile-more-action" id="mobileSupportBtn" onclick="closeMobileMore(); openSupportModal()"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="mobileSupportDot" class="side-unread-dot" hidden></span></button>
         <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openPublicPage()"><i data-lucide="external-link" size="18"></i><span>Σελίδα πελάτη</span></button>
         <button type="button" class="mobile-more-action" data-feature="bucket" onclick="closeMobileMore(); openBookingToBucket()"><i data-lucide="inbox" size="18"></i><span>Στο bucket</span></button>
@@ -522,7 +522,7 @@
             </label>
             <label class="remember-me" style="margin-top:0.65rem;">
               <input type="checkbox" id="featInstagram" checked>
-              Κουμπί «Σύνδεσμος κράτησης»
+              Κουμπί «Share»
             </label>
           </div>
 
@@ -970,7 +970,7 @@
     <div id="clientDrawerBody"></div>
   </aside>
 
-<script src="manager.js?v=20261126x"></script>
+<script src="manager.js?v=20261127a"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

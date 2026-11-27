@@ -2869,9 +2869,9 @@ async function copyInstagramPack() {
   ].join('\n');
   try {
     await navigator.clipboard.writeText(text);
-    showToast('Αντιγράφηκε ο σύνδεσμος κράτησης.');
+    showToast('Αντιγράφηκε για Share.');
   } catch (err) {
-    window.prompt('Αντίγραψε τον σύνδεσμο κράτησης:', text);
+    window.prompt('Αντίγραψε για Share:', text);
   }
 }
 

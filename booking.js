@@ -950,6 +950,13 @@
                 status.textContent = 'Επιλέξτε με ποιο πλάνο το θέλετε (ή δοκιμή).';
                 return;
             }
+            const leadPhone = String(body.phone || '').trim();
+            const leadEmail = String(body.email || '').trim();
+            if (!leadPhone && !leadEmail) {
+                status.classList.add('is-err');
+                status.textContent = 'Συμπληρώστε τηλέφωνο ή email. Αρκεί ένα από τα δύο.';
+                return;
+            }
             button.disabled = true;
             try {
                 const res = await fetch(`${API_BASE_URL}/api/install-requests`, {
