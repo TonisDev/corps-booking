@@ -454,7 +454,7 @@
                     resetTimePickers();
                     hideWaitlistBox();
                     slotHint.textContent = isRequestMode()
-                        ? 'Προτιμώμενη ώρα — δεν δεσμεύεται αυτόματα. Θα επιβεβαιώσουμε μαζί σας.'
+                        ? 'Διάλεξε μέρα και ώρα. Θα ενημερωθείς σύντομα για την έγκριση του ραντεβού σου.'
                         : 'Επιλέξτε ώρα και μετά 00 ή 30, μόνο από τις διαθέσιμες.';
                     slotHint.className = 'field-help';
                     document.getElementById('submitBtnText').textContent = isRequestMode() ? 'Αίτημα ραντεβού' : 'Υποβολή Αιτήματος Κράτησης';
@@ -585,7 +585,7 @@
 
                 if (isRequestMode()) {
                     document.getElementById('timeLabel').textContent = 'Προτιμώμενη ώρα *';
-                    slotHint.textContent = 'Δεν κλείνει ώρα. Προτείνετε μέρα και ώρα· θα επικοινωνήσουμε για επιβεβαίωση.';
+                    slotHint.textContent = 'Διάλεξε μέρα και ώρα. Θα ενημερωθείς σύντομα για την έγκριση του ραντεβού σου.';
                     document.getElementById('submitBtnText').textContent = 'Αίτημα ραντεβού';
                     if (!businessData.booking_subtitle) {
                         document.getElementById('businessSubtitle').textContent = 'Στείλτε αίτημα ραντεβού για μέρα και ώρα';

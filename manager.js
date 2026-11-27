@@ -3624,6 +3624,8 @@ function openSettingsModal() {
   renderConnectStatus();
   document.getElementById('setPhone').value = currentTenantData.phone || '';
   document.getElementById('setAddress').value = currentTenantData.address || '';
+  const approveBox = document.getElementById('setApproveBeforeBook');
+  if (approveBox) approveBox.checked = currentTenantData.intake_mode === 'request';
   document.getElementById('setLogo').value = currentTenantData.logo_url || '';
   logoLocalPreview = '';
   document.getElementById('setColor').value = currentTenantData.brand_color || '#4f46e5';
@@ -4158,6 +4160,9 @@ async function saveSettings(e) {
         deposit_fixed_euros: document.getElementById('setDepositFixed') ? Number(document.getElementById('setDepositFixed').value) : 1,
         cancel_hours: document.getElementById('setCancelHours') ? Number(document.getElementById('setCancelHours').value) : 24,
         hold_days_before: document.getElementById('setHoldDays') ? Number(document.getElementById('setHoldDays').value) : 2,
+        intake_mode: document.getElementById('setApproveBeforeBook') && document.getElementById('setApproveBeforeBook').checked ? 'request' : 'slots',
+        waitlist_enabled: !!(currentTenantData && currentTenantData.waitlist_enabled),
+        daily_cap: currentTenantData && currentTenantData.daily_cap ? Number(currentTenantData.daily_cap) : 0,
         features: {
           bucket: document.getElementById('featBucket') ? document.getElementById('featBucket').checked : true,
           waitlist: document.getElementById('featWaitlist') ? document.getElementById('featWaitlist').checked : true,
