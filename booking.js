@@ -171,20 +171,30 @@
             if (e.key === 'Escape') closeShopInfo();
         });
 
-        // [SECTION: JS-REQUEST] — προτιμώμενες ώρες χωρίς BLOCKED / BOOKED / CONFIRMED
-        function preferredSlotsForDate(dateStr, blocked, duration) {
+        function slotBlockedByRanges(start, end, ranges, allowMinutes) {
+            return (ranges || []).some((range) => {
+                const overlap = Math.min(end, range.end) - Math.max(start, range.start);
+                if (overlap <= 0) return false;
+                if (range.hard || !(allowMinutes > 0)) return true;
+                return overlap > allowMinutes;
+            });
+        }
+
+        // [SECTION: JS-REQUEST] — προτιμώμενες ώρες. Έγκριση: έως 30′ επικάλυψη, όχι πάνω σε κλειδωμένη ώρα.
+        function preferredSlotsForDate(dateStr, occupied, duration) {
             const shifts = getShiftsForDate(dateStr);
             const slots = [];
             const step = 30;
-            const blockedRanges = (blocked || []).map((occ) => ({
+            const ranges = (occupied || []).map((occ) => ({
                 start: timeToMinutes(occ.start_time),
-                end: timeToMinutes(occ.end_time)
+                end: timeToMinutes(occ.end_time),
+                hard: occ.status === 'BLOCKED'
             }));
             shifts.forEach((shift) => {
                 const alignedStart = Math.ceil(shift.start / step) * step;
-                for (let mins = alignedStart; mins < shift.end; mins += step) {
-                    const hit = blockedRanges.some((r) => mins >= r.start && mins < r.end);
-                    if (!hit) slots.push(minutesToTime(mins));
+                for (let mins = alignedStart; mins + duration <= shift.end; mins += step) {
+                    if (slotBlockedByRanges(mins, mins + duration, ranges, 30)) continue;
+                    slots.push(minutesToTime(mins));
                 }
             });
             return [...new Set(slots)].sort();
@@ -773,12 +783,11 @@
                 }
 
                 if (isRequestMode()) {
-                    const blocked = (data.occupied || []).filter((occ) => occ.status === 'BLOCKED');
                     fillPreferredTimes(
                       'Προτιμώμενη ώρα μέσα στο ωράριο — δεν δεσμεύεται αυτόματα.',
                       false,
                       dateStr,
-                      blocked,
+                      data.occupied || [],
                       duration
                     );
                     if (!availableSlots.length && waitlistAllowed()) {
