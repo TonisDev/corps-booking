@@ -3700,13 +3700,34 @@ function openSettingsModal() {
   lucide.createIcons();
 }
 
+function displayLogoUrl(value) {
+  let text = String(value || '').trim();
+  if (!text) return '';
+  if (/^http:\/\//i.test(text)) text = `https://${text.slice(7)}`;
+  if (!/^https:\/\/\S+$/i.test(text)) return '';
+  const driveFile = text.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
+  const driveQuery = text.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
+  if (driveFile || (/drive\.google\.com|docs\.google\.com/i.test(text) && driveQuery)) {
+    return `https://lh3.googleusercontent.com/d/${(driveFile || driveQuery)[1]}`;
+  }
+  if (/dropbox\.com\//i.test(text)) {
+    try {
+      const url = new URL(text);
+      url.searchParams.set('raw', '1');
+      url.searchParams.delete('dl');
+      return url.toString();
+    } catch (err) {}
+  }
+  return text;
+}
+
 function updateAppearancePreview() {
   const preview = document.getElementById('clientAppearancePreview');
   if (!preview) return;
 
   const theme = (document.querySelector('input[name="clientTheme"]:checked') || {}).value || 'light';
   const brandColor = document.getElementById('setColor').value || '#4f46e5';
-  const logoUrl = document.getElementById('setLogo').value.trim() || 'logos/quickbook_cropped.png';
+  const logoUrl = displayLogoUrl(document.getElementById('setLogo').value.trim()) || 'logos/quickbook_cropped.png';
   const logo = document.getElementById('previewLogo');
   const welcome = document.getElementById('setWelcomeText').value.trim();
 
@@ -3721,6 +3742,7 @@ function updateAppearancePreview() {
   document.getElementById('previewSuccess').textContent =
     document.getElementById('setSuccessMessage').value.trim() || 'Η κράτησή σας καταχωρήθηκε!';
 
+  logo.referrerPolicy = 'no-referrer';
   logo.onerror = () => {
     logo.onerror = null;
     logo.src = 'logos/quickbook_cropped.png';
@@ -3995,6 +4017,11 @@ async function saveSettings(e) {
   const phone = document.getElementById('setPhone').value.trim();
   const address = document.getElementById('setAddress').value.trim();
   const logo_url = document.getElementById('setLogo').value.trim();
+  if (logo_url && !/^https?:\/\/\S+$/i.test(logo_url)) {
+    showToast('Το λογότυπο θέλει σύνδεσμο https που δείχνει στην εικόνα.', true);
+    document.getElementById('setLogo').focus();
+    return;
+  }
   const brand_color = document.getElementById('setColor').value;
   const client_theme = (document.querySelector('input[name="clientTheme"]:checked') || {}).value || 'light';
   const booking_subtitle = document.getElementById('setBookingSubtitle').value.trim();

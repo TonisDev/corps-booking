@@ -17,6 +17,27 @@
             return `${service.name} (${duration} min · ${price}€)`;
         }
 
+        function displayLogoUrl(value) {
+            let text = String(value || '').trim();
+            if (!text) return '';
+            if (/^http:\/\//i.test(text)) text = `https://${text.slice(7)}`;
+            if (!/^https:\/\/\S+$/i.test(text)) return '';
+            const driveFile = text.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
+            const driveQuery = text.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
+            if (driveFile || (/drive\.google\.com|docs\.google\.com/i.test(text) && driveQuery)) {
+                return `https://lh3.googleusercontent.com/d/${(driveFile || driveQuery)[1]}`;
+            }
+            if (/dropbox\.com\//i.test(text)) {
+                try {
+                    const url = new URL(text);
+                    url.searchParams.set('raw', '1');
+                    url.searchParams.delete('dl');
+                    return url.toString();
+                } catch (e) {}
+            }
+            return text;
+        }
+
         function applyClientTheme(theme) {
             const next = CLIENT_THEMES.includes(theme) ? theme : 'light';
             document.documentElement.setAttribute('data-theme', next);
@@ -507,12 +528,14 @@
                 document.getElementById('businessName').textContent = businessData.name;
                 document.getElementById('pageTitle').textContent = `Κράτηση Ραντεβού | ${businessData.name}`;
                 const businessLogo = document.getElementById('businessLogo');
-                businessLogo.src = businessData.logo_url || 'logos/quickbook_cropped.png';
-                businessLogo.alt = `Λογότυπο ${businessData.name}`;
+                const logoUrl = displayLogoUrl(businessData.logo_url);
+                businessLogo.referrerPolicy = 'no-referrer';
                 businessLogo.onerror = () => {
                     businessLogo.onerror = null;
                     businessLogo.src = 'logos/quickbook_cropped.png';
                 };
+                businessLogo.src = logoUrl || 'logos/quickbook_cropped.png';
+                businessLogo.alt = `Λογότυπο ${businessData.name}`;
                 document.getElementById('businessSubtitle').textContent =
                     businessData.booking_subtitle || 'Κλείστε το ραντεβού σας εύκολα και γρήγορα';
                 const welcomeText = document.getElementById('welcomeText');
