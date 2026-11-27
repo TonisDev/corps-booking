@@ -248,8 +248,14 @@ button, input, select, textarea { font-family: inherit; }
   cursor: default;
 }
 #loginScreen {
-  max-width: 400px; margin: 5rem auto; background: var(--card-bg); border: 1px solid var(--border-color);
+  max-width: 400px; margin: 3rem auto; background: var(--card-bg); border: 1px solid var(--border-color);
   padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+.login-brand {
+  display: block;
+  width: min(240px, 100%);
+  height: auto;
+  margin: 0 auto 1.15rem;
 }
 .login-quiet {
   display: block; width: 100%; margin-top: 0.85rem; padding: 0.35rem 0;

@@ -3702,7 +3702,7 @@ function updateAppearancePreview() {
 
   const theme = (document.querySelector('input[name="clientTheme"]:checked') || {}).value || 'light';
   const brandColor = document.getElementById('setColor').value || '#4f46e5';
-  const logoUrl = document.getElementById('setLogo').value.trim() || 'logos/quickbook_logo.png';
+  const logoUrl = document.getElementById('setLogo').value.trim() || 'logos/quickbook_cropped.png';
   const logo = document.getElementById('previewLogo');
   const welcome = document.getElementById('setWelcomeText').value.trim();
 
@@ -3719,7 +3719,7 @@ function updateAppearancePreview() {
 
   logo.onerror = () => {
     logo.onerror = null;
-    logo.src = 'logos/quickbook_logo.png';
+    logo.src = 'logos/quickbook_cropped.png';
   };
   logo.src = logoUrl;
 }

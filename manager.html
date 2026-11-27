@@ -9,8 +9,9 @@
     <meta name="apple-mobile-web-app-title" content="Manager">
     <meta name="theme-color" content="#f8fafc" id="themeColor">
     <title>Διαχείριση Επιχείρησης | Manager</title>
+    <link rel="icon" href="logos/quickbook_cropped.png" type="image/png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="logos/quickbook_logo.png">
+    <link rel="apple-touch-icon" href="logos/quickbook_cropped.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
@@ -18,12 +19,13 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261126x">
+    <link rel="stylesheet" href="manager_style.css?v=20261127c">
 </head>
 <body data-theme="light">
 
   <!-- [SECTION: HTML-LOGIN] -->
   <div id="loginScreen">
+    <img class="login-brand" src="logos/quickbook_logo.png" alt="QuickBook">
     <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="log-in" size="22"></i> Είσοδος διαχειριστή</h2>
     <form id="loginForm" onsubmit="handleLogin(event)">
       <div class="form-group" style="margin-top: 1rem;">
@@ -487,7 +489,7 @@
               <aside class="client-preview" id="clientAppearancePreview" data-preview-theme="light" style="--preview-brand:#4f46e5;">
                 <p class="preview-title">Live Preview</p>
                 <div class="preview-phone">
-                  <img id="previewLogo" class="preview-logo" src="logos/quickbook_logo.png" alt="Προεπισκόπηση logo">
+                  <img id="previewLogo" class="preview-logo" src="logos/quickbook_cropped.png" alt="Προεπισκόπηση logo">
                   <h3 id="previewName" class="preview-business-name">Η επιχείρησή σας</h3>
                   <p id="previewSubtitle" class="preview-copy">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
                   <span class="preview-info">Πληροφορίες καταστήματος</span>
@@ -970,7 +972,7 @@
     <div id="clientDrawerBody"></div>
   </aside>
 
-<script src="manager.js?v=20261127b"></script>
+<script src="manager.js?v=20261127c"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

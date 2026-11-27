@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://cdn.jsdelivr.net https://npmcdn.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://corporate-bookings.tonisdevv.workers.dev">
     <title id="pageTitle">Κράτηση Ραντεβού</title>
+    <link rel="icon" href="logos/quickbook_cropped.png" type="image/png">
     <script src="booking-boot.js?v=20261126f"></script>
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20261127a">
+    <link rel="stylesheet" href="style.css?v=20261127c">
     <style>
         /* [SECTION: THEME-CSS] — επιφανειακά θέματα. Το brand_color του tenant βάφει κουμπί/focus. */
         :root {
@@ -100,7 +101,7 @@
     <main class="booking-shell">
     <div class="home">
         <header class="home-nav">
-            <span class="home-mark">QuickBook</span>
+            <img class="home-mark" src="logos/quickbook_logo.png" alt="QuickBook">
             <a class="home-nav-link" href="manager.html">Είσοδος</a>
         </header>
         <section class="home-hero">
@@ -289,7 +290,7 @@
         </div>
         <!-- Header Επιχείρησης -->
         <div id="businessHeader" class="brand-block hidden">
-            <img id="businessLogo" class="business-logo" src="logos/quickbook_logo.png" alt="Λογότυπο επιχείρησης">
+            <img id="businessLogo" class="business-logo" src="logos/quickbook_cropped.png" alt="Λογότυπο επιχείρησης">
             <h1 id="businessName"></h1>
             <p id="businessSubtitle">Κλείστε το ραντεβού σας εύκολα και γρήγορα</p>
             <button type="button" id="shopInfoBtn">Πληροφορίες καταστήματος</button>
@@ -438,6 +439,6 @@
             <button type="button" class="shop-info-close">Κλείσιμο</button>
         </div>
     </div>
-    <script src="booking.js?v=20261127b"></script>
+    <script src="booking.js?v=20261127c"></script>
 </body>
 </html>

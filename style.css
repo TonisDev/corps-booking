@@ -136,13 +136,9 @@ html[data-mode="home"] .page-bg::before {
   margin-bottom: 2.6rem;
 }
 .home-mark {
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  background: linear-gradient(120deg, #0f172a 12%, var(--brand-color) 88%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  display: block;
+  height: 48px;
+  width: auto;
 }
 .home-nav-link,
 .home-nav a {
