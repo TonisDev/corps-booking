@@ -19,7 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261127d">
+    <link rel="stylesheet" href="manager_style.css?v=20261128a">
 </head>
 <body data-theme="light">
 
@@ -135,8 +135,11 @@
     <div class="manager-main">
     <div class="header">
       <div class="header-brand">
-        <h2 id="storeTitle">Διαχείριση Καταστήματος</h2>
-        <span id="storeCodeSpan"></span>
+        <img id="storeLogo" class="header-logo" alt="" hidden>
+        <div class="header-brand-text">
+          <h2 id="storeTitle">Διαχείριση Καταστήματος</h2>
+          <span id="storeCodeSpan"></span>
+        </div>
       </div>
       <div class="header-actions">
         <button class="btn btn-outline header-desk-only" onclick="openBookingToBucket()" title="Προσθήκη χωρίς μέρα — μπαίνει στο bucket"><i data-lucide="inbox" size="16"></i> <span class="btn-label">Στο bucket</span></button>
@@ -541,6 +544,16 @@
           <div class="settings-panel" id="settingsPanel-integrations">
             <h3 class="settings-panel-title">Telegram / Calendar</h3>
             <div class="help-box" style="margin-top:0;">
+              <h3>Ειδοποιήσεις συσκευής</h3>
+              <p class="settings-hint">Νέο αίτημα έρχεται αμέσως. Περίπου 1 ώρα πριν το ραντεβού έρχεται υπενθύμιση. Ραντεβού στη σειρά (κενό έως 2 ώρες από το τέλος του ενός ως την αρχή του επόμενου) μπαίνουν σε μία ειδοποίηση. Μεγάλο κενό, π.χ. 13:00 και 17:00, χωριστά.</p>
+              <p class="settings-hint">Στο iPhone: πρώτα πρόσθεσε το panel στην αρχική οθόνη, μετά πάτα ενεργοποίηση.</p>
+              <p id="pushStatus" class="settings-hint"></p>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" class="btn" id="pushEnableBtn" onclick="enableAdminPush()">Ενεργοποίηση ειδοποιήσεων</button>
+                <button type="button" class="btn btn-outline" id="pushDisableBtn" onclick="disableAdminPush()" hidden>Διακοπή σε αυτή τη συσκευή</button>
+              </div>
+            </div>
+            <div class="help-box">
               <h3>Telegram</h3>
               <p class="settings-hint">1) Άνοιξε το bot · 2) Έναρξη / Start · 3) Αντίγραψε το Chat ID εδώ. Κενό = χωρίς ειδοποιήσεις.</p>
               <p id="telegramBotLinkWrap" style="margin:0 0 0.7rem; display:none;">
@@ -982,7 +995,7 @@
     <div id="clientDrawerBody"></div>
   </aside>
 
-<script src="manager.js?v=20261127h"></script>
+<script src="manager.js?v=20261128b"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

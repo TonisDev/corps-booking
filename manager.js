@@ -656,6 +656,7 @@ async function loadDashboard(code) {
     const res = await adminFetch(`/api/${code}/admin/settings`);
     currentTenantData = await res.json();
     document.getElementById('storeTitle').innerText = currentTenantData.name;
+    applyStoreLogo(currentTenantData);
     const businessEmail = String(currentTenantData.email || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(businessEmail) && !sessionStorage.getItem('email_nudge_' + code)) {
       sessionStorage.setItem('email_nudge_' + code, '1');
@@ -717,6 +718,7 @@ async function refreshDashboard(silent) {
       currentTenantData = await res.json();
       const title = document.getElementById('storeTitle');
       if (title) title.innerText = currentTenantData.name || '';
+      applyStoreLogo(currentTenantData);
       populateServicesDropdown();
       renderPlatformBanners();
       renderBillingBox();
@@ -3581,6 +3583,120 @@ function captureSettingsSnapshot() {
   syncSettingsSaveState();
 }
 
+function pushKeyBytes(value) {
+  const text = String(value || '').trim();
+  const pad = text.length % 4 === 0 ? '' : '='.repeat(4 - (text.length % 4));
+  const b64 = text.replace(/-/g, '+').replace(/_/g, '/') + pad;
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function iosNeedsHomeScreen() {
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  return ios && !standalone;
+}
+
+async function refreshPushUi() {
+  const status = document.getElementById('pushStatus');
+  const enable = document.getElementById('pushEnableBtn');
+  const disable = document.getElementById('pushDisableBtn');
+  if (!status || !enable) return;
+  const ready = !!(currentTenantData && currentTenantData.push_public_key);
+  if (!ready) {
+    status.textContent = 'Οι ειδοποιήσεις δεν είναι έτοιμες στον server ακόμα.';
+    enable.hidden = true;
+    if (disable) disable.hidden = true;
+    return;
+  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    status.textContent = 'Αυτός ο browser δεν δέχεται ειδοποιήσεις.';
+    enable.hidden = true;
+    if (disable) disable.hidden = true;
+    return;
+  }
+  let on = false;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+    on = !!(sub && Notification.permission === 'granted');
+  } catch (err) {}
+  enable.hidden = on;
+  if (disable) disable.hidden = !on;
+  status.textContent = on ? 'Ενεργές σε αυτή τη συσκευή.' : 'Κλειστές σε αυτή τη συσκευή.';
+}
+
+async function enableAdminPush() {
+  if (!currentBusinessCode || !currentTenantData || !currentTenantData.push_public_key) {
+    showToast('Οι ειδοποιήσεις δεν είναι έτοιμες στον server.', true);
+    return;
+  }
+  if (iosNeedsHomeScreen()) {
+    showToast('Στο iPhone πρόσθεσε πρώτα το panel στην αρχική οθόνη.', true);
+    return;
+  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    showToast('Αυτός ο browser δεν δέχεται ειδοποιήσεις.', true);
+    return;
+  }
+  let perm = Notification.permission;
+  if (perm !== 'granted') perm = await Notification.requestPermission();
+  if (perm !== 'granted') {
+    showToast('Οι ειδοποιήσεις δεν επιτράπηκαν.', true);
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.register('manager-sw.js');
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: pushKeyBytes(currentTenantData.push_public_key)
+      });
+    }
+    const json = sub.toJSON();
+    const res = await adminFetch(`/api/${currentBusinessCode}/admin/push/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: json.endpoint,
+        p256dh: json.keys && json.keys.p256dh,
+        auth: json.keys && json.keys.auth
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Η εγγραφή δεν ολοκληρώθηκε.');
+    showToast('Οι ειδοποιήσεις ενεργοποιήθηκαν σε αυτή τη συσκευή.');
+    refreshPushUi();
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message || 'Η εγγραφή δεν ολοκληρώθηκε.', true);
+  }
+}
+
+async function disableAdminPush() {
+  if (!currentBusinessCode) return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+    const endpoint = sub ? sub.endpoint : '';
+    if (sub) await sub.unsubscribe();
+    if (endpoint) {
+      await adminFetch(`/api/${currentBusinessCode}/admin/push/unsubscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint })
+      });
+    }
+    showToast('Οι ειδοποιήσεις σταμάτησαν σε αυτή τη συσκευή.');
+    refreshPushUi();
+  } catch (err) {
+    if (err.message !== 'Unauthorized') showToast(err.message || 'Η διακοπή δεν ολοκληρώθηκε.', true);
+  }
+}
+
 function openSettingsModal() {
   if (!currentTenantData) return;
   const search = document.getElementById('settingsSearch');
@@ -3588,6 +3704,7 @@ function openSettingsModal() {
   filterSettingsNav();
   showSettingsPanel('profile');
   fillEmbedSnippet();
+  refreshPushUi();
   document.getElementById('setName').value = currentTenantData.name || '';
   document.getElementById('setEmail').value = currentTenantData.email || '';
   const emailNotify = document.getElementById('setEmailNotify');
@@ -3711,6 +3828,22 @@ function openSettingsModal() {
 
 let logoLocalPreview = '';
 
+function applyStoreLogo(tenant) {
+  const img = document.getElementById('storeLogo');
+  if (!img) return;
+  const name = String((tenant && tenant.name) || '').trim();
+  const remote = displayLogoUrl(String((tenant && tenant.logo_url) || '').trim());
+  const fallback = 'logos/quickbook_cropped.png';
+  img.alt = name ? `Λογότυπο ${name}` : 'Λογότυπο';
+  img.referrerPolicy = 'no-referrer';
+  img.hidden = false;
+  img.onerror = () => {
+    img.onerror = null;
+    if (!img.src.endsWith(fallback)) img.src = fallback;
+  };
+  img.src = remote || fallback;
+}
+
 function displayLogoUrl(value) {
   let text = String(value || '').trim();
   if (!text) return '';
@@ -3798,6 +3931,7 @@ async function uploadShopLogo(file) {
     if (!res.ok) throw new Error(data.error || 'Το λογότυπο δεν ανέβηκε.');
     document.getElementById('setLogo').value = data.logo_url || '';
     if (currentTenantData) currentTenantData.logo_url = data.logo_url || '';
+    applyStoreLogo(currentTenantData);
     updateAppearancePreview();
     if (wasClean) captureSettingsSnapshot();
     else syncSettingsSaveState();

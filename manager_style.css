@@ -55,8 +55,18 @@ button, input, select, textarea { font-family: inherit; }
   top: 0;
   z-index: 40;
 }
-.header-brand { grid-area: brand; min-width: 0; }
-.header-brand h2 { margin: 0; font-size: 1.25rem; }
+.header-brand { grid-area: brand; min-width: 0; display: flex; align-items: center; gap: 0.7rem; }
+.header-brand-text { min-width: 0; }
+.header-logo {
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 0.7rem;
+  object-fit: cover;
+  flex: none;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+}
+.header-brand h2 { margin: 0; font-size: 1.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .header-brand span { font-size: 0.75rem; color: var(--text-muted); }
 .header-actions { grid-area: actions; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 /* Τετράγωνο logout πάνω δεξιά — το Lucide svg παίρνει μέγεθος από εδώ, όχι από HTML attrs */
@@ -1359,6 +1369,7 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
     padding: max(0.65rem, env(safe-area-inset-top)) 0.75rem 0.7rem;
   }
   .header-brand h2 { font-size: 1.05rem; }
+  .header-logo { width: 2.2rem; height: 2.2rem; border-radius: 0.55rem; }
   .header-desk-only { display: none !important; }
   .header-actions { width: auto; justify-content: flex-end; }
   .header .btn:not(.btn-logout) {

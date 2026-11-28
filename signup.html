@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://corporate-bookings.tonisdevv.workers.dev">
+    <title>Δημιουργία προφίλ | QuickBook</title>
+    <link rel="icon" href="logos/quickbook_cropped.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=20261128e">
+    <style>
+        :root {
+            --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
+            --bg-color: #eef1f6;
+            --text-color: #1e293b;
+            --brand-color: #4f46e5;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-bg" aria-hidden="true"></div>
+    <main class="wizard">
+        <header class="wizard-nav">
+            <a href="index.html"><img class="home-mark" src="logos/quickbook_logo.png" alt="QuickBook"></a>
+            <a class="home-nav-link" href="manager.html">Είσοδος</a>
+        </header>
+        <div id="wizardLive">
+            <p class="wizard-kicker" id="wizardKicker">Βήμα 1 από 7</p>
+            <h1 id="wizardTitle">Πώς λέγεται η επιχείρηση;</h1>
+            <p class="wizard-lead" id="wizardLead">Αυτό το όνομα βλέπουν οι πελάτες. Ο σύνδεσμος φτιάχνεται μόνος του.</p>
+            <div class="wizard-progress" id="wizardProgress" role="tablist" aria-label="Βήματα"></div>
+            <form id="signupForm">
+                <div class="home-honey" aria-hidden="true">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
+                <section class="wizard-step" data-step="0">
+                    <label>Όνομα επιχείρησης
+                        <input id="signupName" name="name" required maxlength="80" autocomplete="organization" placeholder="π.χ. Barber Shop Νίκος">
+                    </label>
+                    <label>Σύνδεσμος πελατών
+                        <span class="wizard-linkbar"><span class="wizard-link-prefix">quickbook.gr/?business_code=</span><input id="signupCode" name="business_code" required maxlength="48" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="studio-name" aria-label="Κωδικός συνδέσμου"></span>
+                    </label>
+                </section>
+                <section class="wizard-step" data-step="1" hidden>
+                    <label>Email
+                        <input id="signupEmail" name="email" type="email" required maxlength="120" autocomplete="email" placeholder="name@email.com">
+                    </label>
+                    <label>Τηλέφωνο <span style="font-weight:500;color:#64748b;">προαιρετικό</span>
+                        <input id="signupPhone" name="phone" type="tel" maxlength="40" autocomplete="tel" inputmode="tel">
+                    </label>
+                    <label>Διεύθυνση <span style="font-weight:500;color:#64748b;">προαιρετικό</span>
+                        <input id="signupAddress" name="address" maxlength="160" autocomplete="street-address">
+                    </label>
+                </section>
+                <section class="wizard-step" data-step="2" hidden>
+                    <label>Κωδικός
+                        <input id="signupPass" name="password" type="password" required minlength="8" maxlength="200" autocomplete="new-password">
+                    </label>
+                    <label>Ξανά ο κωδικός
+                        <input id="signupPass2" name="password2" type="password" required minlength="8" maxlength="200" autocomplete="new-password">
+                    </label>
+                    <button type="button" class="home-lead-mini" id="signupShowPass">Εμφάνιση κωδικού</button>
+                </section>
+                <section class="wizard-step" data-step="3" hidden>
+                    <div class="wizard-swatches" id="signupSwatches" role="listbox" aria-label="Χρώμα"></div>
+                    <label>Ή διάλεξε ακριβές χρώμα
+                        <input id="signupColor" name="brand_color" type="color" value="#4f46e5">
+                    </label>
+                    <label>Λογότυπο <span style="font-weight:500;color:#64748b;">προαιρετικό</span>
+                        <input id="signupLogo" type="file" accept="image/png,image/jpeg,image/webp">
+                    </label>
+                    <label>Ή σύνδεσμος εικόνας
+                        <input id="signupLogoUrl" name="logo_url" type="url" placeholder="https://…">
+                    </label>
+                    <div class="wizard-preview" id="signupPreview" aria-hidden="true">
+                        <img id="signupPreviewLogo" alt="" hidden>
+                        <strong id="signupPreviewName">Η επιχείρησή σου</strong>
+                        <span>Αίτημα για ραντεβού</span>
+                    </div>
+                </section>
+                <section class="wizard-step" data-step="4" hidden>
+                    <div class="wizard-days" id="signupDays">
+                        <button type="button" class="wizard-day is-on" data-day="1" aria-pressed="true">Δευ</button>
+                        <button type="button" class="wizard-day is-on" data-day="2" aria-pressed="true">Τρί</button>
+                        <button type="button" class="wizard-day is-on" data-day="3" aria-pressed="true">Τετ</button>
+                        <button type="button" class="wizard-day is-on" data-day="4" aria-pressed="true">Πέμ</button>
+                        <button type="button" class="wizard-day is-on" data-day="5" aria-pressed="true">Παρ</button>
+                        <button type="button" class="wizard-day" data-day="6" aria-pressed="false">Σάβ</button>
+                        <button type="button" class="wizard-day" data-day="0" aria-pressed="false">Κυρ</button>
+                    </div>
+                    <div id="signupShifts">
+                        <div class="wizard-shift">
+                            <input type="time" value="09:00" aria-label="Από">
+                            <span>–</span>
+                            <input type="time" value="21:00" aria-label="Έως">
+                        </div>
+                    </div>
+                    <button type="button" class="home-lead-mini" id="signupAddShift">+ Βάρδια</button>
+                </section>
+                <section class="wizard-step" data-step="5" hidden>
+                    <div id="signupServices">
+                        <div class="wizard-service">
+                            <input type="text" value="Ραντεβού" maxlength="80" aria-label="Όνομα υπηρεσίας">
+                            <input type="number" min="15" max="480" value="60" aria-label="Διάρκεια λεπτά">
+                            <input type="number" min="0" step="0.5" placeholder="Τιμή €" aria-label="Τιμή">
+                        </div>
+                    </div>
+                    <button type="button" class="home-lead-mini" id="signupAddService">+ Υπηρεσία</button>
+                </section>
+                <section class="wizard-step" data-step="6" hidden>
+                    <ul class="wizard-summary" id="signupSummary"></ul>
+                    <label class="wizard-check">
+                        <input id="signupTerms" type="checkbox" name="accept_terms">
+                        <span>Αποδέχομαι τους <a href="oroi-epicheiriseis.html" target="_blank" rel="noopener">όρους επιχειρήσεων</a></span>
+                    </label>
+                </section>
+                <p id="signupStatus" class="home-lead-status" role="status"></p>
+                <div class="wizard-actions">
+                    <button type="button" class="wizard-back" id="wizardBack" hidden>Πίσω</button>
+                    <button type="button" class="home-lead-submit" id="wizardNext">Συνέχεια</button>
+                    <button type="submit" class="home-lead-submit" id="wizardCreate" hidden>Δημιουργία προφίλ</button>
+                </div>
+            </form>
+        </div>
+        <section id="wizardDone" class="wizard-done" hidden>
+            <p class="wizard-kicker">Έτοιμο</p>
+            <h1>Το προφίλ δημιουργήθηκε</h1>
+            <p class="wizard-lead" id="wizardDoneText"></p>
+            <a class="home-lead-submit home-create-link" id="wizardDoneLink" href="manager.html">Είσοδος στον πίνακα</a>
+        </section>
+    </main>
+    <script src="signup.js?v=20261128c"></script>
+</body>
+</html>

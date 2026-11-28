@@ -1,0 +1,364 @@
+const API_BASE_URL = 'https://corporate-bookings.tonisdevv.workers.dev';
+const STEPS = [
+  {
+    title: 'Πώς λέγεται η επιχείρηση;',
+    lead: 'Αυτό το όνομα βλέπουν οι πελάτες. Ο σύνδεσμος φτιάχνεται μόνος του — μπορείς να τον αλλάξεις.'
+  },
+  {
+    title: 'Πού σε βρίσκουμε;',
+    lead: 'Το email είναι υποχρεωτικό. Εκεί έρχεται ο σύνδεσμος αν ξεχάσεις τον κωδικό.'
+  },
+  {
+    title: 'Διάλεξε κωδικό',
+    lead: 'Τουλάχιστον 8 χαρακτήρες. Με αυτόν μπαίνεις στον πίνακα.'
+  },
+  {
+    title: 'Δώσε του χρώμα',
+    lead: 'Το χρώμα βάφει το κουμπί στη φόρμα των πελατών. Το λογότυπο μπορείς να το προσθέσεις και αργότερα.'
+  },
+  {
+    title: 'Πότε δουλεύεις;',
+    lead: 'Πάτα τις μέρες. Η βάρδια ισχύει για όλες τις ανοιχτές μέρες.'
+  },
+  {
+    title: 'Τι προσφέρεις;',
+    lead: 'Μία υπηρεσία φτάνει για αρχή. Άδεια τιμή σημαίνει χωρίς τιμή στη φόρμα.'
+  },
+  {
+    title: 'Ρίξε μια ματιά',
+    lead: '14 μέρες δοκιμή, χωρίς κάρτα. Ό,τι θέλεις το αλλάζεις μετά από τον πίνακα.'
+  }
+];
+const SWATCHES = ['#4f46e5', '#0f766e', '#c2410c', '#be185d', '#0369a1', '#0f172a'];
+const GREEK = {
+  α: 'a', ά: 'a', β: 'b', γ: 'g', δ: 'd', ε: 'e', έ: 'e', ζ: 'z', η: 'i', ή: 'i',
+  θ: 'th', ι: 'i', ί: 'i', ϊ: 'i', ΐ: 'i', κ: 'k', λ: 'l', μ: 'm', ν: 'n', ξ: 'x',
+  ο: 'o', ό: 'o', π: 'p', ρ: 'r', σ: 's', ς: 's', τ: 't', υ: 'y', ύ: 'y', ϋ: 'y',
+  ΰ: 'y', φ: 'f', χ: 'ch', ψ: 'ps', ω: 'o', ώ: 'o'
+};
+
+let step = 0;
+let codeEdited = false;
+let logoDataUrl = '';
+
+const form = document.getElementById('signupForm');
+const statusEl = document.getElementById('signupStatus');
+const nameInput = document.getElementById('signupName');
+const codeInput = document.getElementById('signupCode');
+const colorInput = document.getElementById('signupColor');
+
+function slugify(value) {
+  const mapped = String(value || '').toLowerCase().split('').map((ch) => GREEK[ch] || ch).join('');
+  return mapped
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
+}
+
+function setStatus(text, kind) {
+  statusEl.textContent = text || '';
+  statusEl.className = 'home-lead-status' + (kind ? ' is-' + kind : '');
+}
+
+function paintBrand(color) {
+  const next = /^#[0-9a-fA-F]{6}$/.test(color) ? color : '#4f46e5';
+  document.documentElement.style.setProperty('--brand-color', next);
+  document.querySelectorAll('.wizard-swatch').forEach((swatch) => {
+    const on = swatch.dataset.color.toLowerCase() === next.toLowerCase();
+    swatch.classList.toggle('is-on', on);
+    swatch.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+function paintPreview() {
+  const color = colorInput.value || '#4f46e5';
+  paintBrand(color);
+  const previewName = document.getElementById('signupPreviewName');
+  const previewLogo = document.getElementById('signupPreviewLogo');
+  previewName.textContent = nameInput.value.trim() || 'Η επιχείρησή σου';
+  const remote = String(document.getElementById('signupLogoUrl').value || '').trim();
+  const src = logoDataUrl || (/^https:\/\/\S+$/i.test(remote) ? remote : '');
+  previewLogo.hidden = !src;
+  if (src) previewLogo.src = src;
+}
+
+function readDays() {
+  return [...document.querySelectorAll('#signupDays .wizard-day.is-on')].map((btn) => parseInt(btn.dataset.day, 10));
+}
+
+function readShifts() {
+  return [...document.querySelectorAll('#signupShifts .wizard-shift')].map((row) => {
+    const inputs = row.querySelectorAll('input');
+    return { start: inputs[0].value, end: inputs[1].value };
+  }).filter((shift) => shift.start && shift.end);
+}
+
+function readServices() {
+  return [...document.querySelectorAll('#signupServices .wizard-service')].map((row) => {
+    const inputs = row.querySelectorAll('input');
+    const service = {
+      name: inputs[0].value.trim(),
+      duration: parseInt(inputs[1].value, 10) || 60
+    };
+    if (inputs[2].value !== '') service.price = Number(inputs[2].value);
+    return service;
+  }).filter((service) => service.name);
+}
+
+function dayLabel(days) {
+  const names = ['Κυρ', 'Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ'];
+  return days.map((day) => names[day]).join(', ');
+}
+
+function fillSummary() {
+  const list = document.getElementById('signupSummary');
+  const shifts = readShifts().map((shift) => `${shift.start}–${shift.end}`).join(', ');
+  const services = readServices().map((service) => service.name).join(', ');
+  const rows = [
+    ['Επιχείρηση', nameInput.value.trim(), 0],
+    ['Σύνδεσμος', `quickbook.gr/?business_code=${codeInput.value.trim()}`, 0],
+    ['Email', document.getElementById('signupEmail').value.trim(), 1],
+    ['Ωράριο', `${dayLabel(readDays())} · ${shifts}`, 4],
+    ['Υπηρεσίες', services, 5],
+    ['Χρώμα', colorInput.value, 3]
+  ];
+  list.replaceChildren();
+  rows.forEach(([label, value, target]) => {
+    const li = document.createElement('li');
+    const text = document.createElement('span');
+    text.textContent = `${label}: ${value || '—'}`;
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.textContent = 'Αλλαγή';
+    edit.addEventListener('click', () => showStep(target));
+    li.append(text, edit);
+    list.appendChild(li);
+  });
+}
+
+function validate(index) {
+  if (index === 0) {
+    if (!nameInput.value.trim()) return 'Γράψε το όνομα της επιχείρησης.';
+    const code = codeInput.value.trim().toLowerCase();
+    codeInput.value = code;
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code) || code.length < 2) {
+      return 'Ο σύνδεσμος θέλει πεζά λατινικά, αριθμούς και παύλες, π.χ. studio-name.';
+    }
+  }
+  if (index === 1) {
+    const email = document.getElementById('signupEmail').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Βάλε ένα έγκυρο email.';
+  }
+  if (index === 2) {
+    const pass = document.getElementById('signupPass').value;
+    if (pass.length < 8) return 'Ο κωδικός θέλει τουλάχιστον 8 χαρακτήρες.';
+    if (pass !== document.getElementById('signupPass2').value) return 'Οι δύο κωδικοί δεν ταιριάζουν.';
+  }
+  if (index === 4) {
+    if (!readDays().length) return 'Διάλεξε τουλάχιστον μία ημέρα.';
+    const shifts = readShifts();
+    if (!shifts.length) return 'Βάλε τουλάχιστον μία βάρδια.';
+    if (shifts.some((shift) => shift.end <= shift.start)) return 'Κάθε βάρδια πρέπει να τελειώνει μετά την έναρξή της.';
+  }
+  if (index === 5 && !readServices().length) return 'Βάλε τουλάχιστον μία υπηρεσία.';
+  return '';
+}
+
+function showStep(next) {
+  step = next;
+  setStatus('');
+  document.getElementById('wizardKicker').textContent = `Βήμα ${step + 1} από ${STEPS.length}`;
+  document.getElementById('wizardTitle').textContent = STEPS[step].title;
+  document.getElementById('wizardLead').textContent = STEPS[step].lead;
+  document.querySelectorAll('.wizard-step').forEach((section) => {
+    section.hidden = Number(section.dataset.step) !== step;
+  });
+  document.querySelectorAll('#wizardProgress button').forEach((dot, index) => {
+    dot.classList.toggle('is-on', index === step);
+    dot.classList.toggle('is-done', index < step);
+  });
+  document.getElementById('wizardBack').hidden = step === 0;
+  const last = step === STEPS.length - 1;
+  document.getElementById('wizardNext').hidden = last;
+  document.getElementById('wizardCreate').hidden = !last;
+  if (step === 3) paintPreview();
+  if (step === 6) fillSummary();
+  const focusable = document.querySelector(`.wizard-step[data-step="${step}"] input, .wizard-step[data-step="${step}"] button`);
+  if (focusable) focusable.focus();
+}
+
+function buildProgress() {
+  const bar = document.getElementById('wizardProgress');
+  STEPS.forEach((item, index) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.dataset.step = String(index);
+    dot.setAttribute('aria-label', item.title);
+    dot.addEventListener('click', () => {
+      if (index < step) showStep(index);
+    });
+    bar.appendChild(dot);
+  });
+}
+
+function addShift() {
+  const row = document.createElement('div');
+  row.className = 'wizard-shift';
+  row.innerHTML = '<input type="time" value="09:00" aria-label="Από"><span>–</span><input type="time" value="17:00" aria-label="Έως"><button type="button" class="home-lead-mini">Αφαίρεση</button>';
+  row.querySelector('button').addEventListener('click', () => row.remove());
+  document.getElementById('signupShifts').appendChild(row);
+}
+
+function addService() {
+  const row = document.createElement('div');
+  row.className = 'wizard-service';
+  row.innerHTML = '<input type="text" maxlength="80" placeholder="Όνομα" aria-label="Όνομα υπηρεσίας"><input type="number" min="15" max="480" value="60" aria-label="Διάρκεια λεπτά"><input type="number" min="0" step="0.5" placeholder="Τιμή €" aria-label="Τιμή"><button type="button" class="home-lead-mini">Αφαίρεση</button>';
+  row.querySelector('button').addEventListener('click', () => row.remove());
+  document.getElementById('signupServices').appendChild(row);
+}
+
+function buildSwatches() {
+  const box = document.getElementById('signupSwatches');
+  SWATCHES.forEach((color) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'wizard-swatch';
+    button.dataset.color = color;
+    button.style.background = color;
+    button.setAttribute('aria-label', color);
+    button.addEventListener('click', () => {
+      colorInput.value = color;
+      paintPreview();
+    });
+    box.appendChild(button);
+  });
+}
+
+nameInput.addEventListener('input', () => {
+  if (!codeEdited) codeInput.value = slugify(nameInput.value);
+  if (step === 3) paintPreview();
+});
+codeInput.addEventListener('input', () => { codeEdited = true; });
+colorInput.addEventListener('input', paintPreview);
+document.getElementById('signupLogoUrl').addEventListener('input', paintPreview);
+
+document.getElementById('signupLogo').addEventListener('change', () => {
+  const file = document.getElementById('signupLogo').files && document.getElementById('signupLogo').files[0];
+  logoDataUrl = '';
+  if (!file) {
+    paintPreview();
+    return;
+  }
+  if (file.size > 1500000) {
+    setStatus('Η εικόνα είναι μεγάλη. Μέχρι 1,5 MB.', 'err');
+    document.getElementById('signupLogo').value = '';
+    return;
+  }
+  if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+    setStatus('Μόνο PNG, JPG ή WEBP.', 'err');
+    document.getElementById('signupLogo').value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    logoDataUrl = String(reader.result || '');
+    setStatus('');
+    paintPreview();
+  };
+  reader.onerror = () => setStatus('Η εικόνα δεν διαβάστηκε.', 'err');
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('signupDays').addEventListener('click', (event) => {
+  const button = event.target.closest('.wizard-day');
+  if (!button) return;
+  button.classList.toggle('is-on');
+  button.setAttribute('aria-pressed', button.classList.contains('is-on') ? 'true' : 'false');
+});
+
+document.getElementById('signupShowPass').addEventListener('click', () => {
+  const show = document.getElementById('signupPass').type === 'password';
+  document.getElementById('signupPass').type = show ? 'text' : 'password';
+  document.getElementById('signupPass2').type = show ? 'text' : 'password';
+  document.getElementById('signupShowPass').textContent = show ? 'Απόκρυψη κωδικού' : 'Εμφάνιση κωδικού';
+});
+
+document.getElementById('signupAddShift').addEventListener('click', addShift);
+document.getElementById('signupAddService').addEventListener('click', addService);
+
+document.getElementById('wizardBack').addEventListener('click', () => {
+  if (step > 0) showStep(step - 1);
+});
+document.getElementById('wizardNext').addEventListener('click', () => {
+  const problem = validate(step);
+  if (problem) {
+    setStatus(problem, 'err');
+    return;
+  }
+  showStep(step + 1);
+});
+
+form.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || event.target.tagName === 'TEXTAREA') return;
+  if (step < STEPS.length - 1) {
+    event.preventDefault();
+    document.getElementById('wizardNext').click();
+  }
+});
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  for (let index = 0; index <= 5; index += 1) {
+    const problem = validate(index);
+    if (problem) {
+      showStep(index);
+      setStatus(problem, 'err');
+      return;
+    }
+  }
+  if (!document.getElementById('signupTerms').checked) {
+    setStatus('Χρειάζεται αποδοχή των όρων επιχειρήσεων.', 'err');
+    return;
+  }
+  const button = document.getElementById('wizardCreate');
+  button.disabled = true;
+  setStatus('');
+  const payload = {
+    name: nameInput.value.trim(),
+    business_code: codeInput.value.trim().toLowerCase(),
+    email: document.getElementById('signupEmail').value.trim(),
+    phone: document.getElementById('signupPhone').value.trim(),
+    address: document.getElementById('signupAddress').value.trim(),
+    password: document.getElementById('signupPass').value,
+    accept_terms: true,
+    website: form.website.value || '',
+    work_days: readDays(),
+    working_hours: readShifts(),
+    services: readServices(),
+    brand_color: colorInput.value,
+    logo_url: document.getElementById('signupLogoUrl').value.trim(),
+    logo_image: logoDataUrl
+  };
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Το προφίλ δεν δημιουργήθηκε.');
+    document.getElementById('wizardLive').hidden = true;
+    document.getElementById('wizardDone').hidden = false;
+    document.getElementById('wizardDoneText').textContent = data.message || 'Το προφίλ είναι έτοιμο. Μπες στον πίνακα με τον κωδικό που έβαλες.';
+    document.getElementById('wizardDoneLink').href = `manager.html?code=${encodeURIComponent(data.business_code || payload.business_code)}`;
+  } catch (err) {
+    setStatus(err.message || 'Το προφίλ δεν δημιουργήθηκε.', 'err');
+    button.disabled = false;
+  }
+});
+
+buildSwatches();
+buildProgress();
+showStep(0);
