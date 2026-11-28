@@ -161,18 +161,26 @@ function managerLoginUrl(code) {
   return page.toString();
 }
 
+function googleCalendarSubscribeUrl(icsUrl) {
+  const httpsUrl = String(icsUrl || '').trim().replace(/^webcal:/i, 'https:');
+  if (!httpsUrl) return '';
+  return `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(httpsUrl)}`;
+}
+
 async function connectGoogleCalendar() {
   const url = (document.getElementById('calendarUrl')?.value || '').trim();
-  const open = document.getElementById('calendarGoogleLink')?.href || '';
-  if (!url || !open || open.endsWith('#')) {
+  const open = googleCalendarSubscribeUrl(url);
+  if (!url || !open) {
     showToast('Ο σύνδεσμος ημερολογίου δεν είναι έτοιμος.', true);
     return;
   }
+  const link = document.getElementById('calendarGoogleLink');
+  if (link) link.href = open;
   try {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(url.replace(/^webcal:/i, 'https:'));
   } catch (err) {}
   window.open(open, '_blank', 'noopener');
-  showToast('Ο σύνδεσμος αντιγράφηκε. Αν δεν μπει μόνο του, στο Google Calendar πάτα + και «Από URL».');
+  showToast('Ο σύνδεσμος αντιγράφηκε. Το Google ζητά προσθήκη ημερολογίου. Τα ραντεβού έρχονται σε λίγες ώρες και μόνο όσα είναι εγκεκριμένα.');
 }
 
 async function copyCalendarLink() {
@@ -3873,7 +3881,7 @@ function openSettingsModal() {
   const calendarMissing = document.getElementById('calendarMissing');
   const ics = currentTenantData.calendar_url || '';
   if (calendarUrl) calendarUrl.value = ics;
-  if (calendarLink) calendarLink.href = currentTenantData.google_calendar_url || '#';
+  if (calendarLink) calendarLink.href = googleCalendarSubscribeUrl(ics) || currentTenantData.google_calendar_url || '#';
   if (calendarMissing) calendarMissing.style.display = ics ? 'none' : 'block';
   if (calendarUrl) calendarUrl.style.display = ics ? '' : 'none';
   document.getElementById('currentPassword').value = '';

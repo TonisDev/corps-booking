@@ -1398,9 +1398,31 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   .mobile-more-action .side-unread-dot { top: 0.85rem; right: 0.75rem; }
   .mobile-more-close { width: 100%; justify-content: center; min-height: 44px; margin-top: 0.35rem; }
   .home-guide-steps { grid-template-columns: 1fr; }
-  .settings-shell { grid-template-columns: 1fr; min-height: 0; }
-  .settings-nav { border-right: 0; }
-  .settings-search { margin-bottom: 0.15rem; }
+  .settings-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    grid-template-columns: 1fr;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .settings-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    border-right: 0;
+    padding-bottom: 0.35rem;
+  }
+  .settings-search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin-bottom: 0.15rem;
+    background: color-mix(in srgb, var(--text-color) 7%, var(--card-bg));
+  }
   .settings-nav-btn {
     display: flex; justify-content: space-between; align-items: center;
     width: 100%; text-align: left; color: var(--text-color);
@@ -1417,7 +1439,15 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
     color: #4f46e5; font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
   }
   .settings-back::before { content: "‹"; font-size: 1.15rem; }
-  .settings-main { max-height: min(68vh, 640px); }
+  .settings-shell.is-detail .settings-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
   html, body { overflow-x: hidden; }
   #loginScreen {
     margin: 1.25rem 1rem;
@@ -1569,7 +1599,7 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
     justify-content: stretch;
     flex-direction: column-reverse;
   }
-  #settingsModal .modal-content { overflow-y: auto; }
+  #settingsModal .modal-content { overflow: hidden; }
   .settings-save-bar .btn { flex: 1; justify-content: center; min-height: 44px; }
   #dayAppointmentsList, #aptList {
     flex: 1;

@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://corporate-bookings.tonisdevv.workers.dev https://unpkg.com">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Manager">
+    <meta name="apple-mobile-web-app-title" content="QuickBook">
     <meta name="theme-color" content="#f8fafc" id="themeColor">
     <title>Διαχείριση Επιχείρησης | Manager</title>
     <link rel="icon" href="logos/quickbook_cropped.png" type="image/png">
@@ -19,7 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261128i">
+    <link rel="stylesheet" href="manager_style.css?v=20261128j">
 </head>
 <body data-theme="light">
 
@@ -620,6 +620,7 @@
               <span class="info-tip-pop" hidden>Μπαίνουν μόνο τα εγκεκριμένα. Στο Android: Google Calendar → + → Από URL και επικόλλησε τον σύνδεσμο. Το Google τα φέρνει μέσα σε λίγες ώρες, όχι την ίδια στιγμή.</span>
             </h3>
             <p id="calendarMissing" style="display:none; margin:0 0 0.7rem; color:var(--text-muted); font-size:0.85rem;">Χρειάζεται ενημέρωση της βάσης για να βγει ο σύνδεσμος.</p>
+            <p class="settings-hint" style="margin:0 0 0.7rem;">Μπαίνουν μόνο τα εγκεκριμένα ραντεβού. Το Google τα φέρνει μέσα σε λίγες ώρες, όχι μόλις πατήσεις το κουμπί. Στο κινητό, αν ανοίξει το ημερολόγιο χωρίς να ζητήσει προσθήκη, πήγαινε στις ρυθμίσεις του και διάλεξε «Προσθήκη από URL».</p>
             <input class="field readonly-url" id="calendarUrl" readonly>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
               <button type="button" class="btn" onclick="connectGoogleCalendar()">Σύνδεση με Google</button>
@@ -1079,7 +1080,7 @@
     <div id="clientDrawerBody"></div>
   </aside>
 
-<script src="manager.js?v=20261128h"></script>
+<script src="manager.js?v=20261128j"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

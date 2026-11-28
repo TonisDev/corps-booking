@@ -48,6 +48,10 @@
         root.innerHTML = `<p class="brand">QuickBook</p><h1>${esc(data.name || 'Το κατάστημά σου')}</h1><p class="lead">Οι συνδρομές δεν είναι ενεργές ακόμα. Θα σε ειδοποιήσουμε όταν ανοίξει η πληρωμή.</p>`;
         return;
       }
+      if (data.checkout_blocked) {
+        root.innerHTML = `<p class="brand">QuickBook</p><h1>${esc(data.name || 'Το κατάστημά σου')}</h1><p class="lead">${esc(data.checkout_blocked)}</p>`;
+        return;
+      }
       const plans = (data.plans || []).map((p) => `
         <button type="button" class="plan${p.id === selected ? ' is-on' : ''}" data-plan="${esc(p.id)}">
           <strong>${esc(p.label)}</strong>

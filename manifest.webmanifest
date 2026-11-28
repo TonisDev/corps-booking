@@ -1,6 +1,6 @@
 {
-  "name": "Διαχείριση Ραντεβού",
-  "short_name": "Manager",
+  "name": "QuickBook",
+  "short_name": "QuickBook",
   "start_url": "./manager.html",
   "display": "standalone",
   "background_color": "#f8fafc",
