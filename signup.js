@@ -26,7 +26,7 @@ const STEPS = [
   },
   {
     title: 'Ρίξε μια ματιά',
-    lead: '14 μέρες δοκιμή, χωρίς κάρτα. Ό,τι θέλεις το αλλάζεις μετά από τον πίνακα.'
+    lead: '1 μήνας δωρεάν χρήσης, χωρίς δέσμευση κάρτας. Ό,τι θέλεις το αλλάζεις μετά από τον πίνακα.'
   }
 ];
 const SWATCHES = ['#4f46e5', '#0f766e', '#c2410c', '#be185d', '#0369a1', '#0f172a'];
@@ -166,6 +166,15 @@ function validate(index) {
   return '';
 }
 
+function paintNext() {
+  const last = step === STEPS.length - 1;
+  const ready = last
+    ? document.getElementById('signupTerms').checked
+    : validate(step) === '';
+  document.getElementById('wizardNext').classList.toggle('is-ready', !last && ready);
+  document.getElementById('wizardCreate').classList.toggle('is-ready', last && ready);
+}
+
 function showStep(next) {
   step = next;
   setStatus('');
@@ -185,6 +194,7 @@ function showStep(next) {
   document.getElementById('wizardCreate').hidden = !last;
   if (step === 3) paintPreview();
   if (step === 6) fillSummary();
+  paintNext();
   const focusable = document.querySelector(`.wizard-step[data-step="${step}"] input, .wizard-step[data-step="${step}"] button`);
   if (focusable) focusable.focus();
 }
@@ -276,7 +286,11 @@ document.getElementById('signupDays').addEventListener('click', (event) => {
   if (!button) return;
   button.classList.toggle('is-on');
   button.setAttribute('aria-pressed', button.classList.contains('is-on') ? 'true' : 'false');
+  paintNext();
 });
+
+form.addEventListener('input', paintNext);
+form.addEventListener('change', paintNext);
 
 document.getElementById('signupShowPass').addEventListener('click', () => {
   const show = document.getElementById('signupPass').type === 'password';
@@ -285,8 +299,20 @@ document.getElementById('signupShowPass').addEventListener('click', () => {
   document.getElementById('signupShowPass').textContent = show ? 'Απόκρυψη κωδικού' : 'Εμφάνιση κωδικού';
 });
 
-document.getElementById('signupAddShift').addEventListener('click', addShift);
-document.getElementById('signupAddService').addEventListener('click', addService);
+document.getElementById('signupAddShift').addEventListener('click', () => {
+  addShift();
+  paintNext();
+});
+document.getElementById('signupAddService').addEventListener('click', () => {
+  addService();
+  paintNext();
+});
+document.getElementById('signupShifts').addEventListener('click', (event) => {
+  if (event.target.closest('button')) paintNext();
+});
+document.getElementById('signupServices').addEventListener('click', (event) => {
+  if (event.target.closest('button')) paintNext();
+});
 
 document.getElementById('wizardBack').addEventListener('click', () => {
   if (step > 0) showStep(step - 1);

@@ -1870,6 +1870,8 @@ body.shop-info-open { overflow: hidden; }
 
 /* [SECTION: CSS-WIZARD] — δημιουργία προφίλ, ξεχωριστή σελίδα */
 .wizard {
+  position: relative;
+  z-index: 1;
   max-width: 32rem;
   margin: 0 auto;
   padding: 1.35rem 1.15rem 2.5rem;
@@ -1929,29 +1931,37 @@ body.shop-info-open { overflow: hidden; }
   font-weight: 650;
   color: #334155;
 }
-.wizard-step input[type="text"],
-.wizard-step input[type="email"],
-.wizard-step input[type="tel"],
-.wizard-step input[type="password"],
-.wizard-step input[type="url"],
-.wizard-step input[type="number"],
-.wizard-step input[type="time"] {
+.wizard-step input:where(:not([type="checkbox"]):not([type="color"]):not([type="file"]):not([type="radio"])) {
   width: 100%;
   box-sizing: border-box;
   min-height: 2.85rem;
-  padding: 0.55rem 0.8rem;
-  border: 1px solid #e2e8f0;
+  padding: 0.65rem 0.85rem !important;
+  border: 1px solid #cbd5e1 !important;
   border-radius: 0.8rem;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #fff !important;
+  background-color: #fff !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
+  text-align: left !important;
   font: inherit;
-  font-size: 1rem;
+  font-size: 1rem !important;
+  line-height: 1.4;
+  opacity: 1 !important;
+}
+.wizard-step input::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8;
+  opacity: 1;
 }
 .wizard-step input:focus {
   outline: none;
-  border-color: var(--brand-color, #4f46e5);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color, #4f46e5) 18%, transparent);
-  background: #fff;
+  border-color: var(--brand-color, #4f46e5) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color, #4f46e5) 18%, transparent) !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a;
 }
 .wizard-linkbar {
   display: flex;
@@ -1960,31 +1970,60 @@ body.shop-info-open { overflow: hidden; }
   gap: 0;
   min-height: 2.85rem;
   padding: 0.35rem 0.8rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1 !important;
   border-radius: 0.8rem;
-  background: #fff;
+  background: #fff !important;
   color: #64748b;
   font-size: 0.92rem;
 }
-.wizard-link-prefix { flex: none; }
+.wizard-link-prefix { flex: none; color: #64748b; }
 .wizard-linkbar input {
   flex: 1 1 8rem;
   width: auto !important;
   min-width: 0;
   border: 0 !important;
   background: transparent !important;
+  background-color: transparent !important;
   box-shadow: none !important;
   min-height: 2.2rem !important;
   padding: 0.2rem 0 !important;
   color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
+  text-align: left !important;
   font-weight: 650;
 }
 .wizard-actions {
   display: flex;
+  justify-content: flex-end;
+  align-items: center;
   gap: 0.55rem;
   margin-top: 1.15rem;
 }
-.wizard-actions .home-lead-submit { flex: 1; justify-content: center; }
+.wizard-actions .wizard-back { margin-right: auto; }
+.wizard-actions .home-lead-submit { flex: none; margin-left: auto; }
+#wizardNext,
+#wizardCreate {
+  background: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+}
+#wizardNext:hover,
+#wizardCreate:hover {
+  transform: none;
+  filter: none;
+}
+#wizardNext.is-ready,
+#wizardCreate.is-ready {
+  background: var(--brand-color, #4f46e5);
+  color: #fff;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--brand-color, #4f46e5) 32%, transparent);
+}
+#wizardNext.is-ready:hover,
+#wizardCreate.is-ready:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
 .wizard-back {
   min-height: 2.7rem;
   padding: 0 1rem;
@@ -2054,9 +2093,9 @@ body.shop-info-open { overflow: hidden; }
   gap: 0.4rem;
   align-items: center;
 }
-.wizard-service input[type="text"] { flex: 1 1 8rem; }
+.wizard-service input[type="text"] { flex: 1 1 8rem; width: auto !important; }
 .wizard-service input[type="number"],
-.wizard-shift input[type="time"] { width: 6.4rem; flex: none; }
+.wizard-shift input[type="time"] { width: 6.4rem !important; flex: none; }
 .wizard-summary { display: flex; flex-direction: column; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
 .wizard-summary li {
   display: flex;
@@ -2088,6 +2127,5 @@ body.shop-info-open { overflow: hidden; }
 .wizard-done a.home-lead-submit { margin-top: 1rem; text-decoration: none; color: #fff; }
 @media (max-width: 640px) {
   .wizard { padding-inline: 1rem; }
-  .wizard-actions .home-lead-submit,
   .wizard-done a.home-lead-submit { width: 100%; box-sizing: border-box; }
 }

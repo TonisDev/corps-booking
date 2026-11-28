@@ -9,13 +9,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20261128e">
+    <link rel="stylesheet" href="style.css?v=20261128i">
     <style>
         :root {
+            color-scheme: light;
             --body-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --heading-font: "IBM Plex Sans", "Noto Sans", sans-serif;
             --bg-color: #eef1f6;
-            --text-color: #1e293b;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --field-bg: #ffffff;
+            --field-border: #cbd5e1;
             --brand-color: #4f46e5;
         }
     </style>
@@ -120,7 +124,7 @@
                 <p id="signupStatus" class="home-lead-status" role="status"></p>
                 <div class="wizard-actions">
                     <button type="button" class="wizard-back" id="wizardBack" hidden>Πίσω</button>
-                    <button type="button" class="home-lead-submit" id="wizardNext">Συνέχεια</button>
+                    <button type="button" class="home-lead-submit" id="wizardNext">Επόμενο</button>
                     <button type="submit" class="home-lead-submit" id="wizardCreate" hidden>Δημιουργία προφίλ</button>
                 </div>
             </form>
@@ -132,6 +136,6 @@
             <a class="home-lead-submit home-create-link" id="wizardDoneLink" href="manager.html">Είσοδος στον πίνακα</a>
         </section>
     </main>
-    <script src="signup.js?v=20261128c"></script>
+    <script src="signup.js?v=20261128d"></script>
 </body>
 </html>
