@@ -19,7 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="manager_style.css?v=20261128a">
+    <link rel="stylesheet" href="manager_style.css?v=20261128f">
 </head>
 <body data-theme="light">
 
@@ -157,6 +157,7 @@
       <button type="button" class="manager-side-btn" onclick="openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
       <button type="button" class="manager-side-btn" onclick="openPaymentsModal()"><i data-lucide="wallet" size="18"></i><span>Πληρωμές</span></button>
       <button type="button" class="manager-side-btn" onclick="copyInstagramPack()" title="Share — αντιγραφή κειμένου και συνδέσμου"><i data-lucide="share-2" size="18"></i><span>Share</span></button>
+      <button type="button" class="manager-side-btn" onclick="openModal('homeGuideModal')"><i data-lucide="smartphone" size="18"></i><span>Πρόσθεσε στην αρχική</span></button>
       <button type="button" class="manager-side-btn manager-side-btn-bottom" id="supportSideBtn" onclick="openSupportModal()" title="Chat με τον δημιουργό του QuickBook"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="supportUnreadDot" class="side-unread-dot" hidden></span></button>
       <button type="button" class="manager-side-btn" onclick="openPublicPage()" title="Προβολή δημόσιας σελίδας πελάτη"><i data-lucide="external-link" size="18"></i><span>Σελίδα Πελάτη</span></button>
     </aside>
@@ -279,6 +280,7 @@
         <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openBlockFromToolbar()"><i data-lucide="lock" size="18"></i><span>Κλείδωσε ώρες</span></button>
         <button type="button" class="mobile-more-action" data-feature="notes" onclick="closeMobileMore(); openStickyBoard()"><i data-lucide="sticky-note" size="18"></i><span>Σημειώσεις</span></button>
         <button type="button" class="mobile-more-action" data-feature="instagram" onclick="closeMobileMore(); copyInstagramPack()"><i data-lucide="share-2" size="18"></i><span>Share</span></button>
+        <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openModal('homeGuideModal')"><i data-lucide="smartphone" size="18"></i><span>Πρόσθεσε στην αρχική</span></button>
         <button type="button" class="mobile-more-action" id="mobileSupportBtn" onclick="closeMobileMore(); openSupportModal()"><i data-lucide="life-buoy" size="18"></i><span>Υποστήριξη</span><span id="mobileSupportDot" class="side-unread-dot" hidden></span></button>
         <button type="button" class="mobile-more-action" onclick="closeMobileMore(); openPublicPage()"><i data-lucide="external-link" size="18"></i><span>Σελίδα πελάτη</span></button>
         <button type="button" class="mobile-more-action" data-feature="bucket" onclick="closeMobileMore(); openBookingToBucket()"><i data-lucide="inbox" size="18"></i><span>Στο bucket</span></button>
@@ -306,7 +308,7 @@
           <button type="button" class="settings-nav-btn" data-settings-panel="features" onclick="showSettingsPanel('features')">Λειτουργίες</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="integrations" onclick="showSettingsPanel('integrations')">Telegram / Calendar</button>
           <button type="button" class="settings-nav-btn" data-settings-panel="billing" id="settingsNavBilling" onclick="showSettingsPanel('billing')" hidden>Συνδρομή QuickBook</button>
-          <button type="button" class="settings-nav-btn" data-settings-panel="security" onclick="showSettingsPanel('security')">Κωδικός / Κινητό</button>
+          <button type="button" class="settings-nav-btn" data-settings-panel="security" onclick="showSettingsPanel('security')">Κωδικός</button>
         </nav>
         <div class="settings-main">
           <div class="settings-panel active" id="settingsPanel-profile">
@@ -545,8 +547,6 @@
             <h3 class="settings-panel-title">Telegram / Calendar</h3>
             <div class="help-box" style="margin-top:0;">
               <h3>Ειδοποιήσεις συσκευής</h3>
-              <p class="settings-hint">Νέο αίτημα έρχεται αμέσως. Περίπου 1 ώρα πριν το ραντεβού έρχεται υπενθύμιση. Ραντεβού στη σειρά (κενό έως 2 ώρες από το τέλος του ενός ως την αρχή του επόμενου) μπαίνουν σε μία ειδοποίηση. Μεγάλο κενό, π.χ. 13:00 και 17:00, χωριστά.</p>
-              <p class="settings-hint">Στο iPhone: πρώτα πρόσθεσε το panel στην αρχική οθόνη, μετά πάτα ενεργοποίηση.</p>
               <label class="remember-me" style="margin:0.2rem 0 0.45rem;">
                 <input type="checkbox" id="pushShopEnabled" checked onchange="refreshPushUi()">
                 Οι ειδοποιήσεις είναι ανοιχτές για το κατάστημα
@@ -606,17 +606,8 @@
           </div>
 
           <div class="settings-panel" id="settingsPanel-security">
-            <h3 class="settings-panel-title">Κωδικός / Κινητό</h3>
+            <h3 class="settings-panel-title">Κωδικός</h3>
             <div class="help-box" style="margin-top:0;">
-              <h3>Κινητό</h3>
-              <p class="settings-hint">Στείλε αυτό το link στο κινητό και πρόσθεσέ το στην αρχική οθόνη.</p>
-              <input class="field readonly-url" id="managerMobileUrl" readonly>
-              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.7rem 0 0;">
-                <button type="button" class="btn btn-outline" onclick="copyManagerLink()">Αντιγραφή συνδέσμου</button>
-                <button type="button" class="btn btn-outline" onclick="shareManagerLink()">Κοινοποίηση</button>
-              </div>
-            </div>
-            <div class="help-box">
               <h3>Αλλαγή κωδικού</h3>
               <p class="settings-hint">Αν τον χάσεις, στην είσοδο πάτα «Ξέχασα τον κωδικό». Ο σύνδεσμος πάει στο email της επιχείρησης.</p>
               <div class="form-group">
@@ -933,6 +924,32 @@
     </div>
   </div>
 
+  <div class="modal" id="homeGuideModal">
+    <div class="modal-content home-guide">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+        <div>
+          <h2 style="margin:0;">Πρόσθεσε το panel στην αρχική</h2>
+          <p class="settings-hint">Άνοιξε αυτό το panel στο κινητό, στον browser, και ακολούθησε τα βήματα.</p>
+        </div>
+        <button type="button" class="btn btn-outline" onclick="closeModal('homeGuideModal')">Κλείσιμο</button>
+      </div>
+      <div class="home-guide-steps">
+        <figure>
+          <img src="help/home-iphone-share.jpg" alt="iPhone: το κουμπί κοινοποίησης στο κάτω μέρος του Safari">
+          <figcaption>iPhone · πάτα το βελάκι κοινοποίησης</figcaption>
+        </figure>
+        <figure>
+          <img src="help/home-iphone-add.jpg" alt="iPhone: Προσθήκη στην οθόνη Αφετηρίας">
+          <figcaption>iPhone · Προσθήκη στην οθόνη Αφετηρίας</figcaption>
+        </figure>
+        <figure>
+          <img src="help/home-android-add.jpg" alt="Android: Προσθήκη στην αρχική οθόνη">
+          <figcaption>Android · οι τρεις τελείες, μετά Προσθήκη στην αρχική οθόνη</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+
   <!-- Υποστήριξη / chat με τον δημιουργό -->
   <div class="modal" id="supportModal">
     <div class="modal-content support-modal-content">
@@ -1000,7 +1017,7 @@
     <div id="clientDrawerBody"></div>
   </aside>
 
-<script src="manager.js?v=20261128d"></script>
+<script src="manager.js?v=20261128f"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>

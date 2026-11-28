@@ -3784,7 +3784,8 @@ function openSettingsModal() {
   } else if (botWrap) {
     botWrap.style.display = 'none';
   }
-  document.getElementById('managerMobileUrl').value = managerLoginUrl();
+  const mobileUrl = document.getElementById('managerMobileUrl');
+  if (mobileUrl) mobileUrl.value = managerLoginUrl();
   const calendarUrl = document.getElementById('calendarUrl');
   const calendarLink = document.getElementById('calendarGoogleLink');
   const calendarMissing = document.getElementById('calendarMissing');
