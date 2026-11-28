@@ -3625,7 +3625,9 @@ async function refreshPushUi() {
   } catch (err) {}
   enable.hidden = on;
   if (disable) disable.hidden = !on;
-  status.textContent = on ? 'Ενεργές σε αυτή τη συσκευή.' : 'Κλειστές σε αυτή τη συσκευή.';
+  const shopOn = !document.getElementById('pushShopEnabled') || document.getElementById('pushShopEnabled').checked;
+  if (!shopOn) status.textContent = 'Κλειστές για το κατάστημα. Άνοιξέ τις και πάτα Αποθήκευση.';
+  else status.textContent = on ? 'Ενεργές σε αυτή τη συσκευή.' : 'Κλειστές σε αυτή τη συσκευή.';
 }
 
 async function enableAdminPush() {
@@ -3704,6 +3706,11 @@ function openSettingsModal() {
   filterSettingsNav();
   showSettingsPanel('profile');
   fillEmbedSnippet();
+  const pushShop = document.getElementById('pushShopEnabled');
+  if (pushShop) {
+    const feats = currentTenantData.features || {};
+    pushShop.checked = feats.push !== false;
+  }
   refreshPushUi();
   document.getElementById('setName').value = currentTenantData.name || '';
   document.getElementById('setEmail').value = currentTenantData.email || '';
@@ -4301,7 +4308,8 @@ async function saveSettings(e) {
           bucket: document.getElementById('featBucket') ? document.getElementById('featBucket').checked : true,
           waitlist: document.getElementById('featWaitlist') ? document.getElementById('featWaitlist').checked : true,
           notes: document.getElementById('featNotes') ? document.getElementById('featNotes').checked : true,
-          instagram: document.getElementById('featInstagram') ? document.getElementById('featInstagram').checked : true
+          instagram: document.getElementById('featInstagram') ? document.getElementById('featInstagram').checked : true,
+          push: document.getElementById('pushShopEnabled') ? document.getElementById('pushShopEnabled').checked : true
         }
       })
     });

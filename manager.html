@@ -547,6 +547,11 @@
               <h3>Ειδοποιήσεις συσκευής</h3>
               <p class="settings-hint">Νέο αίτημα έρχεται αμέσως. Περίπου 1 ώρα πριν το ραντεβού έρχεται υπενθύμιση. Ραντεβού στη σειρά (κενό έως 2 ώρες από το τέλος του ενός ως την αρχή του επόμενου) μπαίνουν σε μία ειδοποίηση. Μεγάλο κενό, π.χ. 13:00 και 17:00, χωριστά.</p>
               <p class="settings-hint">Στο iPhone: πρώτα πρόσθεσε το panel στην αρχική οθόνη, μετά πάτα ενεργοποίηση.</p>
+              <label class="remember-me" style="margin:0.2rem 0 0.45rem;">
+                <input type="checkbox" id="pushShopEnabled" checked onchange="refreshPushUi()">
+                Οι ειδοποιήσεις είναι ανοιχτές για το κατάστημα
+              </label>
+              <p class="settings-hint">Ξετσέκαρε και πάτα Αποθήκευση για να σταματήσουν σε όλες τις συσκευές. Το κουμπί από κάτω αφορά μόνο αυτόν τον browser.</p>
               <p id="pushStatus" class="settings-hint"></p>
               <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                 <button type="button" class="btn" id="pushEnableBtn" onclick="enableAdminPush()">Ενεργοποίηση ειδοποιήσεων</button>
@@ -995,7 +1000,7 @@
     <div id="clientDrawerBody"></div>
   </aside>
 
-<script src="manager.js?v=20261128b"></script>
+<script src="manager.js?v=20261128d"></script>
 
   <p class="rhapsodus-stamp">Powered by <strong>Rhapsodus</strong></p>
   <div id="newToast" class="new-toast" role="status" hidden>Νέο αίτημα</div>
