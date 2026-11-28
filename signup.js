@@ -10,7 +10,7 @@ const STEPS = [
   },
   {
     title: 'Διάλεξε κωδικό',
-    lead: 'Τουλάχιστον 8 χαρακτήρες. Με αυτόν μπαίνεις στον πίνακα.'
+    lead: 'Με αυτόν μπαίνεις στον πίνακα. Τα κριτήρια φαίνονται κάτω από τα πεδία.'
   },
   {
     title: 'Δώσε του χρώμα',
@@ -18,15 +18,15 @@ const STEPS = [
   },
   {
     title: 'Πότε δουλεύεις;',
-    lead: 'Πάτα τις μέρες. Η βάρδια ισχύει για όλες τις ανοιχτές μέρες.'
+    lead: 'Επέλεξε τις μέρες. Το ωράριο από κάτω ισχύει για όλες.'
   },
   {
     title: 'Τι προσφέρεις;',
-    lead: 'Μία υπηρεσία φτάνει για αρχή. Άδεια τιμή σημαίνει χωρίς τιμή στη φόρμα.'
+    lead: 'Μία υπηρεσία φτάνει για αρχή. Άσε κενή την τιμή αν δεν θέλεις να φαίνεται στον πελάτη.'
   },
   {
     title: 'Ρίξε μια ματιά',
-    lead: '1 μήνας δωρεάν χρήσης, χωρίς δέσμευση κάρτας. Ό,τι θέλεις το αλλάζεις μετά από τον πίνακα.'
+    lead: '1 μήνας δωρεάν χρήσης, χωρίς δέσμευση κάρτας. Ό,τι θέλεις το αλλάζεις εύκολα από τις ρυθμίσεις.'
   }
 ];
 const SWATCHES = ['#4f46e5', '#0f766e', '#c2410c', '#be185d', '#0369a1', '#0f172a'];
@@ -88,11 +88,66 @@ function readDays() {
   return [...document.querySelectorAll('#signupDays .wizard-day.is-on')].map((btn) => parseInt(btn.dataset.day, 10));
 }
 
-function readShifts() {
-  return [...document.querySelectorAll('#signupShifts .wizard-shift')].map((row) => {
-    const inputs = row.querySelectorAll('input');
-    return { start: inputs[0].value, end: inputs[1].value };
+const DAY_SHORT = ['Κυρ', 'Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ'];
+
+function dedupeShifts(shifts) {
+  const seen = new Set();
+  return shifts.filter((shift) => {
+    const key = `${shift.start}-${shift.end}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function readShiftRows(root) {
+  return [...root.querySelectorAll(':scope > .wizard-shift, :scope > .wizard-day-hours')].map((row) => {
+    const inputs = row.querySelectorAll('input[type="time"]');
+    return { start: inputs[0] ? inputs[0].value : '', end: inputs[1] ? inputs[1].value : '' };
   }).filter((shift) => shift.start && shift.end);
+}
+
+function rawShifts() {
+  return readShiftRows(document.getElementById('signupShifts'));
+}
+
+function shiftOverlap(shifts) {
+  const list = shifts.filter((shift) => shift.start && shift.end && shift.end > shift.start);
+  for (let i = 0; i < list.length; i += 1) {
+    for (let j = i + 1; j < list.length; j += 1) {
+      if (list[i].start < list[j].end && list[i].end > list[j].start) return [list[i], list[j]];
+    }
+  }
+  return null;
+}
+
+function overlapMessage(pair) {
+  return `Οι βάρδιες ${pair[0].start}–${pair[0].end} και ${pair[1].start}–${pair[1].end} επικαλύπτονται.`;
+}
+
+function readShifts() {
+  return dedupeShifts(rawShifts());
+}
+
+function readHours() {
+  const general = readShifts();
+  const perDay = document.getElementById('signupPerDay').checked;
+  if (!perDay) return general;
+  const out = {};
+  readDays().forEach((day) => {
+    const row = document.querySelector(`#signupDayHours [data-day="${day}"]`);
+    if (!row) {
+      out[day] = general;
+      return;
+    }
+    const inputs = row.querySelectorAll('input[type="time"]');
+    const shift = { start: inputs[0].value, end: inputs[1].value };
+    const same = general.length === 1 && general[0].start === shift.start && general[0].end === shift.end;
+    out[day] = same ? general : [shift];
+  });
+  const lists = Object.values(out);
+  const allSame = lists.length && lists.every((list) => JSON.stringify(list) === JSON.stringify(lists[0]));
+  return allSame ? lists[0] : out;
 }
 
 function readServices() {
@@ -108,21 +163,30 @@ function readServices() {
 }
 
 function dayLabel(days) {
-  const names = ['Κυρ', 'Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ'];
-  return days.map((day) => names[day]).join(', ');
+  return days.map((day) => DAY_SHORT[day]).join(', ');
+}
+
+function hoursSummary() {
+  const hours = readHours();
+  if (Array.isArray(hours)) {
+    const span = hours.map((shift) => `${shift.start}–${shift.end}`).join(', ');
+    return `${dayLabel(readDays())} · ${span}`;
+  }
+  return readDays().map((day) => {
+    const list = hours[day] || [];
+    return `${DAY_SHORT[day]} ${list.map((shift) => `${shift.start}–${shift.end}`).join(', ')}`;
+  }).join(' · ');
 }
 
 function fillSummary() {
   const list = document.getElementById('signupSummary');
-  const shifts = readShifts().map((shift) => `${shift.start}–${shift.end}`).join(', ');
   const services = readServices().map((service) => service.name).join(', ');
   const rows = [
     ['Επιχείρηση', nameInput.value.trim(), 0],
     ['Σύνδεσμος', `quickbook.gr/?business_code=${codeInput.value.trim()}`, 0],
     ['Email', document.getElementById('signupEmail').value.trim(), 1],
-    ['Ωράριο', `${dayLabel(readDays())} · ${shifts}`, 4],
-    ['Υπηρεσίες', services, 5],
-    ['Χρώμα', colorInput.value, 3]
+    ['Ωράριο', hoursSummary(), 4],
+    ['Υπηρεσίες', services, 5]
   ];
   list.replaceChildren();
   rows.forEach(([label, value, target]) => {
@@ -136,6 +200,18 @@ function fillSummary() {
     li.append(text, edit);
     list.appendChild(li);
   });
+  const colorItem = document.createElement('li');
+  const colorText = document.createElement('span');
+  const chip = document.createElement('i');
+  chip.className = 'wizard-color-chip';
+  chip.style.background = colorInput.value;
+  colorText.append('Χρώμα: ', chip, document.createTextNode(` ${colorInput.value}`));
+  const colorEdit = document.createElement('button');
+  colorEdit.type = 'button';
+  colorEdit.textContent = 'Αλλαγή';
+  colorEdit.addEventListener('click', () => showStep(3));
+  colorItem.append(colorText, colorEdit);
+  list.appendChild(colorItem);
 }
 
 function validate(index) {
@@ -158,15 +234,104 @@ function validate(index) {
   }
   if (index === 4) {
     if (!readDays().length) return 'Διάλεξε τουλάχιστον μία ημέρα.';
-    const shifts = readShifts();
+    const shifts = rawShifts();
     if (!shifts.length) return 'Βάλε τουλάχιστον μία βάρδια.';
     if (shifts.some((shift) => shift.end <= shift.start)) return 'Κάθε βάρδια πρέπει να τελειώνει μετά την έναρξή της.';
+    const overlap = shiftOverlap(shifts);
+    if (overlap) return overlapMessage(overlap);
+    if (document.getElementById('signupPerDay').checked) {
+      const bad = [...document.querySelectorAll('#signupDayHours .wizard-day-hours')].some((row) => {
+        const inputs = row.querySelectorAll('input[type="time"]');
+        return !inputs[0].value || !inputs[1].value || inputs[1].value <= inputs[0].value;
+      });
+      if (bad) return 'Κάθε μέρα με δικό της ωράριο πρέπει να τελειώνει μετά την έναρξη.';
+    }
   }
   if (index === 5 && !readServices().length) return 'Βάλε τουλάχιστον μία υπηρεσία.';
   return '';
 }
 
+function paintRules() {
+  const code = codeInput.value.trim().toLowerCase();
+  const codeRule = document.getElementById('signupCodeRule');
+  const codeOk = code.length >= 2 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code);
+  if (!code) {
+    codeRule.textContent = 'Πεζά λατινικά, αριθμοί και παύλες. Από 2 χαρακτήρες, π.χ. nikos.';
+    codeRule.className = 'wizard-rule';
+  } else if (!codeOk) {
+    codeRule.textContent = code.length < 2
+      ? `Ο σύνδεσμος θέλει τουλάχιστον 2 χαρακτήρες. Τώρα έχει ${code.length}.`
+      : 'Μόνο πεζά λατινικά, αριθμοί και παύλες. Τα ελληνικά και τα σύμβολα δεν περνάνε.';
+    codeRule.className = 'wizard-rule is-bad';
+  } else {
+    codeRule.textContent = 'Ο σύνδεσμος είναι εντάξει.';
+    codeRule.className = 'wizard-rule is-ok';
+  }
+  const pass = document.getElementById('signupPass').value;
+  const pass2 = document.getElementById('signupPass2').value;
+  const len = document.querySelector('#signupPassRules [data-rule="len"]');
+  const match = document.querySelector('#signupPassRules [data-rule="match"]');
+  len.textContent = pass.length
+    ? `Τουλάχιστον 8 χαρακτήρες (${pass.length}/8)`
+    : 'Τουλάχιστον 8 χαρακτήρες';
+  len.className = pass.length >= 8 ? 'is-ok' : (pass.length ? 'is-bad' : '');
+  match.className = pass && pass2 && pass === pass2 ? 'is-ok' : (pass2 ? 'is-bad' : '');
+}
+
+function paintShiftNote() {
+  const note = document.getElementById('signupHoursNote');
+  const rows = [...document.querySelectorAll('#signupShifts .wizard-shift')];
+  const shifts = rows.map((row) => {
+    const inputs = row.querySelectorAll('input[type="time"]');
+    return { row, start: inputs[0] ? inputs[0].value : '', end: inputs[1] ? inputs[1].value : '' };
+  });
+  rows.forEach((row) => row.classList.remove('is-overlap'));
+  const overlap = shiftOverlap(shifts);
+  shifts.forEach((shift, index) => {
+    const hits = shifts.some((other, otherIndex) => otherIndex !== index
+      && shift.start && shift.end && other.start && other.end
+      && shift.end > shift.start && other.end > other.start
+      && shift.start < other.end && shift.end > other.start);
+    shift.row.classList.toggle('is-overlap', hits);
+  });
+  if (overlap) {
+    note.textContent = `⚠ ${overlapMessage(overlap)} Άλλαξέ τες για να συνεχίσεις.`;
+    note.className = 'wizard-rule is-warn';
+    return;
+  }
+  note.className = 'wizard-rule';
+  note.textContent = 'Ισχύει για όλες τις μέρες που επέλεξες. Δεύτερη βάρδια είναι για διάλειμμα, π.χ. πρωί και απόγευμα, χωρίς να πέφτει πάνω στην πρώτη.';
+}
+
+function renderDayHours() {
+  const box = document.getElementById('signupDayHours');
+  const on = document.getElementById('signupPerDay').checked;
+  box.hidden = !on;
+  if (!on) return;
+  const previous = {};
+  box.querySelectorAll('[data-day]').forEach((row) => {
+    const inputs = row.querySelectorAll('input[type="time"]');
+    previous[row.dataset.day] = { start: inputs[0].value, end: inputs[1].value };
+  });
+  const general = readShifts()[0] || { start: '09:00', end: '21:00' };
+  box.replaceChildren();
+  const hint = document.createElement('p');
+  hint.className = 'wizard-rule';
+  hint.textContent = 'Άλλαξε μόνο τη μέρα που διαφέρει. Οι υπόλοιπες μένουν στο κοινό ωράριο.';
+  box.appendChild(hint);
+  readDays().forEach((day) => {
+    const saved = previous[day] || general;
+    const row = document.createElement('div');
+    row.className = 'wizard-day-hours';
+    row.dataset.day = String(day);
+    row.innerHTML = `<span>${DAY_SHORT[day]}</span><input type="time" value="${saved.start}" aria-label="${DAY_SHORT[day]} από"><span>–</span><input type="time" value="${saved.end}" aria-label="${DAY_SHORT[day]} έως">`;
+    box.appendChild(row);
+  });
+}
+
 function paintNext() {
+  paintRules();
+  paintShiftNote();
   const last = step === STEPS.length - 1;
   const ready = last
     ? document.getElementById('signupTerms').checked
@@ -286,8 +451,11 @@ document.getElementById('signupDays').addEventListener('click', (event) => {
   if (!button) return;
   button.classList.toggle('is-on');
   button.setAttribute('aria-pressed', button.classList.contains('is-on') ? 'true' : 'false');
+  renderDayHours();
   paintNext();
 });
+
+document.getElementById('signupPerDay').addEventListener('change', renderDayHours);
 
 form.addEventListener('input', paintNext);
 form.addEventListener('change', paintNext);
@@ -361,7 +529,7 @@ form.addEventListener('submit', async (event) => {
     accept_terms: true,
     website: form.website.value || '',
     work_days: readDays(),
-    working_hours: readShifts(),
+    working_hours: readHours(),
     services: readServices(),
     brand_color: colorInput.value,
     logo_url: document.getElementById('signupLogoUrl').value.trim(),

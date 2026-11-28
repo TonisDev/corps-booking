@@ -141,11 +141,13 @@ button, input, select, textarea { font-family: inherit; }
 .mobile-dock, .mobile-more { display: none; }
 .support-modal-content { max-width: min(34rem, 96vw); }
 .home-guide { max-width: min(68rem, 96vw); }
+.home-guide-group + .home-guide-group { margin-top: 1.15rem; }
+.home-guide-group h3 { margin: 0.2rem 0 0; font-size: 1rem; }
 .home-guide-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   gap: 0.85rem;
-  margin-top: 1rem;
+  margin-top: 0.7rem;
 }
 .home-guide-steps figure { margin: 0; }
 .home-guide-steps img {
@@ -914,7 +916,7 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
   --fc-page-bg-color: #1e293b;
   --fc-neutral-bg-color: #1e293b;
   --fc-border-color: #334155;
-  --fc-today-bg-color: rgba(79, 70, 229, 0.18);
+  --fc-today-bg-color: rgba(245, 193, 108, 0.22);
   color: #f8fafc;
 }
 [data-theme="dark"] .fc .fc-col-header-cell,
@@ -1056,6 +1058,9 @@ body:has(#toast.show) .new-toast { bottom: 5.6rem; }
 .week-line-label strong { font-size: 0.95rem; color: var(--text-color); }
 .week-line.is-today .week-line-label,
 .week-line.is-today .week-line-label strong { color: #4f46e5; }
+[data-theme="dark"] .week-line.is-today { background: rgba(245, 193, 108, 0.12); }
+[data-theme="dark"] .week-line.is-today .week-line-label,
+[data-theme="dark"] .week-line.is-today .week-line-label strong { color: #f5c16c; }
 .week-line-track,
 .week-day-apts {
   display: flex;

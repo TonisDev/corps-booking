@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20261128i">
+    <link rel="stylesheet" href="style.css?v=20261128k">
     <style>
         :root {
             color-scheme: light;
@@ -47,6 +47,7 @@
                     <label>Σύνδεσμος πελατών
                         <span class="wizard-linkbar"><span class="wizard-link-prefix">quickbook.gr/?business_code=</span><input id="signupCode" name="business_code" required maxlength="48" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="studio-name" aria-label="Κωδικός συνδέσμου"></span>
                     </label>
+                    <p class="wizard-rule" id="signupCodeRule">Πεζά λατινικά, αριθμοί και παύλες. Από 2 χαρακτήρες, π.χ. nikos.</p>
                 </section>
                 <section class="wizard-step" data-step="1" hidden>
                     <label>Email
@@ -67,6 +68,10 @@
                         <input id="signupPass2" name="password2" type="password" required minlength="8" maxlength="200" autocomplete="new-password">
                     </label>
                     <button type="button" class="home-lead-mini" id="signupShowPass">Εμφάνιση κωδικού</button>
+                    <ul class="wizard-rules" id="signupPassRules">
+                        <li data-rule="len">Τουλάχιστον 8 χαρακτήρες</li>
+                        <li data-rule="match">Ίδιος και τις δύο φορές</li>
+                    </ul>
                 </section>
                 <section class="wizard-step" data-step="3" hidden>
                     <div class="wizard-swatches" id="signupSwatches" role="listbox" aria-label="Χρώμα"></div>
@@ -95,6 +100,7 @@
                         <button type="button" class="wizard-day" data-day="6" aria-pressed="false">Σάβ</button>
                         <button type="button" class="wizard-day" data-day="0" aria-pressed="false">Κυρ</button>
                     </div>
+                    <p class="wizard-rule" id="signupHoursNote">Ισχύει για όλες τις μέρες που επέλεξες. Δεύτερη βάρδια είναι για διάλειμμα, π.χ. πρωί και απόγευμα, χωρίς να πέφτει πάνω στην πρώτη.</p>
                     <div id="signupShifts">
                         <div class="wizard-shift">
                             <input type="time" value="09:00" aria-label="Από">
@@ -103,6 +109,11 @@
                         </div>
                     </div>
                     <button type="button" class="home-lead-mini" id="signupAddShift">+ Βάρδια</button>
+                    <label class="wizard-check">
+                        <input id="signupPerDay" type="checkbox">
+                        <span>Κάποια μέρα έχει άλλο ωράριο</span>
+                    </label>
+                    <div id="signupDayHours" hidden></div>
                 </section>
                 <section class="wizard-step" data-step="5" hidden>
                     <div id="signupServices">
@@ -136,6 +147,6 @@
             <a class="home-lead-submit home-create-link" id="wizardDoneLink" href="manager.html">Είσοδος στον πίνακα</a>
         </section>
     </main>
-    <script src="signup.js?v=20261128d"></script>
+    <script src="signup.js?v=20261128f"></script>
 </body>
 </html>

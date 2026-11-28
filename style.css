@@ -2122,7 +2122,73 @@ body.shop-info-open { overflow: hidden; }
   font-size: 0.9rem !important;
   font-weight: 500 !important;
 }
-.wizard-check input { width: auto; margin-top: 0.2rem; }
+.wizard-rule {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.wizard-rule.is-ok { color: #047857; }
+.wizard-rule.is-bad { color: #b91c1c; }
+.wizard-rule.is-warn { color: #b45309; font-weight: 650; }
+.wizard-shift.is-overlap input[type="time"] {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.22) !important;
+}
+.wizard-rules {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #64748b;
+  font-size: 0.84rem;
+}
+.wizard-rules li.is-ok { color: #047857; }
+.wizard-rules li.is-bad { color: #b91c1c; }
+.wizard-day-hours {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.wizard-day-hours > span:first-child {
+  width: 2.4rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: #334155;
+}
+.wizard-day-hours input[type="time"] { width: 6.4rem !important; flex: none; }
+.wizard-color-chip {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin: 0 0.15rem 0 0.35rem;
+  border-radius: 0.2rem;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  vertical-align: -0.1rem;
+}
+.wizard-check input[type="checkbox"] {
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+  min-height: 1.05rem !important;
+  margin-top: 0.15rem;
+  padding: 0 !important;
+  border: 1px solid #94a3b8 !important;
+  border-radius: 0.2rem !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  accent-color: var(--brand-color, #4f46e5);
+}
+.wizard-check input[type="checkbox"]:hover,
+.wizard-check input[type="checkbox"]:focus,
+.wizard-check input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--brand-color, #4f46e5);
+  outline-offset: 2px;
+  border-radius: 0.2rem;
+  box-shadow: none !important;
+}
 .wizard-done { text-align: left; }
 .wizard-done a.home-lead-submit { margin-top: 1rem; text-decoration: none; color: #fff; }
 @media (max-width: 640px) {
