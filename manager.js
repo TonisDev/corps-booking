@@ -161,6 +161,20 @@ function managerLoginUrl(code) {
   return page.toString();
 }
 
+async function connectGoogleCalendar() {
+  const url = (document.getElementById('calendarUrl')?.value || '').trim();
+  const open = document.getElementById('calendarGoogleLink')?.href || '';
+  if (!url || !open || open.endsWith('#')) {
+    showToast('Ο σύνδεσμος ημερολογίου δεν είναι έτοιμος.', true);
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch (err) {}
+  window.open(open, '_blank', 'noopener');
+  showToast('Ο σύνδεσμος αντιγράφηκε. Αν δεν μπει μόνο του, στο Google Calendar πάτα + και «Από URL».');
+}
+
 async function copyCalendarLink() {
   const url = document.getElementById('calendarUrl').value.trim();
   if (!url) {
@@ -3490,14 +3504,44 @@ async function openBillingPortal() {
 }
 
 // [SECTION: JS-SETTINGS]
-function showSettingsPanel(name) {
+function showSettingsPanel(name, opts) {
   document.querySelectorAll('.settings-panel').forEach((el) => {
     el.classList.toggle('active', el.id === `settingsPanel-${name}`);
   });
   document.querySelectorAll('.settings-nav-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-settings-panel') === name);
   });
+  const shell = document.querySelector('.settings-shell');
+  if (shell) shell.classList.toggle('is-detail', !(opts && opts.list));
+  const main = document.querySelector('.settings-main');
+  if (main) main.scrollTop = 0;
 }
+
+function backSettingsList() {
+  const shell = document.querySelector('.settings-shell');
+  if (shell) shell.classList.remove('is-detail');
+}
+
+function toggleInfoTip(event, btn) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const pop = btn && btn.nextElementSibling;
+  if (!pop) return;
+  const willOpen = pop.hasAttribute('hidden');
+  document.querySelectorAll('.info-tip-pop').forEach((el) => { el.hidden = true; });
+  document.querySelectorAll('.info-tip').forEach((el) => el.setAttribute('aria-expanded', 'false'));
+  if (willOpen) {
+    pop.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+
+document.addEventListener('click', (event) => {
+  if (event.target.closest && event.target.closest('.info-tip, .info-tip-pop')) return;
+  document.querySelectorAll('.info-tip-pop').forEach((el) => { el.hidden = true; });
+});
 
 function filterSettingsNav() {
   const input = document.getElementById('settingsSearch');
@@ -3517,7 +3561,7 @@ function filterSettingsNav() {
     if (!first) first = btn;
     if (btn.classList.contains('active')) currentVisible = true;
   });
-  if (q && !currentVisible && first) showSettingsPanel(first.getAttribute('data-settings-panel'));
+  if (q && !currentVisible && first && !managerIsPhone()) showSettingsPanel(first.getAttribute('data-settings-panel'));
 }
 
 function embedSnippetFor(code) {
@@ -3627,7 +3671,33 @@ async function refreshPushUi() {
   if (disable) disable.hidden = !on;
   const shopOn = !document.getElementById('pushShopEnabled') || document.getElementById('pushShopEnabled').checked;
   if (!shopOn) status.textContent = 'Κλειστές για το κατάστημα. Άνοιξέ τις και πάτα Αποθήκευση.';
-  else status.textContent = on ? 'Ενεργές σε αυτή τη συσκευή.' : 'Κλειστές σε αυτή τη συσκευή.';
+  else if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+    status.textContent = 'Ο browser τις έχει μπλοκάρει. Πάτα Ενεργοποίηση για τα βήματα.';
+  } else status.textContent = on ? 'Ενεργές σε αυτή τη συσκευή.' : 'Κλειστές σε αυτή τη συσκευή.';
+}
+
+function explainPushBlocked() {
+  const text = 'Ο browser έχει μπλοκάρει τις ειδοποιήσεις. Στο Android: Ρυθμίσεις → Εφαρμογές → Chrome → Ειδοποιήσεις → ενεργές. Μετά, στο λουκέτο δίπλα στη διεύθυνση, Ειδοποιήσεις → Να επιτρέπονται, και ξαναπάτα Ενεργοποίηση.';
+  const status = document.getElementById('pushStatus');
+  if (status) status.textContent = text;
+  showToast('Οι ειδοποιήσεις δεν επιτράπηκαν. Δες τα βήματα από κάτω.', true);
+}
+
+function requestNotificationPermission() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value || Notification.permission);
+    };
+    try {
+      const result = Notification.requestPermission(done);
+      if (result && typeof result.then === 'function') result.then(done, () => done(Notification.permission));
+    } catch (err) {
+      done(Notification.permission);
+    }
+  });
 }
 
 async function enableAdminPush() {
@@ -3643,10 +3713,13 @@ async function enableAdminPush() {
     showToast('Αυτός ο browser δεν δέχεται ειδοποιήσεις.', true);
     return;
   }
-  let perm = Notification.permission;
-  if (perm !== 'granted') perm = await Notification.requestPermission();
+  if (Notification.permission === 'denied') {
+    explainPushBlocked();
+    return;
+  }
+  const perm = Notification.permission === 'granted' ? 'granted' : await requestNotificationPermission();
   if (perm !== 'granted') {
-    showToast('Οι ειδοποιήσεις δεν επιτράπηκαν.', true);
+    explainPushBlocked();
     return;
   }
   try {
@@ -3674,6 +3747,10 @@ async function enableAdminPush() {
     showToast('Οι ειδοποιήσεις ενεργοποιήθηκαν σε αυτή τη συσκευή.');
     refreshPushUi();
   } catch (err) {
+    if (err && (err.name === 'NotAllowedError' || /denied|not allowed/i.test(err.message || ''))) {
+      explainPushBlocked();
+      return;
+    }
     if (err.message !== 'Unauthorized') showToast(err.message || 'Η εγγραφή δεν ολοκληρώθηκε.', true);
   }
 }
@@ -3704,7 +3781,7 @@ function openSettingsModal() {
   const search = document.getElementById('settingsSearch');
   if (search) search.value = '';
   filterSettingsNav();
-  showSettingsPanel('profile');
+  showSettingsPanel('profile', managerIsPhone() ? { list: true } : undefined);
   fillEmbedSnippet();
   const pushShop = document.getElementById('pushShopEnabled');
   if (pushShop) {
@@ -3751,6 +3828,11 @@ function openSettingsModal() {
   const approveBox = document.getElementById('setApproveBeforeBook');
   if (approveBox) approveBox.checked = currentTenantData.intake_mode === 'request';
   document.getElementById('setLogo').value = currentTenantData.logo_url || '';
+  const savedLogoBg = logoBgColor(currentTenantData.logo_bg);
+  const logoBgOn = document.getElementById('setLogoBgOn');
+  const logoBg = document.getElementById('setLogoBg');
+  if (logoBgOn) logoBgOn.checked = !!savedLogoBg;
+  if (logoBg) logoBg.value = savedLogoBg || '#ffffff';
   logoLocalPreview = '';
   document.getElementById('setColor').value = currentTenantData.brand_color || '#4f46e5';
   document.getElementById('setBookingSubtitle').value = currentTenantData.booking_subtitle || '';
@@ -3791,10 +3873,7 @@ function openSettingsModal() {
   const calendarMissing = document.getElementById('calendarMissing');
   const ics = currentTenantData.calendar_url || '';
   if (calendarUrl) calendarUrl.value = ics;
-  if (calendarLink) {
-    calendarLink.href = currentTenantData.google_calendar_url || '#';
-    calendarLink.style.display = ics ? '' : 'none';
-  }
+  if (calendarLink) calendarLink.href = currentTenantData.google_calendar_url || '#';
   if (calendarMissing) calendarMissing.style.display = ics ? 'none' : 'block';
   if (calendarUrl) calendarUrl.style.display = ics ? '' : 'none';
   document.getElementById('currentPassword').value = '';
@@ -3836,6 +3915,18 @@ function openSettingsModal() {
 
 let logoLocalPreview = '';
 
+function logoBgColor(value) {
+  const text = String(value || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '';
+}
+
+function applyLogoBackground(el, color) {
+  if (!el) return;
+  const hex = logoBgColor(color);
+  el.classList.toggle('has-logo-bg', !!hex);
+  el.style.backgroundColor = hex;
+}
+
 function applyStoreLogo(tenant) {
   const img = document.getElementById('storeLogo');
   if (!img) return;
@@ -3850,6 +3941,7 @@ function applyStoreLogo(tenant) {
     if (!img.src.endsWith(fallback)) img.src = fallback;
   };
   img.src = remote || fallback;
+  applyLogoBackground(img, tenant && tenant.logo_bg);
 }
 
 function displayLogoUrl(value) {
@@ -3901,6 +3993,10 @@ function updateAppearancePreview() {
     logo.src = 'logos/quickbook_cropped.png';
   };
   logo.src = logoUrl;
+  const logoBgOn = document.getElementById('setLogoBgOn');
+  const logoBg = document.getElementById('setLogoBg');
+  if (logoBg && logoBgOn) logoBg.disabled = !logoBgOn.checked;
+  applyLogoBackground(logo, logoBgOn && logoBgOn.checked ? logoBg.value : '');
 }
 
 async function uploadShopLogo(file) {
@@ -4290,6 +4386,7 @@ async function saveSettings(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name, email, phone, address, logo_url, brand_color,
+        logo_bg: document.getElementById('setLogoBgOn')?.checked ? (document.getElementById('setLogoBg')?.value || '') : '',
         client_theme, booking_subtitle, welcome_text, success_message,
         work_days, working_hours, services,
         buffer_minutes, telegram_chat_id, form_fields,

@@ -546,6 +546,9 @@
                 };
                 businessLogo.src = logoUrl || 'logos/quickbook_cropped.png';
                 businessLogo.alt = `Λογότυπο ${businessData.name}`;
+                const logoBg = /^#[0-9a-fA-F]{6}$/.test(String(businessData.logo_bg || '')) ? businessData.logo_bg : '';
+                businessLogo.classList.toggle('has-logo-bg', !!logoBg);
+                businessLogo.style.backgroundColor = logoBg;
                 document.getElementById('businessSubtitle').textContent =
                     businessData.booking_subtitle || 'Κλείστε το ραντεβού σας εύκολα και γρήγορα';
                 const welcomeText = document.getElementById('welcomeText');

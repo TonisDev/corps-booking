@@ -1062,6 +1062,11 @@ a.home-create-link {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color) 10%, transparent);
   transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
+.business-logo.has-logo-bg {
+  object-fit: contain;
+  padding: 8px;
+  box-sizing: border-box;
+}
 .business-logo:hover {
   transform: translateY(-2px);
   box-shadow:
